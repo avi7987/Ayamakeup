@@ -3,26 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>מערכת ניהול עסק - איפור ושיער PRO</title>
+    <title>מערכת ניהול עסק PRO</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700&display=swap');
         body { font-family: 'Heebo', sans-serif; background-color: #f8fafc; }
         .kanban-col { background: #eef2f6; border-radius: 1rem; padding: 12px; width: 280px; min-width: 280px; min-height: 500px; border: 1px solid #e2e8f0; }
-        .lead-card { background: white; border-radius: 12px; padding: 15px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-right: 6px solid #6366f1; transition: 0.2s; }
-        .lead-card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+        .lead-card { background: white; border-radius: 12px; padding: 15px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-right: 6px solid #6366f1; }
         .nav-button { padding: 10px 20px; font-weight: bold; border-radius: 10px; transition: 0.3s; }
         .nav-button.active { background: #9333ea; color: white; }
         .nav-button:not(.active) { background: white; color: #9333ea; border: 1px solid #e9d5ff; }
-        .modal { background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
+        .modal { background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); display: none; }
+        .spinner { border: 2px solid #f3f4f6; border-top: 2px solid #9333ea; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
     <div class="max-w-full mx-auto p-4 md:p-8">
         <div class="bg-white rounded-2xl shadow-sm p-6 mb-8 flex flex-wrap justify-between items-center gap-4">
-            <h1 class="text-2xl font-bold text-gray-800 italic">Beauty CRM & Finance</h1>
+            <h1 class="text-2xl font-bold text-gray-800 italic">Beauty CRM</h1>
             <div class="flex gap-2 flex-wrap">
                 <button onclick="switchPage('leads')" id="nav-leads" class="nav-button active">🎯 לוח לידים</button>
                 <button onclick="switchPage('entry')" id="nav-entry" class="nav-button">💰 הזנת הכנסה</button>
@@ -34,32 +35,36 @@
             <div class="flex justify-between items-center">
                 <h2 class="text-xl font-bold">ניהול תהליכי מכירה</h2>
                 <div class="flex gap-2">
-                    <button onclick="openArchive()" class="bg-gray-100 text-gray-600 px-4 py-2 rounded-lg font-bold border hover:bg-gray-200">🗄️ ארכיון</button>
-                    <button onclick="openModal('modal-lead')" class="bg-purple-600 text-white px-4 py-2 rounded-lg font-bold shadow-lg hover:bg-purple-700">+ ליד חדש</button>
+                    <button onclick="openModal('modal-archive')" class="bg-gray-100 text-gray-600 px-4 py-2 rounded-lg font-bold border">🗄️ ארכיון</button>
+                    <button onclick="openModal('modal-lead')" class="bg-purple-600 text-white px-4 py-2 rounded-lg font-bold shadow-lg">+ ליד חדש</button>
                 </div>
             </div>
-
             <div class="flex gap-4 overflow-x-auto pb-6">
-                <div class="kanban-col"><h3 class="font-bold mb-4 flex justify-between">🆕 פנייה חדשה <span id="cnt-new" class="text-xs bg-white px-2 rounded-full">0</span></h3><div id="col-new" class="space-y-4"></div></div>
-                <div class="kanban-col"><h3 class="font-bold mb-4 flex justify-between">📞 יצירת קשר <span id="cnt-contact" class="text-xs bg-white px-2 rounded-full">0</span></h3><div id="col-contact" class="space-y-4"></div></div>
-                <div class="kanban-col"><h3 class="font-bold mb-4 flex justify-between">💬 משא ומתן <span id="cnt-negotiation" class="text-xs bg-white px-2 rounded-full">0</span></h3><div id="col-negotiation" class="space-y-4"></div></div>
-                <div class="kanban-col"><h3 class="font-bold mb-4 flex justify-between">📄 הצעה/חוזה <span id="cnt-offer" class="text-xs bg-white px-2 rounded-full">0</span></h3><div id="col-offer" class="space-y-4"></div></div>
+                <div class="kanban-col"><h3 class="font-bold mb-4">🆕 פנייה חדשה</h3><div id="col-new" class="space-y-4"></div></div>
+                <div class="kanban-col"><h3 class="font-bold mb-4">📞 יצירת קשר</h3><div id="col-contact" class="space-y-4"></div></div>
+                <div class="kanban-col"><h3 class="font-bold mb-4">💬 משא ומתן</h3><div id="col-negotiation" class="space-y-4"></div></div>
+                <div class="kanban-col"><h3 class="font-bold mb-4">📄 הצעה/חוזה</h3><div id="col-offer" class="space-y-4"></div></div>
             </div>
         </div>
 
         <div id="page-entry" class="hidden max-w-2xl mx-auto bg-white p-8 rounded-2xl shadow-lg">
             <h2 class="text-2xl font-bold mb-6 text-purple-700">הזנת הכנסה לגיליון</h2>
             <div class="grid grid-cols-1 gap-4">
-                <input type="text" id="inc-name" placeholder="שם הלקוחה" class="p-3 border rounded-xl">
-                <input type="text" id="inc-service" placeholder="סוג שירות" class="p-3 border rounded-xl">
-                <input type="number" id="inc-amount" placeholder="סכום (₪)" class="p-3 border rounded-xl">
+                <input type="text" id="inc-name" placeholder="שם הלקוחה *" class="p-3 border rounded-xl">
+                <input type="text" id="inc-service" placeholder="סוג שירות *" class="p-3 border rounded-xl">
+                <input type="number" id="inc-amount" placeholder="סכום (₪) *" class="p-3 border rounded-xl">
                 <input type="date" id="inc-date" class="p-3 border rounded-xl">
                 <select id="inc-payment" class="p-3 border rounded-xl">
                     <option value="מזומן">מזומן</option>
                     <option value="ביט/פייבוקס">ביט/פייבוקס</option>
                     <option value="העברה בנקאית">העברה בנקאית</option>
                 </select>
-                <button onclick="saveIncome()" class="bg-purple-600 text-white py-3 rounded-xl font-bold text-lg">שמור בגיליון</button>
+                <div class="flex items-center gap-3 p-2 bg-purple-50 rounded-xl">
+                    <input type="checkbox" id="inc-isbride" class="w-6 h-6 accent-purple-600">
+                    <label class="font-bold text-purple-800">האם זאת כלה? (לסטטיסטיקה)</label>
+                </div>
+                <textarea id="inc-notes" placeholder="הערות נוספות..." class="p-3 border rounded-xl h-24"></textarea>
+                <button onclick="saveIncome()" id="inc-save-btn" class="bg-purple-600 text-white py-4 rounded-xl font-bold text-lg shadow-md hover:bg-purple-700 transition">שמור בגיליון גוגל שיטס</button>
             </div>
         </div>
 
@@ -70,51 +75,50 @@
                     <div class="p-6 bg-purple-50 rounded-2xl text-center"><div class="text-sm text-purple-400">סה"כ הכנסות</div><div id="stat-income" class="text-4xl font-bold text-purple-700">₪0</div></div>
                     <div class="p-6 bg-pink-50 rounded-2xl text-center"><div class="text-sm text-pink-400">כלות בתקופה</div><div id="stat-brides" class="text-4xl font-bold text-pink-600">0</div></div>
                 </div>
-                <div class="h-96"><canvas id="incomeChart"></canvas></div>
+                <div class="relative h-96"><canvas id="incomeChart"></canvas></div>
             </div>
         </div>
     </div>
 
-    <div id="modal-booking" class="hidden fixed inset-0 modal flex items-center justify-center p-4 z-[100]">
+    <div id="modal-booking" class="modal fixed inset-0 flex items-center justify-center p-4 z-[100]">
         <div class="bg-white rounded-3xl p-8 w-full max-w-lg shadow-2xl">
-            <h2 class="text-2xl font-bold text-green-600 mb-2">🎉 שריון תור ביומן</h2>
-            <p class="text-gray-500 mb-6 italic">הפרטים יסונכרנו אוטומטית ליומן גוגל שלך</p>
+            <h2 class="text-2xl font-bold text-green-600 mb-2">🎉 שריון תור ויומן</h2>
             <div class="space-y-4">
                 <input type="text" id="book-name" readonly class="w-full p-3 bg-gray-50 border rounded-xl font-bold">
                 <div class="grid grid-cols-2 gap-4">
                     <input type="date" id="book-date" class="p-3 border rounded-xl">
                     <input type="time" id="book-time" class="p-3 border rounded-xl">
                 </div>
-                <input type="text" id="book-loc" placeholder="מיקום (עיר/רחוב)" class="p-3 border rounded-xl w-full">
-                <input type="number" id="book-price" placeholder="מחיר שנסגר (₪)" class="p-3 border rounded-xl w-full">
-                <textarea id="book-notes" placeholder="הערות מיוחדות" class="w-full p-3 border rounded-xl h-24"></textarea>
-                <button onclick="confirmBooking()" class="w-full bg-green-600 text-white py-4 rounded-2xl font-bold text-lg shadow-lg">אשרי ושריוני ביומן</button>
+                <input type="text" id="book-loc" placeholder="מיקום האירוע" class="p-3 border rounded-xl w-full">
+                <input type="number" id="book-price" placeholder="מחיר סופי שנסגר" class="p-3 border rounded-xl w-full">
+                <textarea id="book-notes" placeholder="הערות ליומן..." class="w-full p-3 border rounded-xl h-24"></textarea>
+                <button onclick="confirmBooking()" id="book-confirm-btn" class="w-full bg-green-600 text-white py-4 rounded-2xl font-bold shadow-lg">אשרי ושריוני ביומן</button>
+                <button onclick="closeModal('modal-booking')" class="w-full text-gray-400">ביטול</button>
             </div>
         </div>
     </div>
 
-    <div id="modal-archive" class="hidden fixed inset-0 modal flex items-center justify-center p-4 z-50">
+    <div id="modal-lead" class="modal fixed inset-0 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-md">
+            <h2 class="text-xl font-bold mb-4">פנייה חדשה</h2>
+            <input type="text" id="ln-name" placeholder="שם הלקוחה" class="w-full p-3 border rounded-xl mb-3">
+            <input type="tel" id="ln-phone" placeholder="טלפון" class="w-full p-3 border rounded-xl mb-4">
+            <button onclick="saveLead()" class="w-full bg-purple-600 text-white py-3 rounded-xl font-bold">הוסף ליד</button>
+            <button onclick="closeModal('modal-lead')" class="w-full mt-2 text-gray-400">סגור</button>
+        </div>
+    </div>
+
+    <div id="modal-archive" class="modal fixed inset-0 flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-xl font-bold italic">🗄️ ארכיון לקוחות</h2>
-                <button onclick="closeModal('modal-archive')" class="text-2xl">&times;</button>
-            </div>
+            <div class="flex justify-between items-center mb-6"><h2 class="text-xl font-bold">🗄️ ארכיון</h2><button onclick="closeModal('modal-archive')" class="text-2xl">&times;</button></div>
             <div id="archive-list" class="space-y-3"></div>
         </div>
     </div>
 
-    <div id="modal-lead" class="hidden fixed inset-0 modal flex items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-2xl p-6 w-full max-w-md">
-            <h2 class="text-xl font-bold mb-4">פרטי פנייה חדשה</h2>
-            <input type="text" id="ln-name" placeholder="שם הלקוחה" class="w-full p-3 border rounded-xl mb-3">
-            <input type="tel" id="ln-phone" placeholder="טלפון" class="w-full p-3 border rounded-xl mb-4">
-            <button onclick="saveLead()" class="w-full bg-purple-600 text-white py-3 rounded-xl font-bold">הוסף ליד</button>
-            <button onclick="closeModal('modal-lead')" class="w-full mt-2 text-gray-400">ביטול</button>
-        </div>
-    </div>
-
     <script>
-        const SCRIPT_URL = 'YOUR_GOOGLE_SCRIPT_URL';
+        // הכניסי את ה-URL של הסקריפט שלך כאן:
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbydwcb9Elv-S-xFhySVkioiaJrLPwx7I9LxzSLY6ep_aR22ErmKBEuAUG_ZPp0u1JghHw/exec';
+        
         let leads = JSON.parse(localStorage.getItem('crm_leads_v4')) || [];
         let clients = JSON.parse(localStorage.getItem('clientsData')) || [];
         let incomeChart = null;
@@ -130,38 +134,68 @@
             if(page === 'leads') renderBoard();
         }
 
-        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
-        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
-        // --- לידים ---
+        // --- פונקציית הזנת הכנסה (התממשקות לשיטס) ---
+        async function saveIncome() {
+            const name = document.getElementById('inc-name').value;
+            const amount = document.getElementById('inc-amount').value;
+            const date = document.getElementById('inc-date').value;
+            if(!name || !amount || !date) return alert('נא למלא את כל שדות החובה (*)');
+
+            const btn = document.getElementById('inc-save-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<div class="spinner mx-auto"></div>';
+
+            const data = {
+                name,
+                service: document.getElementById('inc-service').value,
+                amount: parseFloat(amount),
+                date,
+                paymentMethod: document.getElementById('inc-payment').value,
+                isBride: document.getElementById('inc-isbride').checked,
+                notes: document.getElementById('inc-notes').value,
+                month: new Date(date).toLocaleDateString('he-IL', {year:'numeric', month:'long'}),
+                type: 'INCOME'
+            };
+
+            try {
+                await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(data) });
+                clients.push(data);
+                localStorage.setItem('clientsData', JSON.stringify(clients));
+                alert('הנתונים נשמרו בהצלחה בגיליון!');
+                document.getElementById('inc-name').value = '';
+                switchPage('stats');
+            } catch(e) { alert('שגיאה בחיבור לגיליון'); }
+            btn.disabled = false; btn.textContent = 'שמור בגיליון גוגל שיטס';
+        }
+
+        // --- לידים ושריון ---
         function saveLead() {
             const name = document.getElementById('ln-name').value;
-            const phone = document.getElementById('ln-phone').value;
             if(!name) return;
-            leads.unshift({ id: Date.now(), name, phone, status: 'new' });
-            saveAndRender();
+            leads.unshift({ id: Date.now(), name, phone: document.getElementById('ln-phone').value, status: 'new' });
+            localStorage.setItem('crm_leads_v4', JSON.stringify(leads));
+            renderBoard();
             closeModal('modal-lead');
         }
 
         function updateStatus(id, newStatus) {
             const lead = leads.find(l => l.id === id);
             if(newStatus === 'closed') {
-                openBooking(lead);
+                document.getElementById('book-name').value = lead.name;
+                document.getElementById('book-date').valueAsDate = new Date();
+                window.activeLeadId = lead.id;
+                openModal('modal-booking');
                 return;
             }
             lead.status = newStatus;
             saveAndRender();
         }
 
-        function openBooking(lead) {
-            document.getElementById('book-name').value = lead.name;
-            document.getElementById('book-date').valueAsDate = new Date();
-            openModal('modal-booking');
-            // שומרים את ה-ID זמנית כדי למחוק אותו מהלידים אחרי השמירה
-            window.activeLeadId = lead.id;
-        }
-
         async function confirmBooking() {
+            const btn = document.getElementById('book-confirm-btn');
             const data = {
                 name: document.getElementById('book-name').value,
                 date: document.getElementById('book-date').value,
@@ -172,17 +206,17 @@
                 type: 'CALENDAR_EVENT'
             };
 
-            // מעבר לארכיון כ-"נסגר"
-            const lead = leads.find(l => l.id === window.activeLeadId);
-            lead.status = 'closed';
-            
+            btn.disabled = true; btn.innerHTML = 'מסנכרן יומן...';
+
             try {
-                // שליחה לגוגל (יומן + שיטס)
                 await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(data) });
-                alert('התור שוריין וסונכרן ליומן גוגל!');
+                const lead = leads.find(l => l.id === window.activeLeadId);
+                lead.status = 'closed';
                 saveAndRender();
+                alert('התור שוריין ביומן בהצלחה!');
                 closeModal('modal-booking');
-            } catch(e) { alert('שגיאה בסנכרון ליומן'); }
+            } catch(e) { alert('שגיאה בסנכרון יומן'); }
+            btn.disabled = false; btn.textContent = 'אשרי ושריוני ביומן';
         }
 
         function renderBoard() {
@@ -190,18 +224,15 @@
             cols.forEach(c => {
                 const container = document.getElementById(`col-${c}`);
                 container.innerHTML = '';
-                const filtered = leads.filter(l => l.status === c);
-                document.getElementById(`cnt-${c}`).innerText = filtered.length;
-                
-                filtered.forEach(lead => {
+                leads.filter(l => l.status === c).forEach(lead => {
                     const card = document.createElement('div');
                     card.className = 'lead-card';
                     card.innerHTML = `
-                        <div class="font-bold text-gray-800 mb-1">${lead.name}</div>
-                        <div class="text-xs text-gray-400 mb-3">${lead.phone || 'אין טלפון'}</div>
-                        <select onchange="updateStatus(${lead.id}, this.value)" class="w-full text-xs p-2 bg-gray-50 border rounded-lg outline-none">
+                        <div class="font-bold mb-1">${lead.name}</div>
+                        <div class="text-xs text-gray-400 mb-3">${lead.phone || ''}</div>
+                        <select onchange="updateStatus(${lead.id}, this.value)" class="w-full text-xs p-2 border rounded-lg bg-gray-50 outline-none">
                             <option value="new" ${lead.status === 'new' ? 'selected' : ''}>🆕 פנייה</option>
-                            <option value="contact" ${lead.status === 'contact' ? 'selected' : ''}>📞 קשר</option>
+                            <option value="contact" ${lead.status === 'contact' ? 'selected' : ''}>📞 יצירת קשר</option>
                             <option value="negotiation" ${lead.status === 'negotiation' ? 'selected' : ''}>💬 מו"מ</option>
                             <option value="offer" ${lead.status === 'offer' ? 'selected' : ''}>📄 הצעה</option>
                             <option value="closed">✅ נסגר בהצלחה</option>
@@ -213,75 +244,14 @@
             });
         }
 
-        function openArchive() {
-            const list = document.getElementById('archive-list');
-            list.innerHTML = '';
-            const archived = leads.filter(l => l.status === 'rejected' || l.status === 'closed');
-            
-            archived.forEach(lead => {
-                const item = document.createElement('div');
-                item.className = 'flex justify-between items-center p-4 bg-gray-50 rounded-xl border';
-                item.innerHTML = `
-                    <div>
-                        <div class="font-bold">${lead.name} (${lead.status === 'closed' ? '✅' : '❌'})</div>
-                        <div class="text-xs text-gray-400">${lead.phone}</div>
-                    </div>
-                    <button onclick="restoreLead(${lead.id})" class="text-xs bg-purple-100 text-purple-600 px-3 py-1 rounded-full font-bold">החזר ללוח</button>
-                `;
-                list.appendChild(item);
-            });
-            openModal('modal-archive');
-        }
-
-        function restoreLead(id) {
-            leads.find(l => l.id === id).status = 'new';
-            saveAndRender();
-            openArchive();
-        }
-
         function saveAndRender() {
             localStorage.setItem('crm_leads_v4', JSON.stringify(leads));
             renderBoard();
         }
 
-        // --- גרפים וסטטיסטיקה ---
+        // --- סטטיסטיקה ---
         function updateStats() {
             const period = document.getElementById('periodSelector').value;
             let filtered = (period === 'yearly') ? clients : clients.filter(c => c.month === period);
             
-            document.getElementById('stat-income').innerText = `₪${filtered.reduce((a,b)=>a+b.amount,0).toLocaleString()}`;
-            document.getElementById('stat-brides').innerText = filtered.filter(c=>c.isBride).length;
-
-            const months = (period === 'yearly') ? [...new Set(clients.map(c=>c.month))] : [period];
-            const data = months.map(m => clients.filter(c=>c.month === m).reduce((a,b)=>a+b.amount,0));
-            
-            renderChart(months, data);
-        }
-
-        function renderChart(labels, data) {
-            const ctx = document.getElementById('incomeChart').getContext('2d');
-            if(incomeChart) incomeChart.destroy();
-            incomeChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{ label: 'הכנסות ₪', data: data, backgroundColor: '#9333ea', borderRadius: 8 }]
-                },
-                options: { responsive: true, maintainAspectRatio: false }
-            });
-        }
-
-        function populateSelector() {
-            const s = document.getElementById('periodSelector');
-            const m = [...new Set(clients.map(c=>c.month))];
-            s.innerHTML = '<option value="yearly">🗓️ כל השנה</option>';
-            m.forEach(month => s.innerHTML += `<option value="${month}">${month}</option>`);
-        }
-
-        // טעינה ראשונית
-        populateSelector();
-        renderBoard();
-        document.getElementById('inc-date').valueAsDate = new Date();
-    </script>
-</body>
-</html>
+            document.getElementById('stat-income').innerText =
