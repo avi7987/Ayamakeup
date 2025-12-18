@@ -237,53 +237,81 @@
             btn.innerText = "שמור בשיטס"; btn.disabled = false;
         }
 
-        // --- ניהול ומחיקה ---
-        function openManageModal() {
-            const filterMonth = document.getElementById('stats-month-filter').value;
-            const filtered = clients.filter(c => c.month === filterMonth);
-            const tbody = document.getElementById('manage-tbody');
-            
-            tbody.innerHTML = filtered.map(c => `
-                <tr class="border-b">
-                    <td class="p-3"><input type="checkbox" class="row-sel" data-id="${c.id}" onchange="checkBulkVisibility()"></td>
-                    <td class="p-3 font-bold">${c.name}</td>
-                    <td class="p-3 text-purple-600">${c.amount} ₪</td>
-                    <td class="p-3"><button onclick="deleteSingle(${c.id})" class="text-red-500">מחק</button></td>
-                </tr>
-            `).join('');
-            
-            document.getElementById('master-check').checked = false;
-            checkBulkVisibility();
-            openModal('modal-manage');
-        }
+       // --- ניהול, עריכה ומחיקה ---
+function openManageModal() {
+    const filterMonth = document.getElementById('stats-month-filter').value;
+    const filtered = clients.filter(c => c.month === filterMonth);
+    const tbody = document.getElementById('manage-tbody');
+    
+    // עדכון הכותרות בטבלה כדי שיתאימו לכל הנתונים
+    document.querySelector('#modal-manage thead tr').innerHTML = `
+        <th class="p-3 text-right"><input type="checkbox" id="master-check" onclick="toggleSelectAll(this)"></th>
+        <th class="p-3 text-right">תאריך</th>
+        <th class="p-3 text-right">שם</th>
+        <th class="p-3 text-right">שירות</th>
+        <th class="p-3 text-right">סכום</th>
+        <th class="p-3 text-right">תשלום</th>
+        <th class="p-3 text-right">פעולות</th>
+    `;
 
-        function toggleSelectAll(m) {
-            document.querySelectorAll('.row-sel').forEach(cb => cb.checked = m.checked);
-            checkBulkVisibility();
-        }
+    tbody.innerHTML = filtered.map(c => `
+        <tr class="border-b hover:bg-gray-50">
+            <td class="p-3"><input type="checkbox" class="row-sel" data-id="${c.id}" onchange="checkBulkVisibility()"></td>
+            <td class="p-3 text-sm">${c.date}</td>
+            <td class="p-3 font-bold">${c.name}</td>
+            <td class="p-3 text-sm">${c.service || '-'}</td>
+            <td class="p-3 text-purple-600 font-bold">${c.amount} ₪</td>
+            <td class="p-3 text-sm">${c.paymentMethod || '-'}</td>
+            <td class="p-3 space-x-2">
+                <button onclick="editRow(${c.id})" class="text-blue-500 hover:underline">ערוך</button>
+                <button onclick="deleteSingle(${c.id})" class="text-red-500 hover:underline">מחק</button>
+            </td>
+        </tr>
+    `).join('');
+    
+    document.getElementById('master-check').checked = false;
+    checkBulkVisibility();
+    openModal('modal-manage');
+}
 
-        function checkBulkVisibility() {
-            const count = document.querySelectorAll('.row-sel:checked').length;
-            document.getElementById('bulk-del-btn').classList.toggle('hidden', count === 0);
-            document.getElementById('bulk-del-btn').innerText = `מחק ${count} מסומנים`;
-        }
+async function editRow(id) {
+    const c = clients.find(x => x.id === id);
+    if (!c) return;
 
-        async function bulkDelete() {
-            if(!confirm('למחוק לצמיתות את כל המסומנים?')) return;
-            const selectedIds = Array.from(document.querySelectorAll('.row-sel:checked')).map(cb => parseInt(cb.dataset.id));
-            
-            for(let id of selectedIds) {
-                await fetch(SCRIPT_URL, {
-                    method:'POST', 
-                    mode:'no-cors', 
-                    body: JSON.stringify({type:'DELETE_ROW', id: id})
-                });
-                clients = clients.filter(x => x.id !== id);
-            }
-            localStorage.setItem('crm_clients_v3', JSON.stringify(clients));
-            openManageModal();
-            updateStats();
+    // חלונית קופצת לעריכה מהירה
+    const newName = prompt("שם הלקוחה:", c.name);
+    const newAmount = prompt("סכום:", c.amount);
+    const newService = prompt("שירות:", c.service);
+    
+    if (newName && newAmount) {
+        const updatedData = {
+            ...c,
+            type: 'UPDATE_ROW', // חשוב לניתוב בשיטס
+            name: newName,
+            amount: parseFloat(newAmount),
+            service: newService
+        };
+
+        // 1. עדכון מקומי באתר
+        const idx = clients.findIndex(x => x.id === id);
+        clients[idx] = updatedData;
+        localStorage.setItem('crm_clients_v3', JSON.stringify(clients));
+
+        // 2. עדכון בשיטס
+        try {
+            await fetch(SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                body: JSON.stringify(updatedData)
+            });
+            alert("העסקה עודכנה בהצלחה!");
+            openManageModal(); // רענון הטבלה
+            updateStats();    // רענון הגרפים
+        } catch (e) {
+            alert("העדכון נשמר באתר אך נכשל בסנכרון לשיטס.");
         }
+    }
+}
 
         async function deleteSingle(id) {
             if(!confirm('למחוק?')) return;
@@ -322,3 +350,4 @@
     </script>
 </body>
 </html>
+
