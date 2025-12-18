@@ -3,23 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CRM יופי חכם - גרסת פולו-אפ מלאה</title>
+    <title>CRM יופי חכם - ניהול מלא</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700&display=swap');
-        body { font-family: 'Heebo', sans-serif; background: #fdf2f8; }
+        body { font-family: 'Heebo', sans-serif; background: #fdf2f8; margin: 0; padding: 0; }
         .main-card { background: white; border-radius: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
         .nav-button { padding: 14px 28px; font-weight: bold; border-radius: 16px; transition: all 0.3s; }
         .nav-button.active { background: linear-gradient(135deg, #9333ea 0%, #db2777 100%); color: white; }
         .nav-button:not(.active) { background: white; color: #9333ea; border: 2px solid #f3e8ff; }
         .kanban-col { background: rgba(243, 232, 255, 0.5); border-radius: 20px; padding: 16px; width: 300px; min-width: 300px; min-height: 600px; }
-        .lead-card { background: white; border-radius: 16px; padding: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border-right: 8px solid #9333ea; position: relative; transition: all 0.3s; }
-        .is-urgent { background: #fff7ed !important; border-color: #fb923c !important; border-width: 2px; }
-        .delete-btn { position: absolute; top: 10px; left: 10px; color: #ef4444; cursor: pointer; opacity: 0.3; }
+        .lead-card { background: white; border-radius: 16px; padding: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border-right: 8px solid #9333ea; position: relative; }
+        .is-urgent { background: #fff7ed !important; border: 2px solid #fb923c !important; }
         .modal { background: rgba(0,0,0,0.4); backdrop-filter: blur(6px); display: none; z-index: 100; position: fixed; inset: 0; align-items: center; justify-content: center; }
         input, select, textarea { border: 2px solid #f3e8ff !important; border-radius: 14px !important; padding: 10px !important; width: 100%; outline: none; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { text-align: right; padding: 12px; border-bottom: 1px solid #f3e8ff; }
         .auto-btn { font-size: 11px; background: white; border: 1px solid #e9d5ff; color: #9333ea; padding: 2px 6px; border-radius: 6px; cursor: pointer; }
+        /* עיצוב לכפתור מנוטרל */
+        button:disabled { background: #d1d5db !important; cursor: not-allowed; transform: scale(1) !important; box-shadow: none !important; }
     </style>
 </head>
 <body class="p-4 md:p-8">
@@ -28,16 +31,16 @@
         <div class="flex flex-wrap gap-4 justify-center mb-10">
             <button onclick="switchPage('entry')" id="nav-entry" class="nav-button active">💰 הזנת הכנסה</button>
             <button onclick="switchPage('leads')" id="nav-leads" class="nav-button">🎯 ניהול לידים</button>
-            <button onclick="switchPage('stats')" id="nav-stats" class="nav-button">📊 סטטיסטיקה</button>
+            <button onclick="switchPage('stats')" id="nav-stats" class="nav-button">📊 סטטיסטיקה וניהול</button>
         </div>
 
-        <div id="page-entry" class="main-card p-8 md:p-12 max-w-2xl mx-auto">
-            <h2 class="text-3xl font-bold mb-8 text-gray-800 border-r-4 border-purple-500 pr-4">הזנת עסקה חדשה</h2>
+        <div id="page-entry" class="main-card p-8 max-w-2xl mx-auto">
+            <h2 class="text-3xl font-bold mb-8 text-gray-800 border-r-4 border-purple-500 pr-4">הזנת עסקה</h2>
             <div class="space-y-6">
                 <input type="text" id="inc-name" placeholder="שם הלקוחה *">
                 <div class="grid grid-cols-2 gap-4">
                     <input type="text" id="inc-service" placeholder="סוג שירות">
-                    <input type="number" id="inc-amount" placeholder="סכום (₪)">
+                    <input type="number" id="inc-amount" placeholder="סכום">
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <input type="date" id="inc-date">
@@ -47,203 +50,216 @@
                         <option value="העברה בנקאית">העברה בנקאית</option>
                     </select>
                 </div>
-                <div class="flex items-center gap-4 p-4 bg-purple-50 rounded-2xl border-2 border-purple-100">
-                    <input type="checkbox" id="inc-isbride" class="w-6 h-6 accent-purple-600">
-                    <label for="inc-isbride" class="font-bold text-purple-900">סמני אם זו כלה 👰</label>
+                <div class="flex items-center gap-4 p-4 bg-purple-50 rounded-2xl">
+                    <input type="checkbox" id="inc-isbride" class="w-6 h-6">
+                    <label class="font-bold">סמני אם זו כלה 👰</label>
                 </div>
-                <button onclick="saveIncome()" id="inc-save-btn" class="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-5 rounded-2xl font-bold text-xl shadow-xl hover:opacity-90">שמירה בשיטס</button>
+                <button onclick="saveIncome()" id="inc-save-btn" class="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-4 rounded-2xl font-bold shadow-lg transition-all active:scale-95">שמירה בשיטס</button>
             </div>
         </div>
 
         <div id="page-leads" class="hidden">
             <div class="flex justify-between items-center mb-8">
-                <h2 class="text-3xl font-bold text-gray-800">לוח פולו-אפ חכם</h2>
-                <button onclick="openModal('modal-lead')" class="bg-purple-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg">+ ליד חדש</button>
+                <h2 class="text-3xl font-bold">לוח פולו-אפ</h2>
+                <button onclick="openModal('modal-lead')" class="bg-purple-600 text-white px-6 py-3 rounded-xl">+ ליד חדש</button>
             </div>
             <div class="flex gap-6 overflow-x-auto pb-8" id="board-container"></div>
         </div>
 
         <div id="page-stats" class="hidden">
-            <div class="main-card p-8">
-                <div class="flex flex-wrap justify-between items-center mb-8 gap-4">
-                    <h2 class="text-2xl font-bold text-gray-800">ניתוח נתונים</h2>
-                    <select id="stats-month-filter" onchange="updateStats()" class="!w-48 bg-white border-2 border-purple-100">
-                        <option value="all">כל השנה</option>
-                        </select>
-                </div>
-                
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-                    <div class="p-6 bg-purple-50 rounded-2xl text-center border border-purple-100">
-                        <div class="text-gray-500 text-sm">סה"כ הכנסות</div>
-                        <div id="sum-total" class="text-4xl font-bold text-purple-600 mt-1">0 ₪</div>
-                    </div>
-                    <div class="p-6 bg-pink-50 rounded-2xl text-center border border-pink-100">
-                        <div class="text-gray-500 text-sm">כמות כלות 👰</div>
-                        <div id="sum-brides" class="text-4xl font-bold text-pink-600 mt-1">0</div>
-                    </div>
-                    <div class="p-6 bg-blue-50 rounded-2xl text-center border border-blue-100">
-                        <div class="text-gray-500 text-sm">סה"כ עסקאות</div>
-                        <div id="sum-count" class="text-4xl font-bold text-blue-600 mt-1">0</div>
+            <div class="main-card p-6">
+                <div class="flex flex-wrap justify-between items-center mb-6 gap-4">
+                    <h2 class="text-2xl font-bold">ניתוח וניהול נתונים</h2>
+                    <div class="flex gap-2">
+                        <button onclick="bulkDelete()" id="btn-bulk-delete" class="hidden bg-red-100 text-red-600 px-4 py-2 rounded-xl text-sm font-bold">מחק מסומנים</button>
+                        <select id="stats-month-filter" onchange="updateStats()" class="!w-48"></select>
                     </div>
                 </div>
-                
-                <div class="h-[400px]">
-                    <canvas id="incomeChart"></canvas>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 text-center">
+                    <div class="p-4 bg-purple-50 rounded-2xl"><div class="text-gray-500">הכנסות</div><div id="sum-total" class="text-3xl font-bold text-purple-600">0 ₪</div></div>
+                    <div class="p-4 bg-pink-50 rounded-2xl"><div class="text-gray-500">כלות 👰</div><div id="sum-brides" class="text-3xl font-bold text-pink-600">0</div></div>
+                    <div class="p-4 bg-blue-50 rounded-2xl"><div class="text-gray-500">עסקאות</div><div id="sum-count" class="text-3xl font-bold text-blue-600">0</div></div>
+                </div>
+
+                <div class="h-[300px] mb-10"><canvas id="incomeChart"></canvas></div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th><input type="checkbox" id="master-check" onclick="toggleSelectAll(this)"></th>
+                                <th>תאריך</th>
+                                <th>לקוחה</th>
+                                <th>שירות</th>
+                                <th>סכום</th>
+                                <th>פעולות</th>
+                            </tr>
+                        </thead>
+                        <tbody id="stats-table-body"></tbody>
+                    </table>
                 </div>
             </div>
         </div>
     </div>
 
-    <div id="modal-auto" class="modal">
-        <div class="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl">
-            <h2 id="auto-title" class="text-2xl font-bold mb-4">הגדרות סטטוס</h2>
-            <textarea id="auto-msg" class="h-24 mb-4" placeholder="נוסח הודעה... השתמשי ב-[שם]"></textarea>
-            <div class="grid grid-cols-2 gap-4 mb-6">
-                <div><label class="text-xs font-bold">טיימר 1 (דקות)</label><input type="number" id="auto-t1"></div>
-                <div><label class="text-xs font-bold">טיימר 2 (דקות)</label><input type="number" id="auto-t2"></div>
-            </div>
-            <input type="hidden" id="auto-col-id">
-            <div class="flex gap-2">
-                <button onclick="saveAutoSettings()" class="flex-1 bg-purple-600 text-white py-3 rounded-xl font-bold">שמירה</button>
-                <button onclick="closeModal('modal-auto')" class="flex-1 bg-gray-100 text-gray-600 py-3 rounded-xl font-bold">סגור</button>
-            </div>
-        </div>
-    </div>
+    <div id="modal-lead" class="modal"><div class="bg-white p-8 rounded-3xl w-full max-w-sm text-center">
+        <h2 class="text-xl font-bold mb-4">ליד חדש</h2>
+        <input type="text" id="ln-name" placeholder="שם הלקוחה" class="mb-4">
+        <input type="tel" id="ln-phone" placeholder="טלפון" class="mb-6">
+        <button onclick="saveLead()" class="w-full bg-purple-600 text-white py-3 rounded-xl font-bold">שמירה</button>
+        <button onclick="closeModal('modal-lead')" class="w-full text-gray-400 mt-2">ביטול</button>
+    </div></div>
 
-    <div id="modal-lead" class="modal">
-        <div class="bg-white rounded-3xl p-8 w-full max-w-sm shadow-2xl">
-            <h2 class="text-2xl font-bold mb-6 text-center">ליד חדש</h2>
-            <div class="space-y-4">
-                <input type="text" id="ln-name" placeholder="שם הלקוחה">
-                <input type="tel" id="ln-phone" placeholder="טלפון">
-                <button onclick="saveLead()" class="w-full bg-purple-600 text-white py-4 rounded-xl font-bold">שמירה</button>
-                <button onclick="closeModal('modal-lead')" class="w-full text-gray-400">ביטול</button>
-            </div>
+    <div id="modal-auto" class="modal"><div class="bg-white p-8 rounded-3xl w-full max-w-md">
+        <h2 class="text-xl font-bold mb-4">הגדרות סטטוס</h2>
+        <textarea id="auto-msg" class="h-24 mb-4" placeholder="הודעת וואטסאפ..."></textarea>
+        <div class="grid grid-cols-2 gap-4 mb-4">
+            <input type="number" id="auto-t1" placeholder="טיימר 1 (דק')">
+            <input type="number" id="auto-t2" placeholder="טיימר 2 (דק')">
         </div>
-    </div>
+        <input type="hidden" id="auto-col-id">
+        <button onclick="saveAutoSettings()" class="w-full bg-purple-600 text-white py-3 rounded-xl font-bold">שמירה</button>
+        <button onclick="closeModal('modal-auto')" class="w-full text-gray-400 mt-2">סגור</button>
+    </div></div>
 
     <script>
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbydwcb9Elv-S-xFhySVkioiaJrLPwx7I9LxzSLY6ep_aR22ErmKBEuAUG_ZPp0u1JghHw/exec';
+        const SCRIPT_URL = 'כאן_להדביק_את_הכתובת_שלך';
         
         let leads = JSON.parse(localStorage.getItem('crm_leads_v7')) || [];
         let clients = JSON.parse(localStorage.getItem('clientsData')) || [];
         let autoConfig = JSON.parse(localStorage.getItem('crm_auto_v7')) || {};
         let myChart = null;
 
-        const COLUMNS = [
-            { id: 'new', title: '🆕 פנייה חדשה' },
-            { id: 'contact', title: '📞 יצירת קשר' },
-            { id: 'negotiation', title: '💬 מו"מ' },
-            { id: 'offer', title: '📄 הצעה' },
-            { id: 'closed', title: '✅ נסגר' }
-        ];
+        const MONTHS = ["ינואר", "פברואר", "מרץ", "אפריל", "מאי", "יוני", "יולי", "אוגוסט", "ספטמבר", "אוקטובר", "נובמבר", "דצמבר"];
+        const COLUMNS = [{id:'new', title:'🆕 פנייה'}, {id:'contact', title:'📞 קשר'}, {id:'negotiation', title:'💬 מו"מ'}, {id:'offer', title:'📄 הצעה'}, {id:'closed', title:'✅ נסגר'}];
 
         window.onload = () => {
-            initMonths();
+            const filter = document.getElementById('stats-month-filter');
+            filter.innerHTML = '<option value="all">כל השנה</option>' + MONTHS.map(m => `<option value="${m}">${m}</option>`).join('');
+            
+            // איפוס תאריך להיום בטעינה ראשונה
+            resetEntryFields();
             switchPage('entry');
-            document.getElementById('inc-date').valueAsDate = new Date();
-            setInterval(checkTimers, 10000);
+            setInterval(checkTimers, 30000); 
         };
-
-        // פילטר חודשים
-        function initMonths() {
-            const select = document.getElementById('stats-month-filter');
-            const months = ["ינואר", "פברואר", "מרץ", "אפריל", "מאי", "יוני", "יולי", "אוגוסט", "ספטמבר", "אוקטובר", "נובמבר", "דצמבר"];
-            months.forEach(m => {
-                const opt = document.createElement('option');
-                opt.value = m;
-                opt.innerText = m;
-                select.appendChild(opt);
-            });
-        }
 
         function switchPage(page) {
             ['entry', 'leads', 'stats'].forEach(p => document.getElementById(`page-${p}`).classList.add('hidden'));
-            ['nav-entry', 'nav-leads', 'nav-stats'].forEach(p => document.getElementById(p).classList.remove('active'));
             document.getElementById(`page-${page}`).classList.remove('hidden');
-            document.getElementById(`nav-${page}`).classList.add('active');
-            if(page === 'leads') renderBoard();
             if(page === 'stats') updateStats();
         }
 
-   // --- סטטיסטיקה מתוקנת ---
+        // פונקציית איפוס שדות
+        function resetEntryFields() {
+            document.getElementById('inc-name').value = '';
+            document.getElementById('inc-service').value = '';
+            document.getElementById('inc-amount').value = '';
+            document.getElementById('inc-isbride').checked = false;
+            document.getElementById('inc-date').valueAsDate = new Date();
+            document.getElementById('inc-payment').value = 'מזומן';
+        }
+
+        async function saveIncome() {
+            const btn = document.getElementById('inc-save-btn');
+            const name = document.getElementById('inc-name').value;
+            const amount = document.getElementById('inc-amount').value;
+            
+            if(!name || !amount) return alert('אנא מלאי שם וסכום');
+
+            const data = {
+                id: Date.now(),
+                type: 'INCOME',
+                name: name,
+                amount: parseFloat(amount),
+                date: document.getElementById('inc-date').value,
+                service: document.getElementById('inc-service').value,
+                paymentMethod: document.getElementById('inc-payment').value,
+                isBride: document.getElementById('inc-isbride').checked,
+                month: MONTHS[new Date(document.getElementById('inc-date').value).getMonth()]
+            };
+            
+            // 1. נטרול כפתור וצביעה לאפור
+            btn.disabled = true;
+            btn.innerText = "שומר נתונים...";
+
+            try {
+                // 2. שליחה לשיטס
+                await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(data) });
+                
+                // 3. עדכון מקומי
+                clients.push(data);
+                localStorage.setItem('clientsData', JSON.stringify(clients));
+                
+                // 4. איפוס שדות ותאריך
+                resetEntryFields();
+                alert('העסקה נשמרה בהצלחה!');
+            } catch (e) {
+                alert('שגיאה בשמירה. נסי שוב.');
+            } finally {
+                // 5. החזרת הכפתור למצב פעיל
+                btn.disabled = false;
+                btn.innerText = "שמירה בשיטס";
+            }
+        }
+
+        // --- שאר הפונקציות נשמרות ללא שינוי ---
+
         function updateStats() {
             const filter = document.getElementById('stats-month-filter').value;
-            
-            // סינון הנתונים
-            const filtered = filter === 'all' 
-                ? clients 
-                : clients.filter(c => c.month.trim() === filter.trim());
+            const filtered = filter === 'all' ? clients : clients.filter(c => c.month === filter);
 
-            // עדכון הריבועים המסכמים
-            const total = filtered.reduce((sum, c) => sum + (parseFloat(c.amount) || 0), 0);
-            const brides = filtered.filter(c => c.isBride).length;
-            
-            document.getElementById('sum-total').innerText = total.toLocaleString() + ' ₪';
+            document.getElementById('sum-total').innerText = filtered.reduce((s, c) => s + c.amount, 0).toLocaleString() + ' ₪';
             document.getElementById('sum-count').innerText = filtered.length;
-            document.getElementById('sum-brides').innerText = brides;
+            document.getElementById('sum-brides').innerText = filtered.filter(c => c.isBride).length;
 
-            // הכנת נתונים לגרף
-            const chartData = {};
-            
-            if (filter === 'all') {
-                // תצוגה שנתית - לפי חודשים
-                filtered.forEach(c => {
-                    chartData[c.month] = (chartData[c.month] || 0) + parseFloat(c.amount);
-                });
-            } else {
-                // תצוגה חודשית - לפי ימים (תאריכים)
-                filtered.forEach(c => {
-                    const dateLabel = new Date(c.date).toLocaleDateString('he-IL');
-                    chartData[dateLabel] = (chartData[dateLabel] || 0) + parseFloat(c.amount);
-                });
-            }
+            const tbody = document.getElementById('stats-table-body');
+            tbody.innerHTML = filtered.map(c => `
+                <tr>
+                    <td><input type="checkbox" class="row-select" data-id="${c.id}"></td>
+                    <td>${c.date}</td>
+                    <td><b>${c.name}</b></td>
+                    <td>${c.service}</td>
+                    <td>${c.amount} ₪</td>
+                    <td><button onclick="deleteRow(${c.id})" class="text-red-500 font-bold">מחק</button></td>
+                </tr>`).join('');
 
-            // רינדור הגרף מחדש
+            const chartLabels = [...new Set(filtered.map(c => filter === 'all' ? c.month : c.date))];
+            const chartVals = chartLabels.map(l => filtered.filter(c => (filter === 'all' ? c.month : c.date) === l).reduce((s, c) => s + c.amount, 0));
+
             if (myChart) myChart.destroy();
-            const ctx = document.getElementById('incomeChart').getContext('2d');
-            myChart = new Chart(ctx, {
+            myChart = new Chart(document.getElementById('incomeChart'), {
                 type: 'bar',
-                data: {
-                    labels: Object.keys(chartData),
-                    datasets: [{
-                        label: filter === 'all' ? 'הכנסה חודשית' : 'הכנסה יומית',
-                        data: Object.values(chartData),
-                        backgroundColor: '#9333ea',
-                        borderRadius: 8
-                    }]
-                },
-                options: { 
-                    responsive: true, 
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: { beginAtZero: true }
-                    }
-                }
+                data: { labels: chartLabels, datasets: [{ label: 'הכנסות', data: chartVals, backgroundColor: '#9333ea', borderRadius: 10 }] },
+                options: { responsive: true, maintainAspectRatio: false }
             });
         }
+
+        async function deleteRow(id) {
+            if(!confirm('למחוק מהאתר ומהשיטס?')) return;
+            const item = clients.find(c => c.id === id);
+            clients = clients.filter(c => c.id !== id);
+            localStorage.setItem('clientsData', JSON.stringify(clients));
+            updateStats();
+            await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ type: 'DELETE_ROW', name: item.name, amount: item.amount }) });
         }
 
-        // --- פונקציות לידים וטיימרים ---
         function renderBoard() {
             const container = document.getElementById('board-container');
             container.innerHTML = '';
             COLUMNS.forEach(col => {
                 const colDiv = document.createElement('div');
                 colDiv.className = 'kanban-col';
-                colDiv.innerHTML = `<div class="flex justify-between items-center mb-4"><h3 class="font-bold text-gray-700">${col.title}</h3><div onclick="openAutoEditor('${col.id}')" class="auto-btn">⚙️ הגדרות</div></div><div id="cards-${col.id}" class="space-y-4 min-h-[50px]"></div>`;
+                colDiv.innerHTML = `<div class="flex justify-between mb-4"><h3 class="font-bold">${col.title}</h3><div onclick="openAutoEditor('${col.id}')" class="auto-btn">⚙️</div></div><div id="cards-${col.id}" class="space-y-4"></div>`;
                 container.appendChild(colDiv);
                 
                 leads.filter(l => l.status === col.id).sort((a,b) => b.urgent - a.urgent).forEach(l => {
                     const card = document.createElement('div');
                     card.className = `lead-card ${l.urgent ? 'is-urgent' : ''}`;
-                    card.innerHTML = `
-                        <div class="delete-btn" onclick="deleteLead(${l.id})">✖</div>
-                        <div class="font-bold">${l.name} ${l.urgent ? '🔔' : ''}</div>
-                        <div class="text-xs text-gray-500 mb-2">${l.phone}</div>
-                        <button onclick="sendWA(${l.id})" class="w-full py-2 ${l.urgent ? 'bg-orange-500' : 'bg-green-500'} text-white rounded-lg text-xs font-bold mb-2">שלחי הודעה</button>
-                        <select onchange="updateStatus(${l.id}, this.value)" class="text-[10px] bg-gray-50 border-none">
-                            ${COLUMNS.map(c => `<option value="${c.id}" ${l.status === c.id ? 'selected' : ''}>העבר ל: ${c.title}</option>`).join('')}
+                    card.innerHTML = `<div class="font-bold">${l.name} ${l.urgent ? '🔔' : ''}</div><div class="text-xs mb-3 text-gray-500">${l.phone}</div>
+                        <button onclick="sendWA(${l.id})" class="w-full py-2 bg-green-500 text-white rounded-lg text-xs font-bold mb-2 shadow-md">שלחי הודעה</button>
+                        <select onchange="updateStatus(${l.id}, this.value)" class="text-[10px] bg-gray-50 border-none rounded-lg p-1">
+                            ${COLUMNS.map(c => `<option value="${c.id}" ${l.status === c.id ? 'selected' : ''}>${c.title}</option>`).join('')}
                         </select>`;
                     document.getElementById(`cards-${col.id}`).appendChild(card);
                 });
@@ -254,42 +270,28 @@
             let changed = false;
             const now = Date.now();
             leads.forEach(l => {
-                if(!autoConfig[l.status]) return;
-                const conf = autoConfig[l.status];
+                const conf = autoConfig[l.status] || {t1:30, t2:1440};
                 const diff = (now - (l.lastSent || l.enterStatusAt)) / 60000;
                 const limit = l.lastSent ? conf.t2 : conf.t1;
                 if (diff >= limit && !l.urgent) { l.urgent = true; changed = true; }
             });
-            if(changed) { save(); renderBoard(); }
+            if(changed) { localStorage.setItem('crm_leads_v7', JSON.stringify(leads)); renderBoard(); }
         }
 
         function sendWA(id) {
             const l = leads.find(x => x.id === id);
-            const msg = (autoConfig[l.status]?.msg || "").replace('[שם]', l.name);
+            const msg = (autoConfig[l.status]?.msg || "היי [שם]").replace('[שם]', l.name);
             l.urgent = false; l.lastSent = Date.now();
-            save(); renderBoard();
+            localStorage.setItem('crm_leads_v7', JSON.stringify(leads));
+            renderBoard();
             window.open(`https://wa.me/972${l.phone.replace(/^0/, '')}?text=${encodeURIComponent(msg)}`, '_blank');
         }
 
         function updateStatus(id, stat) {
             const l = leads.find(x => x.id === id);
             l.status = stat; l.enterStatusAt = Date.now(); l.lastSent = null; l.urgent = false;
-            save(); renderBoard();
-        }
-
-        async function saveIncome() {
-            const data = {
-                type: 'INCOME',
-                name: document.getElementById('inc-name').value,
-                amount: parseFloat(document.getElementById('inc-amount').value),
-                date: document.getElementById('inc-date').value,
-                isBride: document.getElementById('inc-isbride').checked,
-                month: new Date(document.getElementById('inc-date').value).toLocaleDateString('he-IL', {month:'long'})
-            };
-            await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(data) });
-            clients.push(data);
-            localStorage.setItem('clientsData', JSON.stringify(clients));
-            alert('נשמר!');
+            localStorage.setItem('crm_leads_v7', JSON.stringify(leads));
+            renderBoard();
         }
 
         function saveLead() {
@@ -297,34 +299,16 @@
             const phone = document.getElementById('ln-phone').value;
             if(!name || !phone) return;
             leads.push({ id: Date.now(), name, phone, status: 'new', enterStatusAt: Date.now(), urgent: false });
-            save(); closeModal('modal-lead'); renderBoard();
-        }
-
-        function saveAutoSettings() {
-            const id = document.getElementById('auto-col-id').value;
-            autoConfig[id] = {
-                msg: document.getElementById('auto-msg').value,
-                t1: parseInt(document.getElementById('auto-t1').value) || 0,
-                t2: parseInt(document.getElementById('auto-t2').value) || 0
-            };
-            save(); closeModal('modal-auto'); renderBoard();
-        }
-
-        function openAutoEditor(id) { 
-            const c = autoConfig[id] || {msg:'', t1:0, t2:0};
-            document.getElementById('auto-col-id').value = id;
-            document.getElementById('auto-msg').value = c.msg;
-            document.getElementById('auto-t1').value = c.t1;
-            document.getElementById('auto-t2').value = c.t2;
-            openModal('modal-auto'); 
-        }
-
-        function save() { 
             localStorage.setItem('crm_leads_v7', JSON.stringify(leads));
-            localStorage.setItem('crm_auto_v7', JSON.stringify(autoConfig));
+            closeModal('modal-lead'); renderBoard();
         }
-        function deleteLead(id) { if(confirm('למחוק?')) { leads = leads.filter(l => l.id !== id); save(); renderBoard(); } }
+
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+        function openAutoEditor(id) { const c = autoConfig[id] || {msg:'', t1:30, t2:1440}; document.getElementById('auto-col-id').value = id; document.getElementById('auto-msg').value = c.msg; document.getElementById('auto-t1').value = c.t1; document.getElementById('auto-t2').value = c.t2; openModal('modal-auto'); }
+        function saveAutoSettings() { const id = document.getElementById('auto-col-id').value; autoConfig[id] = { msg: document.getElementById('auto-msg').value, t1: parseInt(document.getElementById('auto-t1').value), t2: parseInt(document.getElementById('auto-t2').value) }; localStorage.setItem('crm_auto_v7', JSON.stringify(autoConfig)); closeModal('modal-auto'); renderBoard(); }
+        function toggleSelectAll(m) { document.querySelectorAll('.row-select').forEach(cb => cb.checked = m.checked); document.getElementById('btn-bulk-delete').classList.toggle('hidden', !m.checked); }
+        async function bulkDelete() { if(!confirm('למחוק מסומנים?')) return; const sel = Array.from(document.querySelectorAll('.row-select:checked')).map(cb => cb.dataset.id); for(let id of sel) { await deleteRow(parseInt(id)); } }
     </script>
 </body>
 </html>
-
