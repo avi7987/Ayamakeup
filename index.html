@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CRM יופי חכם</title>
+    <title>CRM יופי חכם - גרסת פולו-אפ מלאה</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700&display=swap');
         body { font-family: 'Heebo', sans-serif; background: #fdf2f8; }
         .main-card { background: white; border-radius: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
-        .nav-button { padding: 16px 32px; font-weight: bold; border-radius: 16px; transition: all 0.3s; font-size: 18px; }
-        .nav-button.active { background: linear-gradient(135deg, #9333ea 0%, #db2777 100%); color: white; box-shadow: 0 8px 20px rgba(147, 51, 234, 0.3); }
+        .nav-button { padding: 14px 28px; font-weight: bold; border-radius: 16px; transition: all 0.3s; }
+        .nav-button.active { background: linear-gradient(135deg, #9333ea 0%, #db2777 100%); color: white; }
         .nav-button:not(.active) { background: white; color: #9333ea; border: 2px solid #f3e8ff; }
         .kanban-col { background: rgba(243, 232, 255, 0.5); border-radius: 20px; padding: 16px; width: 300px; min-width: 300px; min-height: 600px; }
         .lead-card { background: white; border-radius: 16px; padding: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border-right: 8px solid #9333ea; position: relative; transition: all 0.3s; }
@@ -51,13 +51,13 @@
                     <input type="checkbox" id="inc-isbride" class="w-6 h-6 accent-purple-600">
                     <label for="inc-isbride" class="font-bold text-purple-900">סמני אם זו כלה 👰</label>
                 </div>
-                <button onclick="saveIncome()" id="inc-save-btn" class="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-5 rounded-2xl font-bold text-xl shadow-xl">שמירה בשיטס</button>
+                <button onclick="saveIncome()" id="inc-save-btn" class="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-5 rounded-2xl font-bold text-xl shadow-xl hover:opacity-90">שמירה בשיטס</button>
             </div>
         </div>
 
         <div id="page-leads" class="hidden">
             <div class="flex justify-between items-center mb-8">
-                <h2 class="text-3xl font-bold text-gray-800">לוח לידים ופולו-אפ</h2>
+                <h2 class="text-3xl font-bold text-gray-800">לוח פולו-אפ חכם</h2>
                 <button onclick="openModal('modal-lead')" class="bg-purple-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg">+ ליד חדש</button>
             </div>
             <div class="flex gap-6 overflow-x-auto pb-8" id="board-container"></div>
@@ -65,11 +65,31 @@
 
         <div id="page-stats" class="hidden">
             <div class="main-card p-8">
-                <div id="stats-summary" class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10 text-center">
-                    <div class="p-6 bg-purple-50 rounded-2xl"><div class="text-gray-500">סה"כ הכנסות (₪)</div><div id="sum-total" class="text-4xl font-bold text-purple-600">0</div></div>
-                    <div class="p-6 bg-pink-50 rounded-2xl"><div class="text-gray-500">עסקאות שבוצעו</div><div id="sum-count" class="text-4xl font-bold text-pink-600">0</div></div>
+                <div class="flex flex-wrap justify-between items-center mb-8 gap-4">
+                    <h2 class="text-2xl font-bold text-gray-800">ניתוח נתונים</h2>
+                    <select id="stats-month-filter" onchange="updateStats()" class="!w-48 bg-white border-2 border-purple-100">
+                        <option value="all">כל השנה</option>
+                        </select>
                 </div>
-                <div class="h-[400px]"><canvas id="incomeChart"></canvas></div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+                    <div class="p-6 bg-purple-50 rounded-2xl text-center border border-purple-100">
+                        <div class="text-gray-500 text-sm">סה"כ הכנסות</div>
+                        <div id="sum-total" class="text-4xl font-bold text-purple-600 mt-1">0 ₪</div>
+                    </div>
+                    <div class="p-6 bg-pink-50 rounded-2xl text-center border border-pink-100">
+                        <div class="text-gray-500 text-sm">כמות כלות 👰</div>
+                        <div id="sum-brides" class="text-4xl font-bold text-pink-600 mt-1">0</div>
+                    </div>
+                    <div class="p-6 bg-blue-50 rounded-2xl text-center border border-blue-100">
+                        <div class="text-gray-500 text-sm">סה"כ עסקאות</div>
+                        <div id="sum-count" class="text-4xl font-bold text-blue-600 mt-1">0</div>
+                    </div>
+                </div>
+                
+                <div class="h-[400px]">
+                    <canvas id="incomeChart"></canvas>
+                </div>
             </div>
         </div>
     </div>
@@ -105,6 +125,11 @@
     <script>
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbydwcb9Elv-S-xFhySVkioiaJrLPwx7I9LxzSLY6ep_aR22ErmKBEuAUG_ZPp0u1JghHw/exec';
         
+        let leads = JSON.parse(localStorage.getItem('crm_leads_v7')) || [];
+        let clients = JSON.parse(localStorage.getItem('clientsData')) || [];
+        let autoConfig = JSON.parse(localStorage.getItem('crm_auto_v7')) || {};
+        let myChart = null;
+
         const COLUMNS = [
             { id: 'new', title: '🆕 פנייה חדשה' },
             { id: 'contact', title: '📞 יצירת קשר' },
@@ -113,19 +138,24 @@
             { id: 'closed', title: '✅ נסגר' }
         ];
 
-        let leads = JSON.parse(localStorage.getItem('crm_leads_v7')) || [];
-        let clients = JSON.parse(localStorage.getItem('clientsData')) || [];
-        let autoConfig = JSON.parse(localStorage.getItem('crm_auto_v7')) || {};
-        let myChart = null;
-
-        // הגדרות ברירת מחדל
-        COLUMNS.forEach(c => { if(!autoConfig[c.id]) autoConfig[c.id] = { msg: "היי [שם], מה שלומך?", t1: 30, t2: 1440 }; });
-
         window.onload = () => {
+            initMonths();
             switchPage('entry');
             document.getElementById('inc-date').valueAsDate = new Date();
-            setInterval(checkTimers, 10000); 
+            setInterval(checkTimers, 10000);
         };
+
+        // פילטר חודשים
+        function initMonths() {
+            const select = document.getElementById('stats-month-filter');
+            const months = ["ינואר", "פברואר", "מרץ", "אפריל", "מאי", "יוני", "יולי", "אוגוסט", "ספטמבר", "אוקטובר", "נובמבר", "דצמבר"];
+            months.forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m;
+                opt.innerText = m;
+                select.appendChild(opt);
+            });
+        }
 
         function switchPage(page) {
             ['entry', 'leads', 'stats'].forEach(p => document.getElementById(`page-${p}`).classList.add('hidden'));
@@ -136,35 +166,65 @@
             if(page === 'stats') updateStats();
         }
 
+        // --- סטטיסטיקה ---
+        function updateStats() {
+            const filter = document.getElementById('stats-month-filter').value;
+            const filtered = filter === 'all' ? clients : clients.filter(c => c.month === filter);
+
+            const total = filtered.reduce((sum, c) => sum + (parseFloat(c.amount) || 0), 0);
+            const brides = filtered.filter(c => c.isBride).length;
+            
+            document.getElementById('sum-total').innerText = total.toLocaleString() + ' ₪';
+            document.getElementById('sum-count').innerText = filtered.length;
+            document.getElementById('sum-brides').innerText = brides;
+
+            // גרף
+            const chartData = {};
+            filtered.forEach(c => {
+                const label = filter === 'all' ? c.month : c.date;
+                chartData[label] = (chartData[label] || 0) + parseFloat(c.amount);
+            });
+
+            if (myChart) myChart.destroy();
+            const ctx = document.getElementById('incomeChart').getContext('2d');
+            myChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(chartData),
+                    datasets: [{
+                        label: 'הכנסות',
+                        data: Object.values(chartData),
+                        backgroundColor: '#9333ea',
+                        borderRadius: 8
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
+
+        // --- פונקציות לידים וטיימרים ---
         function renderBoard() {
             const container = document.getElementById('board-container');
             container.innerHTML = '';
             COLUMNS.forEach(col => {
                 const colDiv = document.createElement('div');
                 colDiv.className = 'kanban-col';
-                colDiv.innerHTML = `
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="font-bold text-gray-700">${col.title}</h3>
-                        <div onclick="openAutoEditor('${col.id}')" class="auto-btn">⚙️ הגדרות</div>
-                    </div>
-                    <div id="cards-${col.id}" class="space-y-4"></div>`;
+                colDiv.innerHTML = `<div class="flex justify-between items-center mb-4"><h3 class="font-bold text-gray-700">${col.title}</h3><div onclick="openAutoEditor('${col.id}')" class="auto-btn">⚙️ הגדרות</div></div><div id="cards-${col.id}" class="space-y-4 min-h-[50px]"></div>`;
                 container.appendChild(colDiv);
                 
-                leads.filter(l => l.status === col.id)
-                     .sort((a,b) => b.urgent - a.urgent)
-                     .forEach(l => {
-                        const card = document.createElement('div');
-                        card.className = `lead-card ${l.urgent ? 'is-urgent' : ''}`;
-                        card.innerHTML = `
-                            <div class="delete-btn" onclick="deleteLead(${l.id})">✖</div>
-                            <div class="font-bold">${l.name} ${l.urgent ? '🔔' : ''}</div>
-                            <div class="text-xs text-gray-500 mb-2">${l.phone}</div>
-                            <button onclick="sendWA(${l.id})" class="w-full py-2 ${l.urgent ? 'bg-orange-500' : 'bg-green-500'} text-white rounded-lg text-xs font-bold mb-2">שלחי הודעה</button>
-                            <select onchange="updateStatus(${l.id}, this.value)" class="text-[10px] bg-gray-50 border-none">
-                                ${COLUMNS.map(c => `<option value="${c.id}" ${l.status === c.id ? 'selected' : ''}>העבר ל: ${c.title}</option>`).join('')}
-                            </select>`;
-                        document.getElementById(`cards-${col.id}`).appendChild(card);
-                     });
+                leads.filter(l => l.status === col.id).sort((a,b) => b.urgent - a.urgent).forEach(l => {
+                    const card = document.createElement('div');
+                    card.className = `lead-card ${l.urgent ? 'is-urgent' : ''}`;
+                    card.innerHTML = `
+                        <div class="delete-btn" onclick="deleteLead(${l.id})">✖</div>
+                        <div class="font-bold">${l.name} ${l.urgent ? '🔔' : ''}</div>
+                        <div class="text-xs text-gray-500 mb-2">${l.phone}</div>
+                        <button onclick="sendWA(${l.id})" class="w-full py-2 ${l.urgent ? 'bg-orange-500' : 'bg-green-500'} text-white rounded-lg text-xs font-bold mb-2">שלחי הודעה</button>
+                        <select onchange="updateStatus(${l.id}, this.value)" class="text-[10px] bg-gray-50 border-none">
+                            ${COLUMNS.map(c => `<option value="${c.id}" ${l.status === c.id ? 'selected' : ''}>העבר ל: ${c.title}</option>`).join('')}
+                        </select>`;
+                    document.getElementById(`cards-${col.id}`).appendChild(card);
+                });
             });
         }
 
@@ -172,6 +232,7 @@
             let changed = false;
             const now = Date.now();
             leads.forEach(l => {
+                if(!autoConfig[l.status]) return;
                 const conf = autoConfig[l.status];
                 const diff = (now - (l.lastSent || l.enterStatusAt)) / 60000;
                 const limit = l.lastSent ? conf.t2 : conf.t1;
@@ -182,7 +243,7 @@
 
         function sendWA(id) {
             const l = leads.find(x => x.id === id);
-            const msg = autoConfig[l.status].msg.replace('[שם]', l.name);
+            const msg = (autoConfig[l.status]?.msg || "").replace('[שם]', l.name);
             l.urgent = false; l.lastSent = Date.now();
             save(); renderBoard();
             window.open(`https://wa.me/972${l.phone.replace(/^0/, '')}?text=${encodeURIComponent(msg)}`, '_blank');
@@ -192,20 +253,6 @@
             const l = leads.find(x => x.id === id);
             l.status = stat; l.enterStatusAt = Date.now(); l.lastSent = null; l.urgent = false;
             save(); renderBoard();
-        }
-
-        function saveLead() {
-            const name = document.getElementById('ln-name').value;
-            const phone = document.getElementById('ln-phone').value;
-            if(!name || !phone) return;
-            leads.push({ id: Date.now(), name, phone, status: 'new', enterStatusAt: Date.now(), urgent: false });
-            save(); closeModal('modal-lead'); renderBoard();
-        }
-
-        function deleteLead(id) { if(confirm('למחוק?')) { leads = leads.filter(l => l.id !== id); save(); renderBoard(); } }
-        function save() { 
-            localStorage.setItem('crm_leads_v7', JSON.stringify(leads));
-            localStorage.setItem('crm_auto_v7', JSON.stringify(autoConfig));
         }
 
         async function saveIncome() {
@@ -223,43 +270,38 @@
             alert('נשמר!');
         }
 
-        function updateStats() {
-            const total = clients.reduce((sum, c) => sum + (parseFloat(c.amount) || 0), 0);
-            document.getElementById('sum-total').innerText = total.toLocaleString();
-            document.getElementById('sum-count').innerText = clients.length;
-
-            const months = {};
-            clients.forEach(c => { months[c.month] = (months[c.month] || 0) + parseFloat(c.amount); });
-
-            if (myChart) myChart.destroy();
-            const ctx = document.getElementById('incomeChart').getContext('2d');
-            myChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: Object.keys(months),
-                    datasets: [{ label: 'הכנסות לפי חודש', data: Object.values(months), backgroundColor: '#9333ea' }]
-                },
-                options: { responsive: true, maintainAspectRatio: false }
-            });
+        function saveLead() {
+            const name = document.getElementById('ln-name').value;
+            const phone = document.getElementById('ln-phone').value;
+            if(!name || !phone) return;
+            leads.push({ id: Date.now(), name, phone, status: 'new', enterStatusAt: Date.now(), urgent: false });
+            save(); closeModal('modal-lead'); renderBoard();
         }
 
-        function openAutoEditor(id) { 
-            document.getElementById('auto-col-id').value = id;
-            document.getElementById('auto-msg').value = autoConfig[id].msg;
-            document.getElementById('auto-t1').value = autoConfig[id].t1;
-            document.getElementById('auto-t2').value = autoConfig[id].t2;
-            openModal('modal-auto'); 
-        }
         function saveAutoSettings() {
             const id = document.getElementById('auto-col-id').value;
             autoConfig[id] = {
                 msg: document.getElementById('auto-msg').value,
-                t1: parseInt(document.getElementById('auto-t1').value),
-                t2: parseInt(document.getElementById('auto-t2').value)
+                t1: parseInt(document.getElementById('auto-t1').value) || 0,
+                t2: parseInt(document.getElementById('auto-t2').value) || 0
             };
             save(); closeModal('modal-auto'); renderBoard();
         }
-        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        function openAutoEditor(id) { 
+            const c = autoConfig[id] || {msg:'', t1:0, t2:0};
+            document.getElementById('auto-col-id').value = id;
+            document.getElementById('auto-msg').value = c.msg;
+            document.getElementById('auto-t1').value = c.t1;
+            document.getElementById('auto-t2').value = c.t2;
+            openModal('modal-auto'); 
+        }
+
+        function save() { 
+            localStorage.setItem('crm_leads_v7', JSON.stringify(leads));
+            localStorage.setItem('crm_auto_v7', JSON.stringify(autoConfig));
+        }
+        function deleteLead(id) { if(confirm('למחוק?')) { leads = leads.filter(l => l.id !== id); save(); renderBoard(); } }
     </script>
 </body>
 </html>
