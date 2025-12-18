@@ -3,188 +3,271 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>מערכת ניהול יופי ועסקים</title>
+    <title>CRM חכם עם פולו-אפ</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700&display=swap');
         body { font-family: 'Heebo', sans-serif; background: #fdf2f8; }
         .main-card { background: white; border-radius: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
-        .nav-button { padding: 16px 32px; font-weight: bold; border-radius: 16px; transition: all 0.3s; font-size: 18px; }
-        .nav-button.active { background: linear-gradient(135deg, #9333ea 0%, #db2777 100%); color: white; box-shadow: 0 8px 20px rgba(147, 51, 234, 0.3); }
+        .nav-button { padding: 14px 28px; font-weight: bold; border-radius: 16px; transition: all 0.3s; }
+        .nav-button.active { background: linear-gradient(135deg, #9333ea 0%, #db2777 100%); color: white; shadow: 0 8px 20px rgba(147, 51, 234, 0.3); }
         .nav-button:not(.active) { background: white; color: #9333ea; border: 2px solid #f3e8ff; }
-        .kanban-col { background: rgba(243, 232, 255, 0.5); border-radius: 20px; padding: 16px; width: 300px; min-width: 300px; min-height: 600px; position: relative; }
-        .lead-card { background: white; border-radius: 16px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border-right: 8px solid #9333ea; position: relative; }
-        .delete-btn { position: absolute; top: 10px; left: 10px; color: #ef4444; cursor: pointer; opacity: 0.3; }
+        .kanban-col { background: rgba(243, 232, 255, 0.5); border-radius: 20px; padding: 16px; width: 310px; min-width: 310px; min-height: 70vh; }
+        
+        /* עיצוב כרטיס ליד */
+        .lead-card { background: white; border-radius: 16px; padding: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border-right: 6px solid #9333ea; position: relative; transition: all 0.4s ease; }
+        .lead-urgent { background: #fff7ed !important; border-right-color: #f97316 !important; border-width: 2px; border-style: solid; border-color: #fb923c; transform: scale(1.02); z-index: 10; }
+        
+        .delete-btn { position: absolute; top: 8px; left: 8px; color: #ef4444; cursor: pointer; opacity: 0.2; }
         .delete-btn:hover { opacity: 1; }
-        .modal { background: rgba(0,0,0,0.4); backdrop-filter: blur(6px); display: none; z-index: 100; }
-        input, select, textarea { border: 2px solid #f3e8ff !important; border-radius: 14px !important; padding: 12px !important; width: 100%; outline: none; }
-        .config-btn { font-size: 14px; color: #9333ea; background: white; padding: 4px 8px; border-radius: 8px; cursor: pointer; border: 1px solid #f3e8ff; margin-bottom: 8px; display: inline-block; }
+        .modal { background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); display: none; z-index: 100; fixed: inset 0; }
+        input, select, textarea { border: 2px solid #f3e8ff !important; border-radius: 12px !important; padding: 10px !important; width: 100%; outline: none; }
+        .automation-btn { font-size: 12px; color: #7c3aed; background: #f3e8ff; padding: 4px 10px; border-radius: 8px; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body class="p-4 md:p-8">
 
-    <div class="max-w-7xl mx-auto">
-        <div class="flex flex-wrap gap-4 justify-center mb-10">
-            <button onclick="switchPage('entry')" id="nav-entry" class="nav-button active">💰 הזנת הכנסה</button>
-            <button onclick="switchPage('leads')" id="nav-leads" class="nav-button">🎯 ניהול לידים</button>
-            <button onclick="switchPage('stats')" id="nav-stats" class="nav-button">📊 סטטיסטיקה</button>
+    <div class="max-w-full mx-auto">
+        <div class="flex gap-4 justify-center mb-8">
+            <button onclick="switchPage('entry')" id="nav-entry" class="nav-button active">💰 הכנסות</button>
+            <button onclick="switchPage('leads')" id="nav-leads" class="nav-button">🎯 לידים</button>
         </div>
 
-        <div id="page-entry" class="main-card p-8 md:p-12 max-w-2xl mx-auto">
-            <h2 class="text-3xl font-bold mb-8 text-gray-800 border-r-4 border-purple-500 pr-4">הזנת עסקה חדשה</h2>
-            <div class="space-y-6">
-                <input type="text" id="inc-name" placeholder="שם הלקוחה *">
-                <div class="grid grid-cols-2 gap-4">
-                    <input type="text" id="inc-service" placeholder="סוג שירות">
-                    <input type="number" id="inc-amount" placeholder="סכום (₪)">
-                </div>
+        <div id="page-entry" class="main-card p-8 max-w-xl mx-auto">
+            <h2 class="text-2xl font-bold mb-6 text-gray-800 border-r-4 border-purple-500 pr-3">הזנת הכנסה</h2>
+            <div class="space-y-4">
+                <input type="text" id="inc-name" placeholder="שם הלקוחה">
+                <input type="number" id="inc-amount" placeholder="סכום (₪)">
                 <input type="date" id="inc-date">
-                <button onclick="saveIncome()" id="inc-save-btn" class="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-5 rounded-2xl font-bold text-xl shadow-xl">שמירה בשיטס</button>
+                <button onclick="saveIncome()" class="w-full bg-purple-600 text-white py-4 rounded-xl font-bold shadow-lg">שמירה</button>
             </div>
         </div>
 
         <div id="page-leads" class="hidden">
-            <div class="flex justify-between items-center mb-8">
-                <h2 class="text-3xl font-bold text-gray-800">לוח לידים</h2>
-                <button onclick="openModal('modal-lead')" class="bg-purple-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg">+ ליד חדש</button>
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-3xl font-bold text-gray-800">ניהול פולו-אפ</h2>
+                <button onclick="openModal('modal-lead')" class="bg-purple-600 text-white px-6 py-3 rounded-xl font-bold">+ הוספת ליד</button>
             </div>
             
-            <div class="flex gap-6 overflow-x-auto pb-8">
-                <script>
-                    const colConfig = [
-                        { id: 'new', title: '🆕 פנייה חדשה', color: 'gray' },
-                        { id: 'contact', title: '📞 יצירת קשר', color: 'blue' },
-                        { id: 'negotiation', title: '💬 מו"מ', color: 'orange' },
-                        { id: 'offer', title: '📄 הצעה', color: 'pink' },
-                        { id: 'closed', title: '✅ נסגר', color: 'green' }
-                    ];
-                    
-                    colConfig.forEach(col => {
-                        document.write(`
-                            <div class="kanban-col">
-                                <div class="flex justify-between items-center mb-4">
-                                    <h3 class="font-bold text-lg text-${col.color}-700">${col.title}</h3>
-                                    <div onclick="openMsgEditor('${col.id}')" class="config-btn">⚙️ נוסח הודעה</div>
-                                </div>
-                                <div id="col-${col.id}" class="space-y-4"></div>
-                            </div>
-                        `);
-                    });
-                </script>
-            </div>
-        </div>
-
-        <div id="page-stats" class="hidden">
-             <div class="main-card p-8"><canvas id="incomeChart"></canvas></div>
+            <div class="flex gap-6 overflow-x-auto pb-10" id="kanban-board">
+                </div>
         </div>
     </div>
 
-    <div id="modal-msg-editor" class="modal fixed inset-0 flex items-center justify-center p-4">
+    <div id="modal-automation" class="modal fixed inset-0 flex items-center justify-center p-4">
         <div class="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl">
-            <h2 id="editor-title" class="text-2xl font-bold mb-2">עריכת נוסח הודעה</h2>
-            <p class="text-sm text-gray-500 mb-4">השתמשי ב-<b>[שם]</b> כדי שהמערכת תכתוב את שם הלקוחה אוטומטית.</p>
-            <textarea id="edit-msg-text" class="h-40 mb-4" placeholder="כתבי כאן את ההודעה שתשלח בוואטסאפ..."></textarea>
-            <input type="hidden" id="edit-msg-col-id">
+            <h2 id="auto-title" class="text-2xl font-bold mb-4">ניהול אוטומציה</h2>
+            
+            <label class="block text-sm font-bold mb-1">נוסח הודעה ([שם] יוחלף בשם הלקוחה):</label>
+            <textarea id="auto-msg-text" class="h-24 mb-4"></textarea>
+            
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div>
+                    <label class="block text-sm font-bold mb-1">טיימר 1 (דקות):</label>
+                    <input type="number" id="auto-t1" placeholder="למשל 30">
+                    <p class="text-[10px] text-gray-500">זמן עד לשליחה ראשונה</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-bold mb-1">טיימר 2 (דקות):</label>
+                    <input type="number" id="auto-t2" placeholder="למשל 1440">
+                    <p class="text-[10px] text-gray-500">זמן לתזכורת נוספת</p>
+                </div>
+            </div>
+
+            <input type="hidden" id="auto-col-id">
             <div class="flex gap-3">
-                <button onclick="saveMsgTemplate()" class="flex-1 bg-purple-600 text-white py-3 rounded-xl font-bold">שמירה</button>
-                <button onclick="closeModal('modal-msg-editor')" class="flex-1 bg-gray-100 text-gray-600 py-3 rounded-xl font-bold">ביטול</button>
+                <button onclick="saveAutomation()" class="flex-1 bg-purple-600 text-white py-3 rounded-xl font-bold">שמירה</button>
+                <button onclick="closeModal('modal-automation')" class="flex-1 bg-gray-100 text-gray-600 py-3 rounded-xl font-bold">ביטול</button>
             </div>
         </div>
     </div>
 
     <div id="modal-lead" class="modal fixed inset-0 flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl">
-            <h2 class="text-2xl font-bold mb-6">ליד חדש</h2>
+        <div class="bg-white rounded-3xl p-8 w-full max-w-sm shadow-2xl">
+            <h2 class="text-2xl font-bold mb-4">ליד חדש</h2>
             <div class="space-y-4">
-                <input type="text" id="ln-name" placeholder="שם הלקוחה *">
-                <input type="tel" id="ln-phone" placeholder="טלפון *">
-                <input type="text" id="ln-service" placeholder="שירות">
-                <button onclick="saveLead()" id="lead-save-btn" class="w-full bg-purple-600 text-white py-4 rounded-xl font-bold text-lg">שמירה</button>
-                <button onclick="closeModal('modal-lead')" class="w-full text-gray-400">סגור</button>
+                <input type="text" id="ln-name" placeholder="שם הלקוחה">
+                <input type="tel" id="ln-phone" placeholder="טלפון">
+                <button onclick="saveLead()" class="w-full bg-purple-600 text-white py-4 rounded-xl font-bold">הוספה</button>
+                <button onclick="closeModal('modal-lead')" class="w-full text-gray-400">ביטול</button>
             </div>
         </div>
     </div>
 
     <script>
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbydwcb9Elv-S-xFhySVkioiaJrLPwx7I9LxzSLY6ep_aR22ErmKBEuAUG_ZPp0u1JghHw/exec';
+        // קונפיגורציה של העמודות
+        const COLUMNS = [
+            { id: 'new', title: '🆕 פנייה', color: 'gray' },
+            { id: 'contact', title: '📞 יצירת קשר', color: 'blue' },
+            { id: 'negotiation', title: '💬 מו"מ', color: 'orange' },
+            { id: 'offer', title: '📄 הצעה', color: 'pink' },
+            { id: 'closed', title: '✅ נסגר', color: 'green' }
+        ];
 
-        // טעינת הודעות מהזיכרון או הגדרת ברירת מחדל
-        let msgTemplates = JSON.parse(localStorage.getItem('crm_msg_templates')) || {
-            new: "היי [שם], תודה שפנית אליי! 😊",
-            contact: "היי [שם], ניסיתי לתפוס אותך...",
-            negotiation: "היי [שם], רציתי לבדוק אם יצא לך לעבור על הפרטים?",
-            offer: "היי [שם], שולחת לך את ההצעה המסודרת.",
-            closed: "איזה כיף [שם]! סגרנו. תודה על האמון."
-        };
+        let leads = JSON.parse(localStorage.getItem('crm_leads_v5')) || [];
+        let config = JSON.parse(localStorage.getItem('crm_config')) || {};
 
-        let leads = JSON.parse(localStorage.getItem('crm_leads_v4')) || [];
-        let clients = JSON.parse(localStorage.getItem('clientsData')) || [];
+        // אתחול הגדרות ברירת מחדל אם ריק
+        COLUMNS.forEach(col => {
+            if (!config[col.id]) {
+                config[col.id] = { msg: "היי [שם], מה שלומך?", t1: 30, t2: 1440 };
+            }
+        });
 
-        window.onload = function() {
+        window.onload = () => {
             switchPage('entry');
-            renderBoard();
-            document.getElementById('inc-date').valueAsDate = new Date();
+            setInterval(checkTimers, 10000); // בדיקת טיימרים כל 10 שניות
         };
 
         function switchPage(page) {
-            ['leads', 'entry', 'stats'].forEach(p => {
-                document.getElementById(`page-${p}`).classList.add('hidden');
-                document.getElementById(`nav-${p}`).classList.remove('active');
-            });
-            document.getElementById(`page-${page}`).classList.remove('hidden');
-            document.getElementById(`nav-${page}`).classList.add('active');
+            document.getElementById('page-entry').classList.toggle('hidden', page !== 'entry');
+            document.getElementById('page-leads').classList.toggle('hidden', page !== 'leads');
+            document.getElementById('nav-entry').className = page === 'entry' ? 'nav-button active' : 'nav-button';
+            document.getElementById('nav-leads').className = page === 'leads' ? 'nav-button active' : 'nav-button';
             if(page === 'leads') renderBoard();
         }
 
         function openModal(id) { document.getElementById(id).style.display = 'flex'; }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
-        // --- מנגנון עריכת הודעות ---
+        // --- ניהול אוטומציה ---
         function openMsgEditor(colId) {
-            document.getElementById('edit-msg-col-id').value = colId;
-            document.getElementById('edit-msg-text').value = msgTemplates[colId];
-            const colName = colConfig.find(c => c.id === colId).title;
-            document.getElementById('editor-title').innerText = `נוסח הודעה ל${colName}`;
-            openModal('modal-msg-editor');
+            const c = config[colId];
+            document.getElementById('auto-col-id').value = colId;
+            document.getElementById('auto-msg-text').value = c.msg;
+            document.getElementById('auto-t1').value = c.t1;
+            document.getElementById('auto-t2').value = c.t2;
+            openModal('modal-automation');
         }
 
-        function saveMsgTemplate() {
-            const colId = document.getElementById('edit-msg-col-id').value;
-            const text = document.getElementById('edit-msg-text').value;
-            msgTemplates[colId] = text;
-            localStorage.setItem('crm_msg_templates', JSON.stringify(msgTemplates));
-            closeModal('modal-msg-editor');
+        function saveAutomation() {
+            const id = document.getElementById('auto-col-id').value;
+            config[id] = {
+                msg: document.getElementById('auto-msg-text').value,
+                t1: parseInt(document.getElementById('auto-t1').value),
+                t2: parseInt(document.getElementById('auto-t2').value)
+            };
+            localStorage.setItem('crm_config', JSON.stringify(config));
+            closeModal('modal-automation');
             renderBoard();
-            alert('הנוסח עודכן בהצלחה!');
         }
 
-        // --- ניהול לידים ---
-        function renderBoard() {
-            const cols = ['new', 'contact', 'negotiation', 'offer', 'closed'];
-            cols.forEach(c => {
-                const container = document.getElementById(`col-${c}`);
-                if (!container) return;
-                container.innerHTML = '';
-                leads.filter(l => l.status === c).forEach(lead => {
-                    // יצירת ההודעה בזמן אמת מהתבנית ששמורה
-                    const rawMsg = msgTemplates[c] || "היי [שם]";
-                    const finalMsg = rawMsg.replace('[שם]', lead.name);
-                    const waLink = `https://wa.me/972${lead.phone.replace(/^0/, '')}?text=${encodeURIComponent(finalMsg)}`;
+        // --- ניהול לידים וטיימרים ---
+        function saveLead() {
+            const name = document.getElementById('ln-name').value;
+            const phone = document.getElementById('ln-phone').value;
+            if(!name || !phone) return;
+            
+            const newLead = {
+                id: Date.now(),
+                name,
+                phone,
+                status: 'new',
+                enterStatusTime: Date.now(),
+                lastSentTime: null,
+                isUrgent: false
+            };
+            leads.push(newLead);
+            save();
+            closeModal('modal-lead');
+            renderBoard();
+        }
 
+        function updateStatus(id, newStatus) {
+            const lead = leads.find(l => l.id === id);
+            lead.status = newStatus;
+            lead.enterStatusTime = Date.now(); // איפוס זמן כניסה לסטטוס
+            lead.lastSentTime = null; // איפוס זמן שליחה
+            lead.isUrgent = false;
+            save();
+            renderBoard();
+        }
+
+        function sendWhatsApp(id) {
+            const lead = leads.find(l => l.id === id);
+            const colConfig = config[lead.status];
+            const msg = colConfig.msg.replace('[שם]', lead.name);
+            
+            // עדכון שהודעה נשלחה
+            lead.lastSentTime = Date.now();
+            lead.isUrgent = false;
+            save();
+            renderBoard();
+
+            const waLink = `https://wa.me/972${lead.phone.replace(/^0/, '')}?text=${encodeURIComponent(msg)}`;
+            window.open(waLink, '_blank');
+        }
+
+        function checkTimers() {
+            let changed = false;
+            const now = Date.now();
+
+            leads.forEach(lead => {
+                const colConf = config[lead.status];
+                if (!colConf) return;
+
+                const timeInStatusMin = (now - lead.enterStatusTime) / 60000;
+                
+                if (!lead.lastSentTime) {
+                    // טיימר 1 - לפני שליחה ראשונה
+                    if (timeInStatusMin >= colConf.t1 && !lead.isUrgent) {
+                        lead.isUrgent = true;
+                        changed = true;
+                    }
+                } else {
+                    // טיימר 2 - אחרי שליחה ראשונה
+                    const timeSinceSentMin = (now - lead.lastSentTime) / 60000;
+                    if (timeSinceSentMin >= colConf.t2 && !lead.isUrgent) {
+                        lead.isUrgent = true;
+                        changed = true;
+                    }
+                }
+            });
+
+            if (changed) {
+                save();
+                if (!document.getElementById('page-leads').classList.contains('hidden')) {
+                    renderBoard();
+                }
+            }
+        }
+
+        function renderBoard() {
+            const board = document.getElementById('kanban-board');
+            board.innerHTML = '';
+
+            COLUMNS.forEach(col => {
+                const colDiv = document.createElement('div');
+                colDiv.className = 'kanban-col';
+                colDiv.innerHTML = `
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-lg text-${col.color}-700">${col.title}</h3>
+                        <div onclick="openMsgEditor('${col.id}')" class="automation-btn">⚙️ ניהול אוטומציה</div>
+                    </div>
+                    <div id="cards-${col.id}" class="space-y-4"></div>
+                `;
+                board.appendChild(colDiv);
+
+                const container = document.getElementById(`cards-${col.id}`);
+                
+                // מיון: דחופים (Urgent) למעלה
+                const colLeads = leads.filter(l => l.status === col.id)
+                    .sort((a, b) => b.isUrgent - a.isUrgent);
+
+                colLeads.forEach(lead => {
                     const card = document.createElement('div');
-                    card.className = 'lead-card';
+                    card.className = `lead-card ${lead.isUrgent ? 'lead-urgent' : ''}`;
                     card.innerHTML = `
                         <div class="delete-btn" onclick="deleteLead(${lead.id})">✖</div>
-                        <div class="font-bold text-lg mb-1">${lead.name}</div>
-                        <div class="text-sm text-gray-500 mb-3">📞 ${lead.phone}</div>
-                        <a href="${waLink}" target="_blank" class="block w-full text-center bg-green-100 text-green-700 text-xs py-2 rounded-lg font-bold mb-3">💬 שלחי הודעה</a>
-                        <select onchange="updateStatus(${lead.id}, this.value)" class="w-full text-xs font-bold p-2 bg-gray-50 border-none rounded-xl">
-                            <option value="new" ${lead.status === 'new' ? 'selected' : ''}>🆕 פנייה</option>
-                            <option value="contact" ${lead.status === 'contact' ? 'selected' : ''}>📞 יצירת קשר</option>
-                            <option value="negotiation" ${lead.status === 'negotiation' ? 'selected' : ''}>💬 מו"מ</option>
-                            <option value="offer" ${lead.status === 'offer' ? 'selected' : ''}>📄 הצעה</option>
-                            <option value="closed" ${lead.status === 'closed' ? 'selected' : ''}>✅ נסגר</option>
+                        <div class="font-bold text-gray-800">${lead.name} ${lead.isUrgent ? '🔔' : ''}</div>
+                        <div class="text-xs text-gray-500 mb-3">${lead.phone}</div>
+                        
+                        <button onclick="sendWhatsApp(${lead.id})" class="w-full py-2 bg-green-500 text-white rounded-lg text-xs font-bold mb-2 shadow-sm">
+                            ${lead.isUrgent ? 'שלחי עכשיו!' : 'שלחי הודעה'}
+                        </button>
+
+                        <select onchange="updateStatus(${lead.id}, this.value)" class="text-[10px] bg-gray-50 border-none">
+                            ${COLUMNS.map(c => `<option value="${c.id}" ${lead.status === c.id ? 'selected' : ''}>העבר ל: ${c.title}</option>`).join('')}
                         </select>
                     `;
                     container.appendChild(card);
@@ -192,45 +275,19 @@
             });
         }
 
-        function updateStatus(id, newStatus) {
-            const lead = leads.find(l => l.id === id);
-            lead.status = newStatus;
-            localStorage.setItem('crm_leads_v4', JSON.stringify(leads));
-            renderBoard();
-        }
-
         function deleteLead(id) {
             if(confirm('למחוק?')) {
                 leads = leads.filter(l => l.id !== id);
-                localStorage.setItem('crm_leads_v4', JSON.stringify(leads));
+                save();
                 renderBoard();
             }
         }
 
-        async function saveLead() {
-            const name = document.getElementById('ln-name').value;
-            const phone = document.getElementById('ln-phone').value;
-            if(!name || !phone) return alert('שם וטלפון חובה');
-            const data = { type: 'LEAD', name, phone, service: document.getElementById('ln-service').value };
-            try {
-                fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(data) });
-                leads.unshift({ id: Date.now(), ...data, status: 'new' });
-                localStorage.setItem('crm_leads_v4', JSON.stringify(leads));
-                renderBoard();
-                closeModal('modal-lead');
-            } catch(e) { alert('שגיאה'); }
-        }
+        function save() { localStorage.setItem('crm_leads_v5', JSON.stringify(leads)); }
 
         async function saveIncome() {
-            const data = { 
-                type: 'INCOME',
-                name: document.getElementById('inc-name').value,
-                amount: document.getElementById('inc-amount').value,
-                date: document.getElementById('inc-date').value,
-                month: new Date(document.getElementById('inc-date').value).toLocaleDateString('he-IL', {year:'numeric', month:'long'})
-            };
-            await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(data) });
-            alert('נשמר!');
+            alert('הכנסה נשמרה (סימולציה)');
+            document.getElementById('inc-name').value = '';
         }
     </script>
 </body>
