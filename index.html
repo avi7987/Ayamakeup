@@ -166,11 +166,16 @@
             if(page === 'stats') updateStats();
         }
 
-        // --- סטטיסטיקה ---
+   // --- סטטיסטיקה מתוקנת ---
         function updateStats() {
             const filter = document.getElementById('stats-month-filter').value;
-            const filtered = filter === 'all' ? clients : clients.filter(c => c.month === filter);
+            
+            // סינון הנתונים
+            const filtered = filter === 'all' 
+                ? clients 
+                : clients.filter(c => c.month.trim() === filter.trim());
 
+            // עדכון הריבועים המסכמים
             const total = filtered.reduce((sum, c) => sum + (parseFloat(c.amount) || 0), 0);
             const brides = filtered.filter(c => c.isBride).length;
             
@@ -178,13 +183,23 @@
             document.getElementById('sum-count').innerText = filtered.length;
             document.getElementById('sum-brides').innerText = brides;
 
-            // גרף
+            // הכנת נתונים לגרף
             const chartData = {};
-            filtered.forEach(c => {
-                const label = filter === 'all' ? c.month : c.date;
-                chartData[label] = (chartData[label] || 0) + parseFloat(c.amount);
-            });
+            
+            if (filter === 'all') {
+                // תצוגה שנתית - לפי חודשים
+                filtered.forEach(c => {
+                    chartData[c.month] = (chartData[c.month] || 0) + parseFloat(c.amount);
+                });
+            } else {
+                // תצוגה חודשית - לפי ימים (תאריכים)
+                filtered.forEach(c => {
+                    const dateLabel = new Date(c.date).toLocaleDateString('he-IL');
+                    chartData[dateLabel] = (chartData[dateLabel] || 0) + parseFloat(c.amount);
+                });
+            }
 
+            // רינדור הגרף מחדש
             if (myChart) myChart.destroy();
             const ctx = document.getElementById('incomeChart').getContext('2d');
             myChart = new Chart(ctx, {
@@ -192,14 +207,21 @@
                 data: {
                     labels: Object.keys(chartData),
                     datasets: [{
-                        label: 'הכנסות',
+                        label: filter === 'all' ? 'הכנסה חודשית' : 'הכנסה יומית',
                         data: Object.values(chartData),
                         backgroundColor: '#9333ea',
                         borderRadius: 8
                     }]
                 },
-                options: { responsive: true, maintainAspectRatio: false }
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
             });
+        }
         }
 
         // --- פונקציות לידים וטיימרים ---
@@ -305,3 +327,4 @@
     </script>
 </body>
 </html>
+
