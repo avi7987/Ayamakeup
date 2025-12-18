@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CRM יופי חכם - גרסה 5.0</title>
+    <title>CRM יופי חכם - גרסה 6.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -17,15 +17,13 @@
         .kanban-col { background: #f3e8ff80; border-radius: 20px; padding: 15px; min-width: 280px; flex: 1; min-height: 400px; }
         .lead-card { background: white; border-radius: 15px; padding: 15px; margin-bottom: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border-right: 5px solid #9333ea; }
         #version-tag { position: fixed; bottom: 10px; left: 10px; background: #333; color: #fff; padding: 3px 10px; border-radius: 20px; font-size: 10px; opacity: 0.7; z-index: 1000; pointer-events: none; }
-        input, select { border: 2px solid #f3e8ff !important; border-radius: 12px !important; padding: 10px !important; width: 100%; outline: none; }
+        input, select { border: 2px solid #f3e8ff !important; border-radius: 12px !important; padding: 10px !important; width: 100%; outline: none; margin-bottom: 10px; }
         .hidden { display: none; }
-        table { width: 100%; border-collapse: collapse; }
-        th { background: #f9fafb; position: sticky; top: 0; }
     </style>
 </head>
 <body>
 
-    <div id="version-tag">Build: 18.12.2025-V5.0 (Edit & Full Sync)</div>
+    <div id="version-tag">Build: 18.12.2025-V6.0 (Edit Modal & Year View)</div>
 
     <div class="max-w-6xl mx-auto p-4 md:p-8">
         <div class="flex flex-wrap gap-3 justify-center mb-8">
@@ -35,8 +33,8 @@
         </div>
 
         <div id="page-entry" class="main-card p-8 max-w-lg mx-auto">
-            <h2 class="text-2xl font-bold mb-6 text-purple-800">הזנת עסקה</h2>
-            <div class="space-y-4">
+            <h2 class="text-2xl font-bold mb-6 text-purple-800 text-center">הזנת עסקה חדשה</h2>
+            <div class="space-y-2">
                 <input type="text" id="inc-name" placeholder="שם הלקוחה *">
                 <input type="number" id="inc-amount" placeholder="סכום (₪) *">
                 <input type="text" id="inc-service" placeholder="שירות (איפור, שיער...)">
@@ -47,10 +45,10 @@
                     <option value="העברה">העברה בנקאית</option>
                 </select>
                 <label class="flex items-center gap-2 p-3 bg-purple-50 rounded-xl cursor-pointer">
-                    <input type="checkbox" id="inc-isbride" class="w-5 h-5">
+                    <input type="checkbox" id="inc-isbride" class="w-5 h-5 text-purple-600">
                     <span class="font-bold">זו עסקת כלה 👰</span>
                 </label>
-                <button onclick="saveIncome()" id="btn-save" class="w-full bg-purple-600 text-white py-4 rounded-xl font-bold text-lg shadow-lg active:scale-95 transition">שמור בשיטס</button>
+                <button onclick="saveIncome()" id="btn-save" class="w-full bg-purple-600 text-white py-4 rounded-xl font-bold text-lg shadow-lg active:scale-95 transition mt-4">שמור בשיטס</button>
             </div>
         </div>
 
@@ -65,18 +63,35 @@
         <div id="page-stats" class="hidden">
             <div class="main-card p-6">
                 <div class="flex flex-wrap justify-between items-center mb-6 gap-4">
-                    <h2 class="text-2xl font-bold text-purple-800">סטטיסטיקה וניהול</h2>
+                    <h2 class="text-2xl font-bold text-purple-800">סטטיסטיקה</h2>
                     <div class="flex gap-2">
                         <button onclick="openManageModal()" class="bg-purple-100 text-purple-700 px-4 py-2 rounded-xl font-bold">⚙️ ניהול שורות</button>
                         <select id="stats-month-filter" onchange="updateStats()" class="!w-40 font-bold"></select>
                     </div>
                 </div>
                 <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
-                    <div class="bg-purple-50 p-6 rounded-2xl text-center"><div class="text-gray-500 text-sm">הכנסות חודש זה</div><div id="sum-total" class="text-2xl font-bold text-purple-700">0</div></div>
+                    <div class="bg-purple-50 p-6 rounded-2xl text-center"><div class="text-gray-500 text-sm">הכנסות בתקופה</div><div id="sum-total" class="text-2xl font-bold text-purple-700">0</div></div>
                     <div class="bg-pink-50 p-6 rounded-2xl text-center"><div class="text-gray-500 text-sm">כלות</div><div id="sum-brides" class="text-2xl font-bold text-pink-600">0</div></div>
-                    <div class="bg-blue-50 p-6 rounded-2xl text-center hidden md:block"><div class="text-gray-500 text-sm">סה"כ עסקאות</div><div id="sum-count" class="text-2xl font-bold text-blue-600">0</div></div>
+                    <div class="bg-blue-50 p-6 rounded-2xl text-center hidden md:block"><div class="text-gray-500 text-sm">עסקאות</div><div id="sum-count" class="text-2xl font-bold text-blue-600">0</div></div>
                 </div>
                 <div class="h-64 md:h-80"><canvas id="incomeChart"></canvas></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-edit-row" class="modal">
+        <div class="bg-white p-6 rounded-3xl w-full max-w-sm shadow-2xl">
+            <h3 class="text-xl font-bold mb-4 text-purple-800 border-b pb-2 text-center">עריכת עסקה</h3>
+            <input type="hidden" id="edit-id">
+            <div class="space-y-3">
+                <div><label class="text-xs text-gray-400">שם לקוחה:</label><input type="text" id="edit-name"></div>
+                <div><label class="text-xs text-gray-400">סכום:</label><input type="number" id="edit-amount"></div>
+                <div><label class="text-xs text-gray-400">שירות:</label><input type="text" id="edit-service"></div>
+                <div><label class="text-xs text-gray-400">תאריך:</label><input type="date" id="edit-date"></div>
+                <div class="flex gap-2 pt-2">
+                    <button onclick="submitEdit()" class="flex-1 bg-purple-600 text-white py-3 rounded-xl font-bold shadow-md">שמור שינויים</button>
+                    <button onclick="closeModal('modal-edit-row')" class="flex-1 bg-gray-100 text-gray-600 py-3 rounded-xl font-bold">ביטול</button>
+                </div>
             </div>
         </div>
     </div>
@@ -96,22 +111,21 @@
     <div id="modal-manage" class="modal">
         <div class="bg-white rounded-3xl w-full max-w-5xl max-h-[85vh] overflow-hidden flex flex-col p-6 shadow-2xl">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="text-xl font-bold">ניהול עסקאות</h3>
+                <h3 class="text-xl font-bold">ניהול נתונים</h3>
                 <div class="flex gap-2">
                     <button id="bulk-del-btn" onclick="bulkDelete()" class="hidden bg-red-500 text-white px-4 py-1 rounded-lg text-sm font-bold">מחק מסומנים</button>
                     <button onclick="closeModal('modal-manage')" class="text-2xl font-bold">&times;</button>
                 </div>
             </div>
-            <div class="overflow-x-auto overflow-y-auto flex-1">
-                <table class="min-w-full text-right">
-                    <thead>
+            <div class="overflow-x-auto overflow-y-auto flex-1 text-right">
+                <table class="min-w-full">
+                    <thead class="bg-gray-50 sticky top-0">
                         <tr class="border-b">
                             <th class="p-3"><input type="checkbox" id="master-check" onclick="toggleSelectAll(this)"></th>
                             <th class="p-3">תאריך</th>
                             <th class="p-3">שם</th>
                             <th class="p-3">שירות</th>
                             <th class="p-3">סכום</th>
-                            <th class="p-3">תשלום</th>
                             <th class="p-3">פעולות</th>
                         </tr>
                     </thead>
@@ -122,7 +136,6 @@
     </div>
 
     <script>
-        // --- חובה להדביק כאן את הכתובת מגוגל שיטס ---
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbydwcb9Elv-S-xFhySVkioiaJrLPwx7I9LxzSLY6ep_aR22ErmKBEuAUG_ZPp0u1JghHw/exec';
         
         let clients = JSON.parse(localStorage.getItem('crm_clients_v3')) || [];
@@ -132,7 +145,9 @@
 
         window.onload = () => {
             const filter = document.getElementById('stats-month-filter');
-            filter.innerHTML = MONTHS.map(m => `<option value="${m}" ${m === MONTHS[new Date().getMonth()] ? 'selected' : ''}>${m}</option>`).join('');
+            let monthOptions = MONTHS.map(m => `<option value="${m}" ${m === MONTHS[new Date().getMonth()] ? 'selected' : ''}>${m}</option>`).join('');
+            monthOptions += `<option value="ALL">שנה שלמה (סיכום שנתי)</option>`;
+            filter.innerHTML = monthOptions;
             document.getElementById('inc-date').valueAsDate = new Date();
             renderLeads();
         };
@@ -152,16 +167,16 @@
             const states = [{id:'new', t:'🆕 חדש'}, {id:'process', t:'📞 בקשר'}, {id:'done', t:'✅ נסגר'}];
             board.innerHTML = states.map(s => `
                 <div class="kanban-col">
-                    <h3 class="font-bold mb-4 text-purple-900 border-b pb-2">${s.t}</h3>
+                    <h3 class="font-bold mb-4 text-purple-900 border-b pb-2 text-center">${s.t}</h3>
                     <div class="space-y-3">
                         ${leads.filter(l => l.status === s.id).map(l => `
                             <div class="lead-card">
                                 <div class="font-bold text-gray-800">${l.name}</div>
-                                <div class="text-sm text-gray-500 mb-3">${l.phone}</div>
-                                <div class="flex flex-wrap gap-2">
-                                    <button onclick="moveLead(${l.id})" class="text-[10px] bg-purple-600 text-white px-2 py-1 rounded-lg">שלב הבא</button>
-                                    <a href="https://wa.me/972${l.phone.replace(/^0/, '')}" target="_blank" class="text-[10px] bg-green-500 text-white px-2 py-1 rounded-lg">WA</a>
-                                    <button onclick="deleteLead(${l.id})" class="text-[10px] text-red-500">מחק</button>
+                                <div class="text-sm text-gray-500 mb-2">${l.phone}</div>
+                                <div class="flex flex-wrap gap-2 border-t pt-2">
+                                    <button onclick="moveLead(${l.id})" class="text-[10px] bg-purple-600 text-white px-2 py-1 rounded-lg">קדם שלב</button>
+                                    <a href="https://wa.me/972${l.phone.replace(/^0/, '')}" target="_blank" class="text-[10px] bg-green-500 text-white px-2 py-1 rounded-lg">WhatsApp</a>
+                                    <button onclick="deleteLead(${l.id})" class="text-[10px] text-red-400">מחק</button>
                                 </div>
                             </div>
                         `).join('')}
@@ -222,59 +237,75 @@
                 await fetch(SCRIPT_URL, {method:'POST', mode:'no-cors', body: JSON.stringify(data)});
                 clients.push(data);
                 localStorage.setItem('crm_clients_v3', JSON.stringify(clients));
-                alert('נשמר!');
+                alert('העסקה נשמרה בשיטס!');
                 document.getElementById('inc-name').value = '';
                 document.getElementById('inc-amount').value = '';
-            } catch(e) { alert('שגיאה'); }
+            } catch(e) { alert('בעיה בסנכרון. נשמר מקומית.'); }
             btn.innerText = "שמור בשיטס"; btn.disabled = false;
         }
 
-        // --- ניהול ועריכה ---
+        // --- ניהול ועריכה מודאלית ---
         function openManageModal() {
-            const filterMonth = document.getElementById('stats-month-filter').value;
-            const filtered = clients.filter(c => c.month === filterMonth);
+            const filterVal = document.getElementById('stats-month-filter').value;
+            const filtered = filterVal === 'ALL' ? clients : clients.filter(c => c.month === filterVal);
             const tbody = document.getElementById('manage-tbody');
             
-            tbody.innerHTML = filtered.map(c => `
-                <tr class="border-b hover:bg-gray-50">
+            tbody.innerHTML = filtered.sort((a,b) => new Date(b.date) - new Date(a.date)).map(c => `
+                <tr class="border-b hover:bg-gray-50 text-sm">
                     <td class="p-3"><input type="checkbox" class="row-sel" data-id="${c.id}" onchange="checkBulkVisibility()"></td>
-                    <td class="p-3 text-sm">${c.date}</td>
+                    <td class="p-3">${c.date}</td>
                     <td class="p-3 font-bold">${c.name}</td>
-                    <td class="p-3 text-sm">${c.service || '-'}</td>
+                    <td class="p-3">${c.service || '-'}</td>
                     <td class="p-3 text-purple-600 font-bold">${c.amount} ₪</td>
-                    <td class="p-3 text-sm">${c.paymentMethod}</td>
                     <td class="p-3">
-                        <button onclick="editRow(${c.id})" class="text-blue-500 ml-2">ערוך</button>
+                        <button onclick="startEdit(${c.id})" class="text-blue-500 ml-2">ערוך</button>
                         <button onclick="deleteSingle(${c.id})" class="text-red-500">מחק</button>
                     </td>
                 </tr>
             `).join('');
             document.getElementById('master-check').checked = false;
             checkBulkVisibility();
-            document.getElementById('modal-manage').style.display = 'flex';
+            openModal('modal-manage');
         }
 
-        async function editRow(id) {
+        function startEdit(id) {
+            const c = clients.find(x => x.id === id);
+            if(!c) return;
+            document.getElementById('edit-id').value = c.id;
+            document.getElementById('edit-name').value = c.name;
+            document.getElementById('edit-amount').value = c.amount;
+            document.getElementById('edit-service').value = c.service || '';
+            document.getElementById('edit-date').value = c.date;
+            openModal('modal-edit-row');
+        }
+
+        async function submitEdit() {
+            const id = parseInt(document.getElementById('edit-id').value);
             const idx = clients.findIndex(x => x.id === id);
-            const c = clients[idx];
-            const newName = prompt("שם הלקוחה:", c.name);
-            const newAmount = prompt("סכום:", c.amount);
-            const newService = prompt("שירות:", c.service);
+            const original = clients[idx];
             
-            if (newName && newAmount) {
-                const updated = {...c, type: 'UPDATE_ROW', name: newName, amount: parseFloat(newAmount), service: newService};
-                clients[idx] = updated;
-                localStorage.setItem('crm_clients_v3', JSON.stringify(clients));
-                
-                await fetch(SCRIPT_URL, {method:'POST', mode:'no-cors', body: JSON.stringify(updated)});
-                alert("עודכן!");
-                openManageModal();
-                updateStats();
-            }
+            const updated = {
+                ...original,
+                type: 'UPDATE_ROW',
+                name: document.getElementById('edit-name').value,
+                amount: parseFloat(document.getElementById('edit-amount').value),
+                service: document.getElementById('edit-service').value,
+                date: document.getElementById('edit-date').value,
+                month: MONTHS[new Date(document.getElementById('edit-date').value).getMonth()]
+            };
+
+            clients[idx] = updated;
+            localStorage.setItem('crm_clients_v3', JSON.stringify(clients));
+            
+            await fetch(SCRIPT_URL, {method:'POST', mode:'no-cors', body: JSON.stringify(updated)});
+            alert("עודכן בהצלחה!");
+            closeModal('modal-edit-row');
+            openManageModal();
+            updateStats();
         }
 
         async function deleteSingle(id) {
-            if(!confirm('למחוק?')) return;
+            if(!confirm('למחוק עסקה?')) return;
             await fetch(SCRIPT_URL, {method:'POST', mode:'no-cors', body: JSON.stringify({type:'DELETE_ROW', id: id})});
             clients = clients.filter(x => x.id !== id);
             localStorage.setItem('crm_clients_v3', JSON.stringify(clients));
@@ -290,11 +321,11 @@
         function checkBulkVisibility() {
             const count = document.querySelectorAll('.row-sel:checked').length;
             document.getElementById('bulk-del-btn').classList.toggle('hidden', count === 0);
-            document.getElementById('bulk-del-btn').innerText = `מחק ${count}`;
+            document.getElementById('bulk-del-btn').innerText = `מחק ${count} מסומנים`;
         }
 
         async function bulkDelete() {
-            if(!confirm('למחוק הכל?')) return;
+            if(!confirm('למחוק את כל המסומנים?')) return;
             const selected = Array.from(document.querySelectorAll('.row-sel:checked')).map(cb => parseInt(cb.dataset.id));
             for(let id of selected) {
                 await fetch(SCRIPT_URL, {method:'POST', mode:'no-cors', body: JSON.stringify({type:'DELETE_ROW', id: id})});
@@ -306,18 +337,34 @@
         }
 
         function updateStats() {
-            const filterMonth = document.getElementById('stats-month-filter').value;
-            const filtered = clients.filter(c => c.month === filterMonth);
+            const filterVal = document.getElementById('stats-month-filter').value;
+            const filtered = filterVal === 'ALL' ? clients : clients.filter(c => c.month === filterVal);
+            
             document.getElementById('sum-total').innerText = filtered.reduce((a,b) => a + b.amount, 0).toLocaleString() + ' ₪';
             document.getElementById('sum-brides').innerText = filtered.filter(c => c.isBride).length;
             document.getElementById('sum-count').innerText = filtered.length;
+
             const labels = [...new Set(filtered.map(c => c.date))].sort();
             const data = labels.map(l => filtered.filter(c => c.date === l).reduce((a,b) => a + b.amount, 0));
+
             if(myChart) myChart.destroy();
             myChart = new Chart(document.getElementById('incomeChart'), {
-                type: 'line',
-                data: { labels, datasets: [{ label: 'הכנסות', data, borderColor: '#9333ea', fill: true, backgroundColor: '#f3e8ff' }] },
-                options: { responsive: true, maintainAspectRatio: false }
+                type: 'bar',
+                data: { 
+                    labels, 
+                    datasets: [{ 
+                        label: 'הכנסות יומיות (₪)', 
+                        data, 
+                        backgroundColor: '#9333ea',
+                        borderRadius: 8
+                    }] 
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true } }
+                }
             });
         }
 
