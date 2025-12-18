@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CRM יופי חכם - גרסה 6.0</title>
+    <title>CRM יופי חכם - גרסה 7.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -12,7 +12,11 @@
         .main-card { background: white; border-radius: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
         .nav-button { padding: 12px 20px; font-weight: bold; border-radius: 14px; transition: 0.3s; border: 2px solid #f3e8ff; background: white; color: #9333ea; }
         .nav-button.active { background: linear-gradient(135deg, #9333ea 0%, #db2777 100%); color: white; border: none; }
+        
+        /* מודאלים ושכבות */
         .modal { background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); display: none; z-index: 100; position: fixed; inset: 0; align-items: center; justify-content: center; padding: 20px; }
+        #modal-edit-row { z-index: 200; } /* מבטיח שהעריכה תהיה מעל הניהול */
+        
         .kanban-container { display: flex; gap: 15px; overflow-x: auto; padding: 10px; }
         .kanban-col { background: #f3e8ff80; border-radius: 20px; padding: 15px; min-width: 280px; flex: 1; min-height: 400px; }
         .lead-card { background: white; border-radius: 15px; padding: 15px; margin-bottom: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border-right: 5px solid #9333ea; }
@@ -23,7 +27,7 @@
 </head>
 <body>
 
-    <div id="version-tag">Build: 18.12.2025-V6.0 (Edit Modal & Year View)</div>
+    <div id="version-tag">Build: 18.12.2025-V7.0 (Trend Graph & Dual Modal)</div>
 
     <div class="max-w-6xl mx-auto p-4 md:p-8">
         <div class="flex flex-wrap gap-3 justify-center mb-8">
@@ -32,7 +36,7 @@
             <button onclick="switchPage('stats')" id="nav-stats" class="nav-button">📊 סטטיסטיקה</button>
         </div>
 
-        <div id="page-entry" class="main-card p-8 max-w-lg mx-auto">
+        <div id="page-entry" class="main-card p-8 max-w-lg mx-auto text-right">
             <h2 class="text-2xl font-bold mb-6 text-purple-800 text-center">הזנת עסקה חדשה</h2>
             <div class="space-y-2">
                 <input type="text" id="inc-name" placeholder="שם הלקוחה *">
@@ -60,34 +64,38 @@
             <div id="kanban-board" class="kanban-container"></div>
         </div>
 
-        <div id="page-stats" class="hidden">
+        <div id="page-stats" class="hidden text-right">
             <div class="main-card p-6">
                 <div class="flex flex-wrap justify-between items-center mb-6 gap-4">
-                    <h2 class="text-2xl font-bold text-purple-800">סטטיסטיקה</h2>
+                    <h2 class="text-2xl font-bold text-purple-800">סיכום וסטטיסטיקה</h2>
                     <div class="flex gap-2">
                         <button onclick="openManageModal()" class="bg-purple-100 text-purple-700 px-4 py-2 rounded-xl font-bold">⚙️ ניהול שורות</button>
-                        <select id="stats-month-filter" onchange="updateStats()" class="!w-40 font-bold"></select>
+                        <select id="stats-month-filter" onchange="updateStats()" class="!w-48 font-bold"></select>
                     </div>
                 </div>
                 <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
-                    <div class="bg-purple-50 p-6 rounded-2xl text-center"><div class="text-gray-500 text-sm">הכנסות בתקופה</div><div id="sum-total" class="text-2xl font-bold text-purple-700">0</div></div>
+                    <div class="bg-purple-50 p-6 rounded-2xl text-center"><div class="text-gray-500 text-sm">סה"כ הכנסות</div><div id="sum-total" class="text-2xl font-bold text-purple-700">0</div></div>
                     <div class="bg-pink-50 p-6 rounded-2xl text-center"><div class="text-gray-500 text-sm">כלות</div><div id="sum-brides" class="text-2xl font-bold text-pink-600">0</div></div>
                     <div class="bg-blue-50 p-6 rounded-2xl text-center hidden md:block"><div class="text-gray-500 text-sm">עסקאות</div><div id="sum-count" class="text-2xl font-bold text-blue-600">0</div></div>
                 </div>
-                <div class="h-64 md:h-80"><canvas id="incomeChart"></canvas></div>
+                <div class="h-64 md:h-96"><canvas id="incomeChart"></canvas></div>
             </div>
         </div>
     </div>
 
     <div id="modal-edit-row" class="modal">
-        <div class="bg-white p-6 rounded-3xl w-full max-w-sm shadow-2xl">
-            <h3 class="text-xl font-bold mb-4 text-purple-800 border-b pb-2 text-center">עריכת עסקה</h3>
+        <div class="bg-white p-6 rounded-3xl w-full max-w-sm shadow-2xl text-right">
+            <h3 class="text-xl font-bold mb-4 text-purple-800 border-b pb-2 text-center">עריכת פרטי עסקה</h3>
             <input type="hidden" id="edit-id">
             <div class="space-y-3">
                 <div><label class="text-xs text-gray-400">שם לקוחה:</label><input type="text" id="edit-name"></div>
                 <div><label class="text-xs text-gray-400">סכום:</label><input type="number" id="edit-amount"></div>
                 <div><label class="text-xs text-gray-400">שירות:</label><input type="text" id="edit-service"></div>
                 <div><label class="text-xs text-gray-400">תאריך:</label><input type="date" id="edit-date"></div>
+                <label class="flex items-center gap-2 p-3 bg-pink-50 rounded-xl cursor-pointer">
+                    <input type="checkbox" id="edit-isbride" class="w-5 h-5">
+                    <span class="font-bold">זו עסקת כלה 👰</span>
+                </label>
                 <div class="flex gap-2 pt-2">
                     <button onclick="submitEdit()" class="flex-1 bg-purple-600 text-white py-3 rounded-xl font-bold shadow-md">שמור שינויים</button>
                     <button onclick="closeModal('modal-edit-row')" class="flex-1 bg-gray-100 text-gray-600 py-3 rounded-xl font-bold">ביטול</button>
@@ -136,7 +144,7 @@
     </div>
 
     <script>
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbydwcb9Elv-S-xFhySVkioiaJrLPwx7I9LxzSLY6ep_aR22ErmKBEuAUG_ZPp0u1JghHw/exec';
+        const SCRIPT_URL = 'כאן_להדביק_את_הכתובת_שלך';
         
         let clients = JSON.parse(localStorage.getItem('crm_clients_v3')) || [];
         let leads = JSON.parse(localStorage.getItem('crm_leads_v3')) || [];
@@ -146,7 +154,7 @@
         window.onload = () => {
             const filter = document.getElementById('stats-month-filter');
             let monthOptions = MONTHS.map(m => `<option value="${m}" ${m === MONTHS[new Date().getMonth()] ? 'selected' : ''}>${m}</option>`).join('');
-            monthOptions += `<option value="ALL">שנה שלמה (סיכום שנתי)</option>`;
+            monthOptions += `<option value="ALL">📈 סיכום שנתי (כל השנה)</option>`;
             filter.innerHTML = monthOptions;
             document.getElementById('inc-date').valueAsDate = new Date();
             renderLeads();
@@ -170,7 +178,7 @@
                     <h3 class="font-bold mb-4 text-purple-900 border-b pb-2 text-center">${s.t}</h3>
                     <div class="space-y-3">
                         ${leads.filter(l => l.status === s.id).map(l => `
-                            <div class="lead-card">
+                            <div class="lead-card text-right">
                                 <div class="font-bold text-gray-800">${l.name}</div>
                                 <div class="text-sm text-gray-500 mb-2">${l.phone}</div>
                                 <div class="flex flex-wrap gap-2 border-t pt-2">
@@ -237,10 +245,10 @@
                 await fetch(SCRIPT_URL, {method:'POST', mode:'no-cors', body: JSON.stringify(data)});
                 clients.push(data);
                 localStorage.setItem('crm_clients_v3', JSON.stringify(clients));
-                alert('העסקה נשמרה בשיטס!');
+                alert('נשמר בשיטס!');
                 document.getElementById('inc-name').value = '';
                 document.getElementById('inc-amount').value = '';
-            } catch(e) { alert('בעיה בסנכרון. נשמר מקומית.'); }
+            } catch(e) { alert('בעיה בסנכרון.'); }
             btn.innerText = "שמור בשיטס"; btn.disabled = false;
         }
 
@@ -276,21 +284,22 @@
             document.getElementById('edit-amount').value = c.amount;
             document.getElementById('edit-service').value = c.service || '';
             document.getElementById('edit-date').value = c.date;
+            document.getElementById('edit-isbride').checked = c.isBride || false;
             openModal('modal-edit-row');
         }
 
         async function submitEdit() {
             const id = parseInt(document.getElementById('edit-id').value);
             const idx = clients.findIndex(x => x.id === id);
-            const original = clients[idx];
             
             const updated = {
-                ...original,
+                ...clients[idx],
                 type: 'UPDATE_ROW',
                 name: document.getElementById('edit-name').value,
                 amount: parseFloat(document.getElementById('edit-amount').value),
                 service: document.getElementById('edit-service').value,
                 date: document.getElementById('edit-date').value,
+                isBride: document.getElementById('edit-isbride').checked,
                 month: MONTHS[new Date(document.getElementById('edit-date').value).getMonth()]
             };
 
@@ -298,7 +307,7 @@
             localStorage.setItem('crm_clients_v3', JSON.stringify(clients));
             
             await fetch(SCRIPT_URL, {method:'POST', mode:'no-cors', body: JSON.stringify(updated)});
-            alert("עודכן בהצלחה!");
+            alert("הנתונים עודכנו!");
             closeModal('modal-edit-row');
             openManageModal();
             updateStats();
@@ -325,7 +334,7 @@
         }
 
         async function bulkDelete() {
-            if(!confirm('למחוק את כל המסומנים?')) return;
+            if(!confirm('למחוק מסומנים?')) return;
             const selected = Array.from(document.querySelectorAll('.row-sel:checked')).map(cb => parseInt(cb.dataset.id));
             for(let id of selected) {
                 await fetch(SCRIPT_URL, {method:'POST', mode:'no-cors', body: JSON.stringify({type:'DELETE_ROW', id: id})});
@@ -336,6 +345,7 @@
             updateStats();
         }
 
+        // --- גרפים וסטטיסטיקה מעודכנים ---
         function updateStats() {
             const filterVal = document.getElementById('stats-month-filter').value;
             const filtered = filterVal === 'ALL' ? clients : clients.filter(c => c.month === filterVal);
@@ -344,26 +354,60 @@
             document.getElementById('sum-brides').innerText = filtered.filter(c => c.isBride).length;
             document.getElementById('sum-count').innerText = filtered.length;
 
-            const labels = [...new Set(filtered.map(c => c.date))].sort();
-            const data = labels.map(l => filtered.filter(c => c.date === l).reduce((a,b) => a + b.amount, 0));
+            let labels = [];
+            let data = [];
+
+            if (filterVal === 'ALL') {
+                // תצוגה שנתית: בר לכל חודש
+                labels = MONTHS;
+                data = MONTHS.map(m => clients.filter(c => c.month === m).reduce((a,b) => a + b.amount, 0));
+            } else {
+                // תצוגה חודשית: בר אחד גדול לסיכום החודש
+                labels = [filterVal];
+                data = [filtered.reduce((a,b) => a + b.amount, 0)];
+            }
 
             if(myChart) myChart.destroy();
             myChart = new Chart(document.getElementById('incomeChart'), {
-                type: 'bar',
-                data: { 
-                    labels, 
-                    datasets: [{ 
-                        label: 'הכנסות יומיות (₪)', 
-                        data, 
-                        backgroundColor: '#9333ea',
-                        borderRadius: 8
-                    }] 
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            type: 'bar',
+                            label: 'הכנסות (₪)',
+                            data: data,
+                            backgroundColor: '#9333ea',
+                            borderRadius: 12,
+                            order: 2
+                        },
+                        {
+                            type: 'line',
+                            label: 'מגמת הכנסות',
+                            data: data,
+                            borderColor: '#db2777',
+                            borderWidth: 3,
+                            pointBackgroundColor: '#db2777',
+                            tension: 0.4,
+                            fill: false,
+                            order: 1
+                        }
+                    ]
                 },
-                options: { 
-                    responsive: true, 
+                options: {
+                    responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: { y: { beginAtZero: true } }
+                    plugins: { 
+                        legend: { display: true, position: 'bottom' }
+                    },
+                    scales: {
+                        y: { 
+                            beginAtZero: true,
+                            grid: { color: '#f3e8ff' }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    }
                 }
             });
         }
