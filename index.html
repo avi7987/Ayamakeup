@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CRM יופי חכם - גרסה 4.6</title>
+    <title>CRM יופי חכם - גרסה 5.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -19,11 +19,13 @@
         #version-tag { position: fixed; bottom: 10px; left: 10px; background: #333; color: #fff; padding: 3px 10px; border-radius: 20px; font-size: 10px; opacity: 0.7; z-index: 1000; pointer-events: none; }
         input, select { border: 2px solid #f3e8ff !important; border-radius: 12px !important; padding: 10px !important; width: 100%; outline: none; }
         .hidden { display: none; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #f9fafb; position: sticky; top: 0; }
     </style>
 </head>
 <body>
 
-    <div id="version-tag">Build: 18.12.2025-V4.6 (Stable)</div>
+    <div id="version-tag">Build: 18.12.2025-V5.0 (Edit & Full Sync)</div>
 
     <div class="max-w-6xl mx-auto p-4 md:p-8">
         <div class="flex flex-wrap gap-3 justify-center mb-8">
@@ -92,22 +94,25 @@
     </div>
 
     <div id="modal-manage" class="modal">
-        <div class="bg-white rounded-3xl w-full max-w-4xl max-h-[85vh] overflow-hidden flex flex-col p-6 shadow-2xl">
+        <div class="bg-white rounded-3xl w-full max-w-5xl max-h-[85vh] overflow-hidden flex flex-col p-6 shadow-2xl">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="text-xl font-bold">ניהול עסקאות (מסונן לפי חודש)</h3>
+                <h3 class="text-xl font-bold">ניהול עסקאות</h3>
                 <div class="flex gap-2">
                     <button id="bulk-del-btn" onclick="bulkDelete()" class="hidden bg-red-500 text-white px-4 py-1 rounded-lg text-sm font-bold">מחק מסומנים</button>
                     <button onclick="closeModal('modal-manage')" class="text-2xl font-bold">&times;</button>
                 </div>
             </div>
-            <div class="overflow-y-auto flex-1 text-right">
-                <table class="w-full border-collapse">
-                    <thead class="bg-gray-50 sticky top-0">
-                        <tr>
-                            <th class="p-3 text-right"><input type="checkbox" id="master-check" onclick="toggleSelectAll(this)"></th>
-                            <th class="p-3 text-right">שם</th>
-                            <th class="p-3 text-right">סכום</th>
-                            <th class="p-3 text-right">פעולה</th>
+            <div class="overflow-x-auto overflow-y-auto flex-1">
+                <table class="min-w-full text-right">
+                    <thead>
+                        <tr class="border-b">
+                            <th class="p-3"><input type="checkbox" id="master-check" onclick="toggleSelectAll(this)"></th>
+                            <th class="p-3">תאריך</th>
+                            <th class="p-3">שם</th>
+                            <th class="p-3">שירות</th>
+                            <th class="p-3">סכום</th>
+                            <th class="p-3">תשלום</th>
+                            <th class="p-3">פעולות</th>
                         </tr>
                     </thead>
                     <tbody id="manage-tbody"></tbody>
@@ -117,7 +122,7 @@
     </div>
 
     <script>
-        // חובה לעדכן את ה-URL הזה מהגוגל שיטס שלך (Deploy -> Manage Deployments)
+        // --- חובה להדביק כאן את הכתובת מגוגל שיטס ---
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbydwcb9Elv-S-xFhySVkioiaJrLPwx7I9LxzSLY6ep_aR22ErmKBEuAUG_ZPp0u1JghHw/exec';
         
         let clients = JSON.parse(localStorage.getItem('crm_clients_v3')) || [];
@@ -144,8 +149,7 @@
         // --- לידים ---
         function renderLeads() {
             const board = document.getElementById('kanban-board');
-            const states = [{id:'new', t:'🆕 חדש', c:'bg-purple-100'}, {id:'process', t:'📞 בקשר', c:'bg-blue-100'}, {id:'done', t:'✅ נסגר', c:'bg-green-100'}];
-            
+            const states = [{id:'new', t:'🆕 חדש'}, {id:'process', t:'📞 בקשר'}, {id:'done', t:'✅ נסגר'}];
             board.innerHTML = states.map(s => `
                 <div class="kanban-col">
                     <h3 class="font-bold mb-4 text-purple-900 border-b pb-2">${s.t}</h3>
@@ -155,9 +159,9 @@
                                 <div class="font-bold text-gray-800">${l.name}</div>
                                 <div class="text-sm text-gray-500 mb-3">${l.phone}</div>
                                 <div class="flex flex-wrap gap-2">
-                                    <button onclick="moveLead(${l.id})" class="text-[10px] bg-purple-600 text-white px-2 py-1 rounded-lg">שלב הבא ></button>
-                                    <a href="https://wa.me/972${l.phone.replace(/^0/, '')}" target="_blank" class="text-[10px] bg-green-500 text-white px-2 py-1 rounded-lg">WhatsApp</a>
-                                    <button onclick="deleteLead(${l.id})" class="text-[10px] text-red-500 font-bold border border-red-200 px-2 py-1 rounded-lg">מחק</button>
+                                    <button onclick="moveLead(${l.id})" class="text-[10px] bg-purple-600 text-white px-2 py-1 rounded-lg">שלב הבא</button>
+                                    <a href="https://wa.me/972${l.phone.replace(/^0/, '')}" target="_blank" class="text-[10px] bg-green-500 text-white px-2 py-1 rounded-lg">WA</a>
+                                    <button onclick="deleteLead(${l.id})" class="text-[10px] text-red-500">מחק</button>
                                 </div>
                             </div>
                         `).join('')}
@@ -169,16 +173,11 @@
         function addLead() {
             const name = document.getElementById('lead-name').value;
             const phone = document.getElementById('lead-phone').value;
-            if(!name || !phone) return alert('נא למלא שם וטלפון');
-            
+            if(!name || !phone) return alert('מלא שם וטלפון');
             const newL = {id: Date.now(), name, phone, status: 'new', type: 'LEAD'};
             leads.push(newL);
             localStorage.setItem('crm_leads_v3', JSON.stringify(leads));
-            
             fetch(SCRIPT_URL, {method:'POST', mode:'no-cors', body: JSON.stringify(newL)});
-            
-            document.getElementById('lead-name').value = '';
-            document.getElementById('lead-phone').value = '';
             closeModal('modal-new-lead');
             renderLeads();
         }
@@ -195,7 +194,7 @@
         }
 
         function deleteLead(id) {
-            if(confirm('למחוק את הליד?')) {
+            if(confirm('למחוק ליד?')) {
                 leads = leads.filter(x => x.id !== id);
                 localStorage.setItem('crm_leads_v3', JSON.stringify(leads));
                 renderLeads();
@@ -205,122 +204,102 @@
         // --- הכנסות ---
         async function saveIncome() {
             const btn = document.getElementById('btn-save');
+            const rawDate = document.getElementById('inc-date').value;
             const data = {
                 type: 'INCOME',
                 name: document.getElementById('inc-name').value,
                 amount: parseFloat(document.getElementById('inc-amount').value),
-                date: document.getElementById('inc-date').value,
+                date: rawDate,
                 service: document.getElementById('inc-service').value,
                 paymentMethod: document.getElementById('inc-payment').value,
                 isBride: document.getElementById('inc-isbride').checked,
-                month: MONTHS[new Date(document.getElementById('inc-date').value).getMonth()],
+                month: MONTHS[new Date(rawDate).getMonth()],
                 id: Date.now()
             };
-
-            if(!data.name || isNaN(data.amount)) return alert('מלאי שם וסכום');
-            
+            if(!data.name || isNaN(data.amount)) return alert('מלא שם וסכום');
             btn.innerText = "שומר..."; btn.disabled = true;
             try {
-                await fetch(SCRIPT_URL, {
-                    method:'POST', 
-                    mode:'no-cors', 
-                    cache: 'no-cache',
-                    body: JSON.stringify(data)
-                });
+                await fetch(SCRIPT_URL, {method:'POST', mode:'no-cors', body: JSON.stringify(data)});
                 clients.push(data);
                 localStorage.setItem('crm_clients_v3', JSON.stringify(clients));
-                alert('העסקה נשמרה בהצלחה!');
+                alert('נשמר!');
                 document.getElementById('inc-name').value = '';
                 document.getElementById('inc-amount').value = '';
-            } catch(e) { alert('תקלה בסנכרון. הנתונים נשמרו מקומית.'); }
-            
+            } catch(e) { alert('שגיאה'); }
             btn.innerText = "שמור בשיטס"; btn.disabled = false;
         }
 
-       // --- ניהול, עריכה ומחיקה ---
-function openManageModal() {
-    const filterMonth = document.getElementById('stats-month-filter').value;
-    const filtered = clients.filter(c => c.month === filterMonth);
-    const tbody = document.getElementById('manage-tbody');
-    
-    // עדכון הכותרות בטבלה כדי שיתאימו לכל הנתונים
-    document.querySelector('#modal-manage thead tr').innerHTML = `
-        <th class="p-3 text-right"><input type="checkbox" id="master-check" onclick="toggleSelectAll(this)"></th>
-        <th class="p-3 text-right">תאריך</th>
-        <th class="p-3 text-right">שם</th>
-        <th class="p-3 text-right">שירות</th>
-        <th class="p-3 text-right">סכום</th>
-        <th class="p-3 text-right">תשלום</th>
-        <th class="p-3 text-right">פעולות</th>
-    `;
-
-    tbody.innerHTML = filtered.map(c => `
-        <tr class="border-b hover:bg-gray-50">
-            <td class="p-3"><input type="checkbox" class="row-sel" data-id="${c.id}" onchange="checkBulkVisibility()"></td>
-            <td class="p-3 text-sm">${c.date}</td>
-            <td class="p-3 font-bold">${c.name}</td>
-            <td class="p-3 text-sm">${c.service || '-'}</td>
-            <td class="p-3 text-purple-600 font-bold">${c.amount} ₪</td>
-            <td class="p-3 text-sm">${c.paymentMethod || '-'}</td>
-            <td class="p-3 space-x-2">
-                <button onclick="editRow(${c.id})" class="text-blue-500 hover:underline">ערוך</button>
-                <button onclick="deleteSingle(${c.id})" class="text-red-500 hover:underline">מחק</button>
-            </td>
-        </tr>
-    `).join('');
-    
-    document.getElementById('master-check').checked = false;
-    checkBulkVisibility();
-    openModal('modal-manage');
-}
-
-async function editRow(id) {
-    const c = clients.find(x => x.id === id);
-    if (!c) return;
-
-    // חלונית קופצת לעריכה מהירה
-    const newName = prompt("שם הלקוחה:", c.name);
-    const newAmount = prompt("סכום:", c.amount);
-    const newService = prompt("שירות:", c.service);
-    
-    if (newName && newAmount) {
-        const updatedData = {
-            ...c,
-            type: 'UPDATE_ROW', // חשוב לניתוב בשיטס
-            name: newName,
-            amount: parseFloat(newAmount),
-            service: newService
-        };
-
-        // 1. עדכון מקומי באתר
-        const idx = clients.findIndex(x => x.id === id);
-        clients[idx] = updatedData;
-        localStorage.setItem('crm_clients_v3', JSON.stringify(clients));
-
-        // 2. עדכון בשיטס
-        try {
-            await fetch(SCRIPT_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                body: JSON.stringify(updatedData)
-            });
-            alert("העסקה עודכנה בהצלחה!");
-            openManageModal(); // רענון הטבלה
-            updateStats();    // רענון הגרפים
-        } catch (e) {
-            alert("העדכון נשמר באתר אך נכשל בסנכרון לשיטס.");
+        // --- ניהול ועריכה ---
+        function openManageModal() {
+            const filterMonth = document.getElementById('stats-month-filter').value;
+            const filtered = clients.filter(c => c.month === filterMonth);
+            const tbody = document.getElementById('manage-tbody');
+            
+            tbody.innerHTML = filtered.map(c => `
+                <tr class="border-b hover:bg-gray-50">
+                    <td class="p-3"><input type="checkbox" class="row-sel" data-id="${c.id}" onchange="checkBulkVisibility()"></td>
+                    <td class="p-3 text-sm">${c.date}</td>
+                    <td class="p-3 font-bold">${c.name}</td>
+                    <td class="p-3 text-sm">${c.service || '-'}</td>
+                    <td class="p-3 text-purple-600 font-bold">${c.amount} ₪</td>
+                    <td class="p-3 text-sm">${c.paymentMethod}</td>
+                    <td class="p-3">
+                        <button onclick="editRow(${c.id})" class="text-blue-500 ml-2">ערוך</button>
+                        <button onclick="deleteSingle(${c.id})" class="text-red-500">מחק</button>
+                    </td>
+                </tr>
+            `).join('');
+            document.getElementById('master-check').checked = false;
+            checkBulkVisibility();
+            document.getElementById('modal-manage').style.display = 'flex';
         }
-    }
-}
+
+        async function editRow(id) {
+            const idx = clients.findIndex(x => x.id === id);
+            const c = clients[idx];
+            const newName = prompt("שם הלקוחה:", c.name);
+            const newAmount = prompt("סכום:", c.amount);
+            const newService = prompt("שירות:", c.service);
+            
+            if (newName && newAmount) {
+                const updated = {...c, type: 'UPDATE_ROW', name: newName, amount: parseFloat(newAmount), service: newService};
+                clients[idx] = updated;
+                localStorage.setItem('crm_clients_v3', JSON.stringify(clients));
+                
+                await fetch(SCRIPT_URL, {method:'POST', mode:'no-cors', body: JSON.stringify(updated)});
+                alert("עודכן!");
+                openManageModal();
+                updateStats();
+            }
+        }
 
         async function deleteSingle(id) {
             if(!confirm('למחוק?')) return;
-            await fetch(SCRIPT_URL, {
-                method:'POST', 
-                mode:'no-cors', 
-                body: JSON.stringify({type:'DELETE_ROW', id: id})
-            });
+            await fetch(SCRIPT_URL, {method:'POST', mode:'no-cors', body: JSON.stringify({type:'DELETE_ROW', id: id})});
             clients = clients.filter(x => x.id !== id);
+            localStorage.setItem('crm_clients_v3', JSON.stringify(clients));
+            openManageModal();
+            updateStats();
+        }
+
+        function toggleSelectAll(m) {
+            document.querySelectorAll('.row-sel').forEach(cb => cb.checked = m.checked);
+            checkBulkVisibility();
+        }
+
+        function checkBulkVisibility() {
+            const count = document.querySelectorAll('.row-sel:checked').length;
+            document.getElementById('bulk-del-btn').classList.toggle('hidden', count === 0);
+            document.getElementById('bulk-del-btn').innerText = `מחק ${count}`;
+        }
+
+        async function bulkDelete() {
+            if(!confirm('למחוק הכל?')) return;
+            const selected = Array.from(document.querySelectorAll('.row-sel:checked')).map(cb => parseInt(cb.dataset.id));
+            for(let id of selected) {
+                await fetch(SCRIPT_URL, {method:'POST', mode:'no-cors', body: JSON.stringify({type:'DELETE_ROW', id: id})});
+                clients = clients.filter(x => x.id !== id);
+            }
             localStorage.setItem('crm_clients_v3', JSON.stringify(clients));
             openManageModal();
             updateStats();
@@ -329,18 +308,15 @@ async function editRow(id) {
         function updateStats() {
             const filterMonth = document.getElementById('stats-month-filter').value;
             const filtered = clients.filter(c => c.month === filterMonth);
-
             document.getElementById('sum-total').innerText = filtered.reduce((a,b) => a + b.amount, 0).toLocaleString() + ' ₪';
             document.getElementById('sum-brides').innerText = filtered.filter(c => c.isBride).length;
             document.getElementById('sum-count').innerText = filtered.length;
-
             const labels = [...new Set(filtered.map(c => c.date))].sort();
             const data = labels.map(l => filtered.filter(c => c.date === l).reduce((a,b) => a + b.amount, 0));
-
             if(myChart) myChart.destroy();
             myChart = new Chart(document.getElementById('incomeChart'), {
                 type: 'line',
-                data: { labels, datasets: [{ label: 'הכנסות יומיות', data, borderColor: '#9333ea', tension: 0.3, fill: true, backgroundColor: '#f3e8ff' }] },
+                data: { labels, datasets: [{ label: 'הכנסות', data, borderColor: '#9333ea', fill: true, backgroundColor: '#f3e8ff' }] },
                 options: { responsive: true, maintainAspectRatio: false }
             });
         }
@@ -350,4 +326,3 @@ async function editRow(id) {
     </script>
 </body>
 </html>
-
