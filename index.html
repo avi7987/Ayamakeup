@@ -187,7 +187,45 @@
 
     <script>
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbydwcb9Elv-S-xFhySVkioiaJrLPwx7I9LxzSLY6ep_aR22ErmKBEuAUG_ZPp0u1JghHw/exec';
-        
+
+        // פונקציה לשליחת ליד חדש לשיטס
+function submitLead() {
+    // 1. איסוף הנתונים מהשדות בטופס
+    const data = {
+        type: 'LEAD', // מגדיר לסקריפט שזה ליד
+        name: document.getElementById('l_name').value,
+        phone: document.getElementById('l_phone').value,
+        service: document.getElementById('l_service').value,
+        source: document.getElementById('l_source').value,
+        eventDate: document.getElementById('l_eventDate').value,
+        notes: document.getElementById('l_notes').value
+    };
+
+    // 2. בדיקת חובה: שם וטלפון
+    if (!data.name || !data.phone) {
+        alert("חובה למלא שם מלא ומספר טלפון");
+        return;
+    }
+
+    // 3. שליחת הנתונים לגוגל
+    fetch(WEB_APP_URL, {
+        method: 'POST',
+        mode: 'no-cors', // קריטי לחיבור תקין
+        body: JSON.stringify(data)
+    })
+    .then(() => {
+        alert("הליד נשלח בהצלחה! הטאב 'ניהול לידים' יתעדכן בשיטס.");
+        // איפוס הטופס
+        document.getElementById('l_name').value = "";
+        document.getElementById('l_phone').value = "";
+        document.getElementById('l_service').value = "";
+        document.getElementById('l_notes').value = "";
+    })
+    .catch(err => {
+        console.error("שגיאה:", err);
+        alert("היתה שגיאה בשליחה. בדקי את החיבור.");
+    });
+}
         let leads = JSON.parse(localStorage.getItem('crm_leads_v4')) || [];
         let clients = JSON.parse(localStorage.getItem('clientsData')) || [];
         let incomeChart = null;
@@ -365,4 +403,5 @@
     </script>
 </body>
 </html>
+
 
