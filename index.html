@@ -9,22 +9,41 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700&display=swap');
         body { font-family: 'Heebo', sans-serif; background: #fdf2f8; }
+        
         .main-card { background: white; border-radius: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
-        .nav-button { padding: 16px 32px; font-weight: bold; border-radius: 16px; transition: all 0.3s; font-size: 18px; }
-        .nav-button.active { background: linear-gradient(135deg, #9333ea 0%, #db2777 100%); color: white; box-shadow: 0 8px 20px rgba(147, 51, 234, 0.3); }
+        
+        .nav-button { 
+            padding: 16px 32px; 
+            font-weight: bold; 
+            border-radius: 16px; 
+            transition: all 0.3s; 
+            font-size: 18px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+        }
+        .nav-button.active { 
+            background: linear-gradient(135deg, #9333ea 0%, #db2777 100%); 
+            color: white; 
+            box-shadow: 0 8px 20px rgba(147, 51, 234, 0.3);
+        }
         .nav-button:not(.active) { background: white; color: #9333ea; border: 2px solid #f3e8ff; }
-        
+
         .kanban-col { background: rgba(243, 232, 255, 0.5); border-radius: 20px; padding: 16px; width: 300px; min-width: 300px; min-height: 600px; }
-        
-        /* עיצוב כרטיס ליד ופולו-אפ */
-        .lead-card { background: white; border-radius: 16px; padding: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border-right: 8px solid #9333ea; position: relative; transition: all 0.3s; }
-        .is-urgent { background: #fff7ed !important; border-color: #fb923c !important; border-width: 2px; transform: translateY(-5px); box-shadow: 0 10px 15px rgba(251, 146, 60, 0.2); }
-        
-        .delete-btn { position: absolute; top: 10px; left: 10px; color: #ef4444; cursor: pointer; opacity: 0.3; }
+        .lead-card { 
+            background: white; 
+            border-radius: 16px; 
+            padding: 20px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
+            border-right: 8px solid #9333ea;
+            position: relative;
+        }
+        .delete-btn { position: absolute; top: 10px; left: 10px; color: #ef4444; font-size: 18px; cursor: pointer; opacity: 0.3; }
         .delete-btn:hover { opacity: 1; }
-        .modal { background: rgba(0,0,0,0.4); backdrop-filter: blur(6px); display: none; z-index: 100; }
-        input, select, textarea { border: 2px solid #f3e8ff !important; border-radius: 14px !important; padding: 10px !important; width: 100%; outline: none; }
-        .automation-label { font-size: 11px; background: #f3e8ff; color: #7c3aed; padding: 2px 8px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+
+        .modal { background: rgba(0,0,0,0.4); backdrop-filter: blur(6px); display: none; z-index: 50; }
+        .spinner { border: 3px solid #f3f4f6; border-top: 3px solid #9333ea; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        input, select, textarea { border: 2px solid #f3e8ff !important; border-radius: 14px !important; padding: 12px !important; outline: none !important; width: 100%; }
     </style>
 </head>
 <body class="p-4 md:p-8">
@@ -38,69 +57,76 @@
 
         <div id="page-entry" class="main-card p-8 md:p-12 max-w-2xl mx-auto">
             <h2 class="text-3xl font-bold mb-8 text-gray-800 border-r-4 border-purple-500 pr-4">הזנת עסקה חדשה</h2>
-            <div class="space-y-6">
-                <input type="text" id="inc-name" placeholder="שם הלקוחה *">
-                <div class="grid grid-cols-2 gap-4">
-                    <input type="text" id="inc-service" placeholder="סוג שירות">
-                    <input type="number" id="inc-amount" placeholder="סכום (₪)">
+            <div class="grid grid-cols-1 gap-6">
+                <div>
+                    <label class="block text-sm font-bold text-gray-600 mb-2">שם הלקוחה *</label>
+                    <input type="text" id="inc-name" placeholder="הכניסי שם מלא">
                 </div>
-                <input type="date" id="inc-date">
-                <button onclick="saveIncome()" id="inc-save-btn" class="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-5 rounded-2xl font-bold text-xl shadow-xl">שמירה בשיטס</button>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-600 mb-2">סוג שירות *</label>
+                        <input type="text" id="inc-service" placeholder="למשל: איפור כלה">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-600 mb-2">סכום (₪) *</label>
+                        <input type="number" id="inc-amount" placeholder="0.00">
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-600 mb-2">תאריך *</label>
+                        <input type="date" id="inc-date">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-600 mb-2">שיטת תשלום</label>
+                        <select id="inc-payment">
+                            <option value="מזומן">מזומן</option>
+                            <option value="ביט/פייבוקס">ביט/פייבוקס</option>
+                            <option value="העברה בנקאית">העברה בנקאית</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4 p-4 bg-purple-50 rounded-2xl border-2 border-purple-100">
+                    <input type="checkbox" id="inc-isbride" class="w-6 h-6 accent-purple-600">
+                    <label for="inc-isbride" class="font-bold text-purple-900">סמני אם זו כלה 👰</label>
+                </div>
+                <button onclick="saveIncome()" id="inc-save-btn" class="bg-gradient-to-r from-purple-600 to-pink-600 text-white py-5 rounded-2xl font-bold text-xl shadow-xl hover:opacity-90">
+                    שמירה בגיליון והמשך
+                </button>
             </div>
         </div>
 
         <div id="page-leads" class="hidden">
-            <div class="flex justify-between items-center mb-8">
-                <h2 class="text-3xl font-bold text-gray-800">לוח לידים ופולו-אפ</h2>
+            <div class="flex flex-wrap justify-between items-center mb-8 gap-4">
+                <h2 class="text-3xl font-bold text-gray-800">לוח לידים</h2>
                 <button onclick="openModal('modal-lead')" class="bg-purple-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg">+ ליד חדש</button>
             </div>
-            
-            <div class="flex gap-6 overflow-x-auto pb-8" id="board-container">
-                </div>
+            <div class="flex gap-6 overflow-x-auto pb-8">
+                <div class="kanban-col"><h3 class="font-bold text-lg mb-4 text-gray-700">🆕 פנייה חדשה</h3><div id="col-new" class="space-y-4"></div></div>
+                <div class="kanban-col"><h3 class="font-bold text-lg mb-4 text-blue-700">📞 יצירת קשר</h3><div id="col-contact" class="space-y-4"></div></div>
+                <div class="kanban-col"><h3 class="font-bold text-lg mb-4 text-orange-700">💬 מו"מ</h3><div id="col-negotiation" class="space-y-4"></div></div>
+                <div class="kanban-col"><h3 class="font-bold text-lg mb-4 text-pink-700">📄 הצעה/חוזה</h3><div id="col-offer" class="space-y-4"></div></div>
+                <div class="kanban-col"><h3 class="font-bold text-lg mb-4 text-green-700">✅ נסגר בהצלחה</h3><div id="col-closed" class="space-y-4"></div></div>
+            </div>
         </div>
 
         <div id="page-stats" class="hidden">
-            <div class="main-card p-8"><canvas id="incomeChart"></canvas></div>
-        </div>
-    </div>
-
-    <div id="modal-auto" class="modal fixed inset-0 flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl">
-            <h2 id="auto-title" class="text-2xl font-bold mb-4">ניהול אוטומציה</h2>
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-sm font-bold mb-1">נוסח הודעה ([שם] יוחלף אוטומטית):</label>
-                    <textarea id="auto-msg" class="h-24"></textarea>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-bold mb-1">טיימר 1 (דקות):</label>
-                        <input type="number" id="auto-t1">
-                        <span class="text-[10px] text-gray-400">זמן עד שליחה ראשונה</span>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-bold mb-1">טיימר 2 (דקות):</label>
-                        <input type="number" id="auto-t2">
-                        <span class="text-[10px] text-gray-400">זמן לתזכורת חוזרת</span>
-                    </div>
-                </div>
-                <input type="hidden" id="auto-col-id">
-                <div class="flex gap-2">
-                    <button onclick="saveAutoSettings()" class="flex-1 bg-purple-600 text-white py-3 rounded-xl font-bold">שמירה</button>
-                    <button onclick="closeModal('modal-auto')" class="flex-1 bg-gray-100 text-gray-600 py-3 rounded-xl font-bold">ביטול</button>
-                </div>
+            <div class="main-card p-8">
+                <div id="stats-summary" class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10"></div>
+                <div class="h-[400px]"><canvas id="incomeChart"></canvas></div>
             </div>
         </div>
     </div>
 
     <div id="modal-lead" class="modal fixed inset-0 flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl p-8 w-full max-w-sm shadow-2xl">
-            <h2 class="text-2xl font-bold mb-6">הוספת ליד</h2>
+        <div class="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl">
+            <h2 class="text-2xl font-bold mb-6">ליד חדש</h2>
             <div class="space-y-4">
                 <input type="text" id="ln-name" placeholder="שם הלקוחה *">
                 <input type="tel" id="ln-phone" placeholder="טלפון *">
-                <button onclick="saveLead()" class="w-full bg-purple-600 text-white py-4 rounded-xl font-bold">שמירה</button>
-                <button onclick="closeModal('modal-lead')" class="w-full text-gray-400">ביטול</button>
+                <input type="text" id="ln-service" placeholder="שירות מבוקש">
+                <button onclick="saveLead()" id="lead-save-btn" class="w-full bg-purple-600 text-white py-4 rounded-xl font-bold">שמירה לשיטס</button>
+                <button onclick="closeModal('modal-lead')" class="w-full text-gray-400">סגור</button>
             </div>
         </div>
     </div>
@@ -108,26 +134,20 @@
     <script>
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbydwcb9Elv-S-xFhySVkioiaJrLPwx7I9LxzSLY6ep_aR22ErmKBEuAUG_ZPp0u1JghHw/exec';
 
-        const COLUMNS = [
-            { id: 'new', title: '🆕 פנייה חדשה', color: 'gray' },
-            { id: 'contact', title: '📞 יצירת קשר', color: 'blue' },
-            { id: 'negotiation', title: '💬 מו"מ', color: 'orange' },
-            { id: 'offer', title: '📄 הצעה', color: 'pink' },
-            { id: 'closed', title: '✅ נסגר', color: 'green' }
-        ];
+        const WA_TEMPLATES = {
+            new: "היי [שם], תודה שפנית אליי! אשמח לתת לך פרטים על השירות.",
+            contact: "היי [שם], ניסיתי לתפוס אותך בטלפון...",
+            negotiation: "היי [שם], רציתי לבדוק אם יש לך עוד שאלות לגבי מה שדיברנו?",
+            offer: "היי [שם], מחכה לך ההצעה/חוזה לשריון התאריך.",
+            closed: "איזה כיף [שם]! התאריך שוריין. מחכה לפגוש אותך."
+        };
 
-        let leads = JSON.parse(localStorage.getItem('crm_leads_v6')) || [];
-        let autoConfig = JSON.parse(localStorage.getItem('crm_auto_config')) || {};
-
-        // אתחול הגדרות אם לא קיימות
-        COLUMNS.forEach(c => {
-            if (!autoConfig[c.id]) autoConfig[c.id] = { msg: "היי [שם], מה שלומך?", t1: 30, t2: 1440 };
-        });
+        let leads = JSON.parse(localStorage.getItem('crm_leads_v4')) || [];
+        let clients = JSON.parse(localStorage.getItem('clientsData')) || [];
 
         window.onload = function() {
             switchPage('entry');
             document.getElementById('inc-date').valueAsDate = new Date();
-            setInterval(checkUrgency, 10000); // בדיקת דחיפות כל 10 שניות
         };
 
         function switchPage(page) {
@@ -143,141 +163,101 @@
         function openModal(id) { document.getElementById(id).style.display = 'flex'; }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
-        // --- אוטומציה ---
-        function openAutoEditor(colId) {
-            const conf = autoConfig[colId];
-            document.getElementById('auto-col-id').value = colId;
-            document.getElementById('auto-msg').value = conf.msg;
-            document.getElementById('auto-t1').value = conf.t1;
-            document.getElementById('auto-t2').value = conf.t2;
-            document.getElementById('auto-title').innerText = `ניהול אוטומציה: ${COLUMNS.find(c=>c.id===colId).title}`;
-            openModal('modal-auto');
-        }
+        // --- הכנסות ---
+        async function saveIncome() {
+            const name = document.getElementById('inc-name').value;
+            const amount = document.getElementById('inc-amount').value;
+            const date = document.getElementById('inc-date').value;
+            if(!name || !amount || !date) return alert('מלאי שדות חובה');
 
-        function saveAutoSettings() {
-            const id = document.getElementById('auto-col-id').value;
-            autoConfig[id] = {
-                msg: document.getElementById('auto-msg').value,
-                t1: parseInt(document.getElementById('auto-t1').value),
-                t2: parseInt(document.getElementById('auto-t2').value)
+            const btn = document.getElementById('inc-save-btn');
+            btn.disabled = true; btn.innerHTML = '<div class="spinner mx-auto"></div>';
+
+            const data = {
+                type: 'INCOME',
+                name,
+                service: document.getElementById('inc-service').value,
+                amount: parseFloat(amount),
+                date,
+                paymentMethod: document.getElementById('inc-payment').value,
+                isBride: document.getElementById('inc-isbride').checked,
+                month: new Date(date).toLocaleDateString('he-IL', {year:'numeric', month:'long'})
             };
-            localStorage.setItem('crm_auto_config', JSON.stringify(autoConfig));
-            closeModal('modal-auto');
-            renderBoard();
+
+            try {
+                await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(data) });
+                clients.push(data);
+                localStorage.setItem('clientsData', JSON.stringify(clients));
+                alert('נשמר בהצלחה!');
+                document.getElementById('inc-name').value = '';
+                document.getElementById('inc-amount').value = '';
+            } catch(e) { alert('שגיאה בסנכרון'); }
+            btn.disabled = false; btn.innerText = 'שמירה בגיליון והמשך';
         }
 
         // --- לידים ---
+        async function saveLead() {
+            const name = document.getElementById('ln-name').value;
+            const phone = document.getElementById('ln-phone').value;
+            if(!name || !phone) return alert('מלאי שם וטלפון');
+
+            const btn = document.getElementById('lead-save-btn');
+            btn.disabled = true; btn.innerHTML = '<div class="spinner mx-auto"></div>';
+
+            const leadData = { type: 'LEAD', name, phone, service: document.getElementById('ln-service').value, status: 'new' };
+
+            try {
+                await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(leadData) });
+                leads.push({ id: Date.now(), ...leadData });
+                localStorage.setItem('crm_leads_v4', JSON.stringify(leads));
+                renderBoard();
+                closeModal('modal-lead');
+            } catch(e) { alert('שגיאה'); }
+            btn.disabled = false; btn.innerText = 'שמירה לשיטס';
+        }
+
         function renderBoard() {
-            const container = document.getElementById('board-container');
-            container.innerHTML = '';
+            const cols = ['new', 'contact', 'negotiation', 'offer', 'closed'];
+            cols.forEach(c => {
+                const container = document.getElementById(`col-${c}`);
+                container.innerHTML = '';
+                leads.filter(l => l.status === c).forEach(lead => {
+                    const msg = WA_TEMPLATES[c].replace('[שם]', lead.name);
+                    const waLink = `https://wa.me/972${lead.phone.replace(/^0/, '')}?text=${encodeURIComponent(msg)}`;
 
-            COLUMNS.forEach(col => {
-                const colDiv = document.createElement('div');
-                colDiv.className = 'kanban-col';
-                colDiv.innerHTML = `
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="font-bold text-${col.color}-700">${col.title}</h3>
-                        <div onclick="openAutoEditor('${col.id}')" class="automation-label">⚙️ ניהול אוטומציה</div>
-                    </div>
-                    <div id="cards-${col.id}" class="space-y-4"></div>
-                `;
-                container.appendChild(colDiv);
-
-                const cardsContainer = document.getElementById(`cards-${col.id}`);
-                // מיון: דחופים למעלה
-                const colLeads = leads.filter(l => l.status === col.id).sort((a,b) => b.urgent - a.urgent);
-
-                colLeads.forEach(lead => {
                     const card = document.createElement('div');
-                    card.className = `lead-card ${lead.urgent ? 'is-urgent' : ''}`;
+                    card.className = 'lead-card';
                     card.innerHTML = `
                         <div class="delete-btn" onclick="deleteLead(${lead.id})">✖</div>
-                        <div class="font-bold text-gray-800">${lead.name} ${lead.urgent ? '🔔' : ''}</div>
-                        <div class="text-xs text-gray-500 mb-3">${lead.phone}</div>
-                        <button onclick="sendWA(${lead.id})" class="w-full py-2 bg-green-500 text-white rounded-lg text-xs font-bold mb-2 shadow-sm">
-                            ${lead.urgent ? 'שלחי עכשיו!' : 'שלחי הודעה'}
-                        </button>
-                        <select onchange="updateStatus(${lead.id}, this.value)" class="text-[10px] bg-gray-50 border-none">
-                            ${COLUMNS.map(c => `<option value="${c.id}" ${lead.status === c.id ? 'selected' : ''}>העברי ל: ${c.title}</option>`).join('')}
+                        <div class="font-bold text-lg">${lead.name}</div>
+                        <div class="text-sm text-gray-500 mb-3">${lead.phone}</div>
+                        <a href="${waLink}" target="_blank" class="block w-full text-center bg-green-500 text-white py-2 rounded-lg text-xs font-bold mb-3 shadow-md">💬 שלחי הודעה</a>
+                        <select onchange="updateStatus(${lead.id}, this.value)" class="w-full text-xs p-2 bg-gray-50 rounded-xl">
+                            <option value="new" ${lead.status === 'new' ? 'selected' : ''}>🆕 פנייה</option>
+                            <option value="contact" ${lead.status === 'contact' ? 'selected' : ''}>📞 יצירת קשר</option>
+                            <option value="negotiation" ${lead.status === 'negotiation' ? 'selected' : ''}>💬 מו"מ</option>
+                            <option value="offer" ${lead.status === 'offer' ? 'selected' : ''}>📄 הצעה</option>
+                            <option value="closed" ${lead.status === 'closed' ? 'selected' : ''}>✅ נסגר</option>
                         </select>
                     `;
-                    cardsContainer.appendChild(card);
+                    container.appendChild(card);
                 });
             });
-        }
-
-        function checkUrgency() {
-            let changed = false;
-            const now = Date.now();
-            leads.forEach(l => {
-                const conf = autoConfig[l.status];
-                const timeDiffMin = (now - (l.lastSent || l.enterStatusAt)) / 60000;
-                const limit = l.lastSent ? conf.t2 : conf.t1;
-                
-                if (timeDiffMin >= limit && !l.urgent) {
-                    l.urgent = true;
-                    changed = true;
-                }
-            });
-            if (changed) {
-                saveData();
-                renderBoard();
-            }
-        }
-
-        function sendWA(id) {
-            const lead = leads.find(l => l.id === id);
-            const msg = autoConfig[lead.status].msg.replace('[שם]', lead.name);
-            lead.urgent = false;
-            lead.lastSent = Date.now();
-            saveData();
-            renderBoard();
-            window.open(`https://wa.me/972${lead.phone.replace(/^0/, '')}?text=${encodeURIComponent(msg)}`, '_blank');
         }
 
         function updateStatus(id, newStatus) {
             const lead = leads.find(l => l.id === id);
             lead.status = newStatus;
-            lead.enterStatusAt = Date.now();
-            lead.lastSent = null;
-            lead.urgent = false;
-            saveData();
-            renderBoard();
-        }
-
-        function saveLead() {
-            const name = document.getElementById('ln-name').value;
-            const phone = document.getElementById('ln-phone').value;
-            if(!name || !phone) return;
-            leads.push({ id: Date.now(), name, phone, status: 'new', enterStatusAt: Date.now(), lastSent: null, urgent: false });
-            saveData();
-            closeModal('modal-lead');
+            localStorage.setItem('crm_leads_v4', JSON.stringify(leads));
             renderBoard();
         }
 
         function deleteLead(id) {
-            if(confirm('למחוק?')) { leads = leads.filter(l => l.id !== id); saveData(); renderBoard(); }
-        }
-
-        function saveData() { localStorage.setItem('crm_leads_v6', JSON.stringify(leads)); }
-
-        async function saveIncome() {
-            const btn = document.getElementById('inc-save-btn');
-            const data = {
-                type: 'INCOME',
-                name: document.getElementById('inc-name').value,
-                amount: document.getElementById('inc-amount').value,
-                date: document.getElementById('inc-date').value,
-                month: new Date(document.getElementById('inc-date').value).toLocaleDateString('he-IL', {year:'numeric', month:'long'})
-            };
-            btn.disabled = true; btn.innerText = 'שומר...';
-            try {
-                await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(data) });
-                alert('נשמר בשיטס!');
-                document.getElementById('inc-name').value = '';
-                document.getElementById('inc-amount').value = '';
-            } catch(e) { alert('שגיאה בשמירה'); }
-            btn.disabled = false; btn.innerText = 'שמירה בשיטס';
+            if(confirm('למחוק?')) {
+                leads = leads.filter(l => l.id !== id);
+                localStorage.setItem('crm_leads_v4', JSON.stringify(leads));
+                renderBoard();
+            }
         }
     </script>
 </body>
