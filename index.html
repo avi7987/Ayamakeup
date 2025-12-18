@@ -416,10 +416,19 @@
             m.forEach(month => s.innerHTML += `<option value="${month}">${month}</option>`);
         }
 
-        // טעינה ראשונית
-        populateSelector();
-        renderBoard();
-        document.getElementById('inc-date').valueAsDate = new Date();
+// טעינה ראשונית - הגדרת דף הבית כברירת מחדל
+        window.onload = function() {
+            switchPage('entry'); // מבטיח שדף הכנסות ייפתח ראשון
+            populateSelector();
+            renderBoard();
+            document.getElementById('inc-date').valueAsDate = new Date();
+            
+            // סגירת כל המודאלים ליתר ביטחון בטעינה
+            closeModal('modal-lead');
+            closeModal('modal-booking');
+            closeModal('modal-archive');
+        };
     </script>
 </body>
 </html>
+
