@@ -2,224 +2,372 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CRM יופי חכם - V8.3 המלא ביותר</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CRM Pro V10 - Full Logic System</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700&display=swap');
-        body { font-family: 'Heebo', sans-serif; background: #fdf2f8; margin: 0; padding-bottom: 60px; overflow-x: hidden; }
-        .main-card { background: white; border-radius: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
-        .nav-button { padding: 12px 20px; font-weight: bold; border-radius: 14px; transition: 0.3s; border: 2px solid #f3e8ff; background: white; color: #9333ea; }
-        .nav-button.active { background: linear-gradient(135deg, #9333ea 0%, #db2777 100%); color: white; border: none; }
+        @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700;800&display=swap');
         
-        /* מודאלים */
-        .modal { background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); display: none; z-index: 100; position: fixed; inset: 0; align-items: center; justify-content: center; padding: 20px; }
-        
-        /* קנבן */
-        .kanban-container { display: flex; gap: 15px; overflow-x: auto; padding: 10px; min-height: 70vh; align-items: flex-start; }
-        .kanban-col { background: #f3e8ff80; border-radius: 20px; padding: 15px; min-width: 280px; flex-shrink: 0; display: flex; flex-direction: column; max-height: 80vh; }
-        .kanban-list { flex: 1; min-height: 200px; overflow-y: auto; }
-        
-        .lead-card { background: white; border-radius: 15px; padding: 15px; margin-bottom: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border-right: 5px solid #9333ea; cursor: grab; user-select: none; }
-        .lead-card:active { cursor: grabbing; }
-        .sortable-ghost { opacity: 0.3; background: #9333ea !important; }
-        
-        .source-tag { font-size: 10px; padding: 2px 8px; border-radius: 20px; background: #f3e8ff; color: #9333ea; font-weight: bold; }
-        input, select { border: 2px solid #f3e8ff !important; border-radius: 12px !important; padding: 12px !important; width: 100%; outline: none; margin-bottom: 10px; font-family: inherit; }
-        input:focus { border-color: #9333ea !important; }
-        
-        table { width: 100%; border-collapse: separate; border-spacing: 0 8px; }
-        .sticky-thead { position: sticky; top: 0; background: #f9fafb; z-index: 10; }
+        :root {
+            --primary: #9333ea;
+            --secondary: #db2777;
+            --bg-soft: #fdf2f8;
+        }
+
+        body { 
+            font-family: 'Heebo', sans-serif; 
+            background-color: var(--bg-soft); 
+            margin: 0; 
+            color: #1f2937;
+            touch-action: manipulation;
+        }
+
+        /* מערכת ה-Grid ל-6 עמודות ללא גלילה */
+        .kanban-wrapper {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 6px;
+            width: 100%;
+            padding: 8px;
+            height: calc(100vh - 180px);
+            min-height: 500px;
+        }
+
+        @media (max-width: 768px) {
+            .kanban-wrapper { gap: 3px; padding: 4px; }
+            .kanban-col h3 { font-size: 0.6rem !important; }
+            .lead-card { padding: 4px !important; }
+            .lead-card .name { font-size: 0.7rem !important; }
+            .lead-card .tags { display: none; }
+        }
+
+        .kanban-col {
+            background: rgba(243, 232, 255, 0.6);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid rgba(147, 51, 234, 0.1);
+            overflow: hidden;
+        }
+
+        .kanban-col h3 {
+            background: white;
+            padding: 8px 4px;
+            font-size: 0.85rem;
+            font-weight: 800;
+            text-align: center;
+            color: var(--primary);
+            border-bottom: 2px solid var(--bg-soft);
+        }
+
+        .kanban-list {
+            flex: 1;
+            padding: 6px;
+            overflow-y: auto;
+            min-height: 100px;
+        }
+
+        .lead-card {
+            background: white;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            border-right: 4px solid var(--primary);
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: grab;
+        }
+
+        .lead-card:active { cursor: grabbing; transform: scale(0.98); }
+
+        /* כפתורי ניווט מעוצבים */
+        .nav-btn {
+            padding: 12px 24px;
+            border-radius: 16px;
+            font-weight: 700;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: white;
+            color: var(--primary);
+            border: 2px solid #f3e8ff;
+        }
+
+        .nav-btn.active {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            box-shadow: 0 4px 12px rgba(147, 51, 234, 0.3);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+
+        .modal-content {
+            background: white;
+            width: 100%;
+            max-width: 500px;
+            border-radius: 24px;
+            padding: 24px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 12px;
+            border: 2px solid #f3e8ff;
+            border-radius: 12px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input:focus { border-color: var(--primary); }
+
         .hidden { display: none; }
-        
-        #version-tag { position: fixed; bottom: 10px; left: 10px; background: #333; color: #fff; padding: 3px 10px; border-radius: 20px; font-size: 10px; opacity: 0.7; z-index: 1000; }
     </style>
 </head>
 <body>
 
-    <div id="version-tag">Build: 21.12.2025-V8.3 (Full Source)</div>
-
-    <div class="max-w-6xl mx-auto p-4 md:p-8">
-        <div class="flex flex-wrap gap-3 justify-center mb-8">
-            <button onclick="switchPage('entry')" id="nav-entry" class="nav-button active">💰 הכנסה</button>
-            <button onclick="switchPage('leads')" id="nav-leads" class="nav-button">🎯 לידים</button>
-            <button onclick="switchPage('stats')" id="nav-stats" class="nav-button">📊 סטטיסטיקה</button>
-        </div>
-
-        <div id="page-entry" class="main-card p-8 max-w-lg mx-auto text-right">
-            <h2 class="text-2xl font-bold mb-6 text-purple-800 text-center">הזנת עסקה חדשה</h2>
-            <input type="text" id="inc-name" placeholder="שם הלקוחה *">
-            <input type="number" id="inc-amount" placeholder="סכום (₪) *">
-            <input type="text" id="inc-service" placeholder="סוג השירות (הקלדה חופשית)">
-            <input type="date" id="inc-date">
-            <select id="inc-payment">
-                <option value="מזומן">מזומן</option>
-                <option value="ביט">ביט / פייבוקס</option>
-                <option value="העברה">העברה בנקאית</option>
-            </select>
-            <label class="flex items-center gap-2 p-3 bg-purple-50 rounded-xl mb-4 cursor-pointer">
-                <input type="checkbox" id="inc-isbride" class="w-5 h-5">
-                <span class="font-bold text-purple-900">עסקת כלה 👰</span>
-            </label>
-            <button onclick="saveIncome()" id="btn-save" class="w-full bg-purple-600 text-white py-4 rounded-xl font-bold text-lg shadow-lg">שמור בשיטס</button>
-        </div>
-
-        <div id="page-leads" class="hidden">
-            <div class="flex justify-between items-center mb-6 px-2 text-right">
-                <h2 class="text-2xl font-bold text-purple-900">ניהול לידים</h2>
-                <button onclick="openModal('modal-new-lead')" class="bg-purple-600 text-white px-6 py-2 rounded-xl font-bold">+ ליד חדש</button>
-            </div>
-            <div id="kanban-board" class="kanban-container text-right"></div>
-        </div>
-
-        <div id="page-stats" class="hidden text-right">
-            <div class="main-card p-6">
-                <div class="flex flex-wrap justify-between items-center mb-6 gap-4 border-b pb-4">
-                    <h2 class="text-2xl font-bold text-purple-800">ביצועים וניהול</h2>
-                    <div class="flex gap-2">
-                        <button onclick="openManageModal()" class="bg-purple-100 text-purple-700 px-4 py-2 rounded-xl font-bold">⚙️ ניהול שורות</button>
-                        <select id="stats-month-filter" onchange="updateStats()" class="!w-44 !mb-0 font-bold"></select>
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
-                    <div class="bg-purple-50 p-6 rounded-2xl text-center"><div class="text-gray-500 text-xs">הכנסות</div><div id="sum-total" class="text-2xl font-bold text-purple-700">0</div></div>
-                    <div class="bg-pink-50 p-6 rounded-2xl text-center"><div class="text-gray-500 text-xs">כלות</div><div id="sum-brides" class="text-2xl font-bold text-pink-600">0</div></div>
-                    <div class="bg-blue-50 p-6 rounded-2xl text-center hidden md:block"><div class="text-gray-500 text-xs">עסקאות</div><div id="sum-count" class="text-2xl font-bold text-blue-600">0</div></div>
-                </div>
-                <div class="h-80"><canvas id="incomeChart"></canvas></div>
-            </div>
-        </div>
-    </div>
-
-    <div id="modal-new-lead" class="modal">
-        <div class="bg-white p-6 rounded-3xl w-full max-w-md shadow-2xl text-right overflow-y-auto max-h-[90vh]">
-            <h3 class="text-xl font-bold mb-4 text-purple-800 text-center">הוספת ליד חדש</h3>
-            <input type="text" id="lead-name" placeholder="שם הלקוחה *">
-            <input type="tel" id="lead-phone" placeholder="מספר טלפון *">
-            <input type="text" id="lead-source" placeholder="מקור הגעה (למשל: אינסטגרם)">
-            <input type="text" id="lead-service" placeholder="שירות מבוקש">
-            <input type="date" id="lead-event-date">
-            <input type="text" id="lead-location" placeholder="מיקום / אולם">
-            <label class="flex items-center gap-2 p-3 bg-pink-50 rounded-xl mb-4 cursor-pointer">
-                <input type="checkbox" id="lead-is-bride" class="w-5 h-5">
-                <span class="font-bold">זו כלה 👰</span>
-            </label>
+    <header class="p-4 bg-white shadow-sm mb-4">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-l from-purple-600 to-pink-600">SmartBeauty CRM</h1>
             <div class="flex gap-2">
-                <button onclick="addLead()" id="btn-save-lead" class="flex-1 bg-purple-600 text-white py-3 rounded-xl font-bold">שמור ליד</button>
-                <button onclick="closeModal('modal-new-lead')" class="flex-1 bg-gray-100 text-gray-400 py-3 rounded-xl font-bold">ביטול</button>
+                <button onclick="switchTab('entry')" id="tab-entry" class="nav-btn active">💰 הכנסה</button>
+                <button onclick="switchTab('leads')" id="tab-leads" class="nav-btn">🎯 לידים</button>
+                <button onclick="switchTab('stats')" id="tab-stats" class="nav-btn">📊 ניהול</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-[1500px] mx-auto">
+        
+        <section id="view-entry" class="p-4">
+            <div class="modal-content mx-auto shadow-xl border border-purple-100">
+                <h2 class="text-2xl font-bold mb-6 text-center text-gray-800">רישום עסקה חדשה</h2>
+                <div class="space-y-1 text-right">
+                    <label class="text-sm font-bold text-gray-600">שם הלקוחה</label>
+                    <input type="text" id="inc-name" placeholder="שם מלא">
+                    
+                    <label class="text-sm font-bold text-gray-600">סכום העסקה</label>
+                    <input type="number" id="inc-amount" placeholder="0.00 ₪">
+                    
+                    <label class="text-sm font-bold text-gray-600">סוג השירות (חופשי)</label>
+                    <input type="text" id="inc-service" placeholder="למשל: איפור ערב + שיער">
+                    
+                    <label class="text-sm font-bold text-gray-600">תאריך</label>
+                    <input type="date" id="inc-date">
+                    
+                    <label class="text-sm font-bold text-gray-600">שיטת תשלום</label>
+                    <select id="inc-method">
+                        <option value="מזומן">מזומן</option>
+                        <option value="ביט/פייבוקס">ביט / פייבוקס</option>
+                        <option value="העברה בנקאית">העברה בנקאית</option>
+                        <option value="אשראי">כרטיס אשראי</option>
+                    </select>
+
+                    <label class="flex items-center gap-3 p-4 bg-purple-50 rounded-xl cursor-pointer hover:bg-purple-100 transition">
+                        <input type="checkbox" id="inc-bride" class="w-5 h-5 accent-purple-600">
+                        <span class="font-bold text-purple-800 text-lg">עסקת כלה? 👰</span>
+                    </label>
+                    
+                    <button onclick="handleIncomeSubmit()" id="save-btn" class="w-full mt-6 bg-purple-600 text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:bg-purple-700 transition-all">
+                        שמור ביומן ובשיטס
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section id="view-leads" class="hidden p-2">
+            <div class="flex justify-between items-center mb-4 px-4">
+                <button onclick="openModal('lead-modal')" class="bg-purple-600 text-white px-6 py-2 rounded-full font-bold shadow-md">+ הוספת ליד</button>
+                <div class="text-right">
+                    <h2 class="text-xl font-extrabold text-purple-900 leading-tight">ניהול תהליכי לקוחות</h2>
+                    <p class="text-xs text-gray-500">גרירה להחלפת סטטוס</p>
+                </div>
+            </div>
+            <div class="kanban-wrapper" id="kanban-board">
+                </div>
+        </section>
+
+        <section id="view-stats" class="hidden p-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="bg-white p-6 rounded-3xl shadow-sm border-b-4 border-purple-500">
+                    <p class="text-gray-500 font-bold">הכנסות חודשיות</p>
+                    <h3 id="stat-total" class="text-3xl font-black text-purple-700">₪0</h3>
+                </div>
+                <div class="bg-white p-6 rounded-3xl shadow-sm border-b-4 border-pink-500">
+                    <p class="text-gray-500 font-bold">כלות החודש</p>
+                    <h3 id="stat-brides" class="text-3xl font-black text-pink-600">0</h3>
+                </div>
+                <div class="bg-white p-6 rounded-3xl shadow-sm border-b-4 border-blue-500">
+                    <p class="text-gray-500 font-bold">סה"כ עסקאות</p>
+                    <h3 id="stat-count" class="text-3xl font-black text-blue-600">0</h3>
+                </div>
+            </div>
+            
+            <div class="bg-white p-6 rounded-3xl shadow-sm mb-8">
+                <div class="flex justify-between items-center mb-6">
+                    <button onclick="openManagement()" class="bg-gray-100 text-gray-700 px-4 py-2 rounded-xl font-bold">⚙️ עריכת נתונים</button>
+                    <select id="month-filter" onchange="refreshStats()" class="!w-40 !mb-0 font-bold"></select>
+                </div>
+                <div class="h-64">
+                    <canvas id="mainChart"></canvas>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div id="lead-modal" class="modal">
+        <div class="modal-content text-right">
+            <h3 class="text-xl font-bold mb-4">יצירת ליד חדש</h3>
+            <input type="text" id="l-name" placeholder="שם הלקוחה *">
+            <input type="tel" id="l-phone" placeholder="טלפון">
+            <label class="text-xs text-gray-400">מקור הגעה:</label>
+            <select id="l-source">
+                <option value="אינסטגרם">אינסטגרם</option>
+                <option value="פייסבוק">פייסבוק</option>
+                <option value="טיקטוק">טיקטוק</option>
+                <option value="חברה/המלצה">חברה / המלצה</option>
+                <option value="אחר">אחר</option>
+            </select>
+            <input type="text" id="l-service" placeholder="שירות מבוקש (חופשי)">
+            <input type="date" id="l-date">
+            <div class="flex gap-3 mt-4">
+                <button onclick="handleLeadSubmit()" class="flex-1 bg-purple-600 text-white py-3 rounded-xl font-bold">שמור</button>
+                <button onclick="closeModal('lead-modal')" class="flex-1 bg-gray-100 py-3 rounded-xl">ביטול</button>
             </div>
         </div>
     </div>
 
-    <div id="modal-view-lead" class="modal">
-        <div class="bg-white p-8 rounded-3xl w-full max-w-sm shadow-2xl text-right">
-            <div class="mb-4">
-                <h3 id="view-name" class="text-2xl font-bold text-purple-800"></h3>
-                <span id="view-tag-bride" class="hidden text-pink-500 font-bold text-sm">👰 לקוחת כלה</span>
-            </div>
-            <div class="space-y-3 text-sm border-t pt-4">
-                <p><b>טלפון:</b> <span id="view-phone"></span></p>
-                <p><b>מקור הגעה:</b> <span id="view-source"></span></p>
-                <p><b>שירות:</b> <span id="view-service"></span></p>
-                <p><b>תאריך אירוע:</b> <span id="view-date"></span></p>
-                <p><b>מיקום:</b> <span id="view-location"></span></p>
-            </div>
-            <div class="mt-8 flex flex-col gap-2">
-                <a id="view-wa-link" target="_blank" class="w-full bg-green-500 text-white py-3 rounded-xl font-bold text-center">שלח WhatsApp</a>
-                <button onclick="closeModal('modal-view-lead')" class="text-gray-400 font-bold py-2">סגור</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="modal-manage" class="modal">
-        <div class="bg-white rounded-3xl w-full max-w-5xl max-h-[85vh] overflow-hidden flex flex-col p-6 shadow-2xl">
+    <div id="manage-modal" class="modal">
+        <div class="modal-content max-w-4xl">
             <div class="flex justify-between items-center mb-4">
-                <button id="bulk-del-btn" onclick="bulkDelete()" class="hidden bg-red-500 text-white px-4 py-1 rounded-lg text-sm font-bold">מחק מסומנים</button>
-                <h3 class="text-xl font-bold">ניהול נתוני הכנסות</h3>
-                <button onclick="closeModal('modal-manage')" class="text-2xl">&times;</button>
+                <button id="bulk-del" onclick="handleBulkDelete()" class="hidden bg-red-500 text-white px-4 py-1 rounded-lg text-sm">מחיקה מרובה</button>
+                <h3 class="font-bold text-xl">ניהול שורות</h3>
+                <button onclick="closeModal('manage-modal')" class="text-2xl">&times;</button>
             </div>
-            <div class="overflow-x-auto overflow-y-auto flex-1">
-                <table>
-                    <thead class="sticky-thead">
-                        <tr class="text-right border-b">
-                            <th class="p-3"><input type="checkbox" id="master-check" onclick="toggleSelectAll(this)"></th>
+            <div class="overflow-x-auto">
+                <table class="w-full text-right">
+                    <thead>
+                        <tr class="bg-gray-50">
+                            <th class="p-3"><input type="checkbox" id="master-check" onclick="toggleAllChecks(this)"></th>
                             <th class="p-3">תאריך</th>
-                            <th class="p-3">שם</th>
-                            <th class="p-3">שירות</th>
+                            <th class="p-3">לקוחה</th>
                             <th class="p-3">סכום</th>
                             <th class="p-3">פעולות</th>
                         </tr>
                     </thead>
-                    <tbody id="manage-tbody"></tbody>
+                    <tbody id="manage-table-body"></tbody>
                 </table>
             </div>
         </div>
     </div>
 
-    <div id="modal-edit-row" class="modal">
-        <div class="bg-white p-6 rounded-3xl w-full max-w-sm shadow-2xl text-right">
-            <h3 class="text-xl font-bold mb-4">עריכת עסקה</h3>
-            <input type="hidden" id="edit-id">
-            <input type="text" id="edit-name" placeholder="שם הלקוחה">
-            <input type="number" id="edit-amount" placeholder="סכום">
-            <input type="text" id="edit-service" placeholder="סוג שירות">
-            <input type="date" id="edit-date">
-            <label class="flex items-center gap-2 p-3 bg-pink-50 rounded-xl mb-4">
-                <input type="checkbox" id="edit-isbride"> <span class="font-bold">עסקת כלה</span>
-            </label>
-            <button onclick="submitEdit()" id="btn-edit-save" class="w-full bg-purple-600 text-white py-3 rounded-xl font-bold">שמור שינויים</button>
-            <button onclick="closeModal('modal-edit-row')" class="w-full text-gray-400 mt-2">ביטול</button>
-        </div>
-    </div>
-
     <script>
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbydwcb9Elv-S-xFhySVkioiaJrLPwx7I9LxzSLY6ep_aR22ErmKBEuAUG_ZPp0u1JghHw/exec';
-        
-        let clients = JSON.parse(localStorage.getItem('crm_clients_v3')) || [];
-        let leads = JSON.parse(localStorage.getItem('crm_leads_v3')) || [];
-        let myChart = null;
-        const MONTHS = ["ינואר", "פברואר", "מרץ", "אפריל", "מאי", "יוני", "יולי", "אוגוסט", "ספטמבר", "אוקטובר", "נובמבר", "דצמבר"];
-
-        window.onload = () => {
-            const filter = document.getElementById('stats-month-filter');
-            filter.innerHTML = MONTHS.map(m => `<option value="${m}" ${m === MONTHS[new Date().getMonth()] ? 'selected' : ''}>${m}</option>`).join('') + `<option value="ALL">📈 שנתי</option>`;
-            document.getElementById('inc-date').valueAsDate = new Date();
-            renderLeads();
+        // --- CONFIGURATION & STATE ---
+        const SCRIPT_URL = 'YOUR_GOOGLE_SCRIPT_URL_HERE'; // חובה להחליף בכתובת שלך
+        let state = {
+            incomes: JSON.parse(localStorage.getItem('crm_inc_v10')) || [],
+            leads: JSON.parse(localStorage.getItem('crm_leads_v10')) || [],
+            chart: null
         };
 
-        function switchPage(p) {
-            ['entry', 'leads', 'stats'].forEach(id => document.getElementById('page-'+id).classList.add('hidden'));
-            document.getElementById('page-'+p).classList.remove('hidden');
-            document.querySelectorAll('.nav-button').forEach(b => b.classList.remove('active'));
-            document.getElementById('nav-'+p).classList.add('active');
-            if(p === 'leads') renderLeads();
-            if(p === 'stats') updateStats();
+        const STAGES = [
+            {id: 'new', label: 'חדש'},
+            {id: 'contact', label: 'קשר'},
+            {id: 'meeting', label: 'מו"מ'},
+            {id: 'offer', label: 'הצעה'},
+            {id: 'closed', label: 'סגר'},
+            {id: 'archive', label: 'ארכיון'}
+        ];
+
+        const MONTHS = ["ינואר", "פברואר", "מרץ", "אפריל", "מאי", "יוני", "יולי", "אוגוסט", "ספטמבר", "אוקטובר", "נובמבר", "דצמבר"];
+
+        // --- INITIALIZATION ---
+        window.onload = () => {
+            document.getElementById('inc-date').valueAsDate = new Date();
+            initMonthFilter();
+            renderKanban();
+            refreshStats();
+        };
+
+        function initMonthFilter() {
+            const select = document.getElementById('month-filter');
+            const curr = new Date().getMonth();
+            MONTHS.forEach((m, i) => {
+                const opt = new Option(m, m);
+                if(i === curr) opt.selected = true;
+                select.add(opt);
+            });
+            select.add(new Option("שנתי", "ALL"));
         }
 
-        // --- ניהול לידים וגרירה ---
-        function renderLeads() {
-            const board = document.getElementById('kanban-board');
-            const stages = [
-                {id:'new', t:'🆕 חדש'}, {id:'contact', t:'📞 קשר'}, {id:'negotiation', t:'🤝 מו"מ'},
-                {id:'offer', t:'📜 הצעה'}, {id:'done', t:'✅ נסגר'}, {id:'archive', t:'📁 ארכיון'}
-            ];
+        // --- CORE LOGIC: INCOMES ---
+        async function handleIncomeSubmit() {
+            const btn = document.getElementById('save-btn');
+            const data = {
+                id: Date.now(),
+                type: 'INCOME',
+                name: document.getElementById('inc-name').value.trim(),
+                amount: parseFloat(document.getElementById('inc-amount').value),
+                service: document.getElementById('inc-service').value.trim(),
+                date: document.getElementById('inc-date').value,
+                method: document.getElementById('inc-method').value,
+                isBride: document.getElementById('inc-bride').checked,
+                month: MONTHS[new Date(document.getElementById('inc-date').value).getMonth()]
+            };
 
-            board.innerHTML = stages.map(s => `
+            if(!data.name || isNaN(data.amount)) return alert("אנא מלא שם וסכום תקין");
+
+            // 1. Save Locally (Instant Feedback)
+            state.incomes.push(data);
+            saveToStorage();
+            
+            // 2. Clear UI
+            document.getElementById('inc-name').value = '';
+            document.getElementById('inc-amount').value = '';
+            alert("נשמר בהצלחה!");
+
+            // 3. Sync to Google Sheets (Background)
+            btn.innerText = "מסנכרן לשיטס...";
+            try {
+                await fetch(SCRIPT_URL, { 
+                    method: 'POST', 
+                    mode: 'no-cors', 
+                    body: JSON.stringify(data) 
+                });
+                btn.innerText = "שמור ביומן ובשיטס";
+            } catch (e) {
+                console.error("Sync failed, saved locally only");
+                btn.innerText = "שמור (שגיאת סנכרון)";
+            }
+        }
+
+        // --- CORE LOGIC: LEADS (KANBAN) ---
+        function renderKanban() {
+            const board = document.getElementById('kanban-board');
+            board.innerHTML = STAGES.map(stage => `
                 <div class="kanban-col">
-                    <h3 class="font-bold mb-4 text-purple-900 border-b pb-2 text-center text-sm">${s.t}</h3>
-                    <div class="kanban-list space-y-3" data-status="${s.id}">
-                        ${leads.filter(l => (l.status || 'new') === s.id).map(l => `
-                            <div class="lead-card text-right" data-id="${l.id}">
-                                <div class="flex justify-between mb-1">
-                                    <span class="font-bold text-gray-800 text-sm">${l.name}</span>
-                                    <span class="source-tag">${l.source || 'כללי'}</span>
-                                </div>
-                                <div class="text-[10px] text-gray-400 mb-2">${l.service || ''}</div>
-                                <div class="flex gap-2 border-t pt-2 mt-1">
-                                    <button onclick="viewLead(${l.id})" class="text-[10px] bg-purple-50 text-purple-600 px-2 py-1 rounded font-bold">👁️ פרטים</button>
-                                    <button onclick="deleteLead(${l.id})" class="text-[10px] text-red-300 mr-auto">מחק</button>
+                    <h3>${stage.label}</h3>
+                    <div class="kanban-list" data-stage="${stage.id}" id="list-${stage.id}">
+                        ${state.leads.filter(l => l.status === stage.id).map(l => `
+                            <div class="lead-card" data-id="${l.id}">
+                                <span class="name font-bold block">${l.name}</span>
+                                <span class="text-[10px] text-gray-500">${l.service || 'כללי'}</span>
+                                <div class="flex justify-between mt-2">
+                                    <span class="text-[9px] bg-purple-100 text-purple-700 px-1 rounded">${l.source}</span>
+                                    <button onclick="deleteLead(${l.id})" class="text-red-300 hover:text-red-500 text-xs">🗑</button>
                                 </div>
                             </div>
                         `).join('')}
@@ -227,219 +375,161 @@
                 </div>
             `).join('');
 
-            // הפעלת גרירה
-            document.querySelectorAll('.kanban-list').forEach(el => {
-                new Sortable(el, {
+            STAGES.forEach(stage => {
+                new Sortable(document.getElementById(`list-${stage.id}`), {
                     group: 'leads',
                     animation: 150,
-                    ghostClass: 'sortable-ghost',
-                    delay: 200,
-                    delayOnTouchOnly: true,
-                    onEnd: async function(evt) {
-                        const leadId = parseInt(evt.item.getAttribute('data-id'));
-                        const newStatus = evt.to.getAttribute('data-status');
-                        const idx = leads.findIndex(x => x.id === leadId);
-                        if(idx !== -1) {
-                            leads[idx].status = newStatus;
-                            localStorage.setItem('crm_leads_v3', JSON.stringify(leads));
-                            // סנכרון שקט
-                            fetch(SCRIPT_URL, {method:'POST', mode:'no-cors', body: JSON.stringify({type:'LEAD_UPDATE', id: leadId, status: newStatus, name: leads[idx].name})});
-                        }
+                    ghostClass: 'bg-purple-50',
+                    onEnd: (evt) => {
+                        const leadId = evt.item.getAttribute('data-id');
+                        const newStatus = evt.to.getAttribute('data-stage');
+                        updateLeadStatus(parseInt(leadId), newStatus);
                     }
                 });
             });
         }
 
-        async function addLead() {
-            const btn = document.getElementById('btn-save-lead');
+        async function handleLeadSubmit() {
             const data = {
-                type: 'LEAD', id: Date.now(), status: 'new',
-                name: document.getElementById('lead-name').value,
-                phone: document.getElementById('lead-phone').value,
-                source: document.getElementById('lead-source').value,
-                service: document.getElementById('lead-service').value,
-                eventDate: document.getElementById('lead-event-date').value,
-                location: document.getElementById('lead-location').value,
-                isBride: document.getElementById('lead-is-bride').checked
+                id: Date.now(),
+                type: 'LEAD_NEW',
+                status: 'new',
+                name: document.getElementById('l-name').value.trim(),
+                phone: document.getElementById('l-phone').value,
+                source: document.getElementById('l-source').value,
+                service: document.getElementById('l-service').value,
+                date: document.getElementById('l-date').value
             };
-            if(!data.name || !data.phone) return alert('שם וטלפון חובה');
-            btn.innerText = "שומר..."; btn.disabled = true;
-            try {
-                await fetch(SCRIPT_URL, {method:'POST', mode:'no-cors', body: JSON.stringify(data)});
-                leads.push(data);
-                localStorage.setItem('crm_leads_v3', JSON.stringify(leads));
-                closeModal('modal-new-lead'); renderLeads();
-                alert('ליד נוסף בהצלחה');
-            } catch(e) { alert("שגיאה בסנכרון"); }
-            finally { btn.innerText = "שמור ליד"; btn.disabled = false; }
+
+            if(!data.name) return alert("חובה להזין שם לקוחה");
+
+            state.leads.push(data);
+            saveToStorage();
+            renderKanban();
+            closeModal('lead-modal');
+            
+            fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(data) });
         }
 
-        function viewLead(id) {
-            const l = leads.find(x => x.id === id);
-            if(!l) return;
-            document.getElementById('view-name').innerText = l.name;
-            document.getElementById('view-phone').innerText = l.phone;
-            document.getElementById('view-source').innerText = l.source || '-';
-            document.getElementById('view-service').innerText = l.service || '-';
-            document.getElementById('view-date').innerText = l.eventDate || 'לא נקבע';
-            document.getElementById('view-location').innerText = l.location || '-';
-            document.getElementById('view-tag-bride').classList.toggle('hidden', !l.isBride);
-            document.getElementById('view-wa-link').href = `https://wa.me/972${l.phone.replace(/[^0-9]/g, '').replace(/^0/, '')}`;
-            openModal('modal-view-lead');
+        function updateLeadStatus(id, newStatus) {
+            const lead = state.leads.find(l => l.id === id);
+            if(lead) {
+                lead.status = newStatus;
+                saveToStorage();
+                fetch(SCRIPT_URL, { 
+                    method: 'POST', 
+                    mode: 'no-cors', 
+                    body: JSON.stringify({ type: 'LEAD_MOVE', id, status: newStatus }) 
+                });
+            }
         }
 
-        async function deleteLead(id) {
-            if(!confirm('למחוק לצמיתות מהשיטס?')) return;
-            fetch(SCRIPT_URL, {method:'POST', mode:'no-cors', body: JSON.stringify({type:'DELETE_LEAD', id})});
-            leads = leads.filter(x => x.id !== id);
-            localStorage.setItem('crm_leads_v3', JSON.stringify(leads));
-            renderLeads();
-        }
-
-        // --- הכנסות (עוגן) ---
-        async function saveIncome() {
-            const btn = document.getElementById('btn-save');
-            const data = {
-                type: 'INCOME', id: Date.now(),
-                name: document.getElementById('inc-name').value,
-                amount: parseFloat(document.getElementById('inc-amount').value),
-                date: document.getElementById('inc-date').value,
-                service: document.getElementById('inc-service').value,
-                paymentMethod: document.getElementById('inc-payment').value,
-                isBride: document.getElementById('inc-isbride').checked,
-                month: MONTHS[new Date(document.getElementById('inc-date').value).getMonth()]
-            };
-            if(!data.name || isNaN(data.amount)) return alert('מלא שם וסכום');
-            btn.innerText = "שומר... ⏳"; btn.disabled = true;
-            try {
-                await fetch(SCRIPT_URL, {method:'POST', mode:'no-cors', body: JSON.stringify(data)});
-                clients.push(data);
-                localStorage.setItem('crm_clients_v3', JSON.stringify(clients));
-                alert('העסקה נשמרה בשיטס!');
-                document.getElementById('inc-name').value = ''; 
-                document.getElementById('inc-amount').value = '';
-            } catch(e) { alert("שגיאה בשמירה"); }
-            finally { btn.innerText = "שמור בשיטס"; btn.disabled = false; }
-        }
-
-        // --- ניהול שורות ועריכה (עוגן מלא) ---
-        function openManageModal() {
-            const filterVal = document.getElementById('stats-month-filter').value;
-            const filtered = filterVal === 'ALL' ? clients : clients.filter(c => c.month === filterVal);
-            const tbody = document.getElementById('manage-tbody');
-            tbody.innerHTML = filtered.sort((a,b) => new Date(b.date) - new Date(a.date)).map(c => `
-                <tr class="border-b hover:bg-gray-50 text-right">
-                    <td class="p-3"><input type="checkbox" class="row-sel" data-id="${c.id}" onchange="checkBulkVisibility()"></td>
-                    <td class="p-3 text-xs text-gray-500">${c.date}</td>
-                    <td class="p-3 font-bold">${c.name}</td>
-                    <td class="p-3 text-sm text-gray-600">${c.service || '-'}</td>
-                    <td class="p-3 text-purple-600 font-bold">${c.amount} ₪</td>
-                    <td class="p-3 flex gap-2">
-                        <button onclick="startEdit(${c.id})" class="text-blue-500 font-bold text-xs bg-blue-50 px-2 py-1 rounded">ערוך</button>
-                        <button onclick="deleteRow(${c.id})" class="text-red-500 font-bold text-xs bg-red-50 px-2 py-1 rounded">מחק</button>
+        // --- MANAGEMENT & STATS ---
+        function openManagement() {
+            const tbody = document.getElementById('manage-table-body');
+            tbody.innerHTML = state.incomes.sort((a,b) => new Date(b.date) - new Date(a.date)).map(inc => `
+                <tr class="border-b">
+                    <td class="p-3"><input type="checkbox" class="row-check" data-id="${inc.id}" onchange="toggleBulkBtn()"></td>
+                    <td class="p-3 text-xs">${inc.date}</td>
+                    <td class="p-3 font-bold">${inc.name}</td>
+                    <td class="p-3 text-purple-600 font-bold">${inc.amount}₪</td>
+                    <td class="p-3">
+                        <button onclick="deleteIncome(${inc.id})" class="text-red-500">מחק</button>
                     </td>
                 </tr>
             `).join('');
-            checkBulkVisibility();
-            openModal('modal-manage');
+            openModal('manage-modal');
         }
 
-        function startEdit(id) {
-            const c = clients.find(x => x.id === id);
-            if(!c) return;
-            document.getElementById('edit-id').value = c.id;
-            document.getElementById('edit-name').value = c.name;
-            document.getElementById('edit-amount').value = c.amount;
-            document.getElementById('edit-service').value = c.service || '';
-            document.getElementById('edit-date').value = c.date;
-            document.getElementById('edit-isbride').checked = c.isBride || false;
-            openModal('modal-edit-row');
+        async function deleteIncome(id) {
+            if(!confirm("למחוק עסקה זו?")) return;
+            state.incomes = state.incomes.filter(i => i.id !== id);
+            saveToStorage();
+            openManagement();
+            refreshStats();
+            fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({type: 'DELETE_INC', id}) });
         }
 
-        async function submitEdit() {
-            const btn = document.getElementById('btn-edit-save');
-            const id = parseInt(document.getElementById('edit-id').value);
-            const idx = clients.findIndex(x => x.id === id);
-            const updated = {
-                ...clients[idx], 
-                type: 'UPDATE_ROW',
-                name: document.getElementById('edit-name').value,
-                amount: parseFloat(document.getElementById('edit-amount').value),
-                service: document.getElementById('edit-service').value,
-                date: document.getElementById('edit-date').value,
-                isBride: document.getElementById('edit-isbride').checked,
-                month: MONTHS[new Date(document.getElementById('edit-date').value).getMonth()]
-            };
-            btn.innerText = "מעדכן... ⏳"; btn.disabled = true;
-            try {
-                await fetch(SCRIPT_URL, {method:'POST', mode:'no-cors', body: JSON.stringify(updated)});
-                clients[idx] = updated;
-                localStorage.setItem('crm_clients_v3', JSON.stringify(clients));
-                closeModal('modal-edit-row');
-                openManageModal();
-                updateStats();
-            } catch(e) { alert("שגיאה בעדכון"); }
-            finally { btn.innerText = "שמור שינויים"; btn.disabled = false; }
-        }
-
-        async function deleteRow(id) {
-            if(!confirm('למחוק מהשיטס?')) return;
-            await fetch(SCRIPT_URL, {method:'POST', mode:'no-cors', body: JSON.stringify({type:'DELETE_ROW', id})});
-            clients = clients.filter(x => x.id !== id);
-            localStorage.setItem('crm_clients_v3', JSON.stringify(clients));
-            openManageModal(); updateStats();
-        }
-
-        function toggleSelectAll(master) {
-            document.querySelectorAll('.row-sel').forEach(cb => cb.checked = master.checked);
-            checkBulkVisibility();
-        }
-
-        function checkBulkVisibility() {
-            const checked = document.querySelectorAll('.row-sel:checked');
-            const btn = document.getElementById('bulk-del-btn');
-            btn.classList.toggle('hidden', checked.length === 0);
-            btn.innerText = `מחק ${checked.length} שורות`;
-        }
-
-        async function bulkDelete() {
-            if(!confirm('למחוק את כל השורות שנבחרו מהשיטס?')) return;
-            const ids = Array.from(document.querySelectorAll('.row-sel:checked')).map(cb => parseInt(cb.dataset.id));
-            for(let id of ids) {
-                await fetch(SCRIPT_URL, {method:'POST', mode:'no-cors', body: JSON.stringify({type:'DELETE_ROW', id})});
-                clients = clients.filter(x => x.id !== id);
-            }
-            localStorage.setItem('crm_clients_v3', JSON.stringify(clients));
-            openManageModal(); updateStats();
-        }
-
-        // --- סטטיסטיקה ---
-        function updateStats() {
-            const filterVal = document.getElementById('stats-month-filter').value;
-            const filtered = filterVal === 'ALL' ? clients : clients.filter(c => c.month === filterVal);
+        function refreshStats() {
+            const filter = document.getElementById('month-filter').value;
+            const filtered = filter === 'ALL' ? state.incomes : state.incomes.filter(i => i.month === filter);
             
-            document.getElementById('sum-total').innerText = filtered.reduce((a,b) => a + b.amount, 0).toLocaleString() + ' ₪';
-            document.getElementById('sum-brides').innerText = filtered.filter(c => c.isBride).length;
-            document.getElementById('sum-count').innerText = filtered.length;
+            const total = filtered.reduce((s, i) => s + i.amount, 0);
+            const brides = filtered.filter(i => i.isBride).length;
+            
+            document.getElementById('stat-total').innerText = '₪' + total.toLocaleString();
+            document.getElementById('stat-brides').innerText = brides;
+            document.getElementById('stat-count').innerText = filtered.length;
 
-            const labels = filterVal === 'ALL' ? MONTHS : [filterVal];
-            const data = filterVal === 'ALL' ? MONTHS.map(m => clients.filter(c => c.month === m).reduce((a,b) => a + b.amount, 0)) : [filtered.reduce((a,b) => a + b.amount, 0)];
+            updateChart(filter);
+        }
 
-            if(myChart) myChart.destroy();
-            myChart = new Chart(document.getElementById('incomeChart'), {
+        function updateChart(filter) {
+            const ctx = document.getElementById('mainChart').getContext('2d');
+            let labels, data;
+
+            if(filter === 'ALL') {
+                labels = MONTHS;
+                data = MONTHS.map(m => state.incomes.filter(i => i.month === m).reduce((s, i) => s + i.amount, 0));
+            } else {
+                labels = [filter];
+                data = [state.incomes.filter(i => i.month === filter).reduce((s, i) => s + i.amount, 0)];
+            }
+
+            if(state.chart) state.chart.destroy();
+            state.chart = new Chart(ctx, {
+                type: 'bar',
                 data: {
-                    labels,
-                    datasets: [
-                        { type: 'bar', label: 'הכנסות ₪', data, backgroundColor: '#9333ea', borderRadius: 8 },
-                        { type: 'line', label: 'מגמה', data, borderColor: '#db2777', tension: 0.3 }
-                    ]
+                    labels: labels,
+                    datasets: [{
+                        label: 'הכנסות',
+                        data: data,
+                        backgroundColor: '#9333ea',
+                        borderRadius: 10
+                    }]
                 },
                 options: { responsive: true, maintainAspectRatio: false }
             });
         }
 
+        // --- UTILS ---
+        function switchTab(t) {
+            ['entry', 'leads', 'stats'].forEach(v => {
+                document.getElementById('view-'+v).classList.add('hidden');
+                document.getElementById('tab-'+v).classList.remove('active');
+            });
+            document.getElementById('view-'+t).classList.remove('hidden');
+            document.getElementById('tab-'+t).classList.add('active');
+            if(t === 'leads') renderKanban();
+            if(t === 'stats') refreshStats();
+        }
+
         function openModal(id) { document.getElementById(id).style.display = 'flex'; }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+        function saveToStorage() {
+            localStorage.setItem('crm_inc_v10', JSON.stringify(state.incomes));
+            localStorage.setItem('crm_leads_v10', JSON.stringify(state.leads));
+        }
+
+        function toggleAllChecks(m) {
+            document.querySelectorAll('.row-check').forEach(c => c.checked = m.checked);
+            toggleBulkBtn();
+        }
+
+        function toggleBulkBtn() {
+            const checked = document.querySelectorAll('.row-check:checked').length;
+            document.getElementById('bulk-del').classList.toggle('hidden', checked === 0);
+        }
+
+        async function handleBulkDelete() {
+            if(!confirm("למחוק את כל הנבחרים?")) return;
+            const ids = Array.from(document.querySelectorAll('.row-check:checked')).map(c => parseInt(c.dataset.id));
+            state.incomes = state.incomes.filter(i => !ids.includes(i.id));
+            saveToStorage();
+            openManagement();
+            refreshStats();
+            ids.forEach(id => fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({type: 'DELETE_INC', id}) }));
+        }
     </script>
 </body>
 </html>
