@@ -288,30 +288,52 @@
             openModal('modal-edit-row');
         }
 
-        async function submitEdit() {
-            const id = parseInt(document.getElementById('edit-id').value);
-            const idx = clients.findIndex(x => x.id === id);
-            
-            const updated = {
-                ...clients[idx],
-                type: 'UPDATE_ROW',
-                name: document.getElementById('edit-name').value,
-                amount: parseFloat(document.getElementById('edit-amount').value),
-                service: document.getElementById('edit-service').value,
-                date: document.getElementById('edit-date').value,
-                isBride: document.getElementById('edit-isbride').checked,
-                month: MONTHS[new Date(document.getElementById('edit-date').value).getMonth()]
-            };
+async function submitEdit() {
+    // 1. מציאת הכפתור בתוך המודאל (הראשון מבין השניים)
+    const btn = document.querySelector('#modal-edit-row button[onclick="submitEdit()"]');
+    const id = parseInt(document.getElementById('edit-id').value);
+    const idx = clients.findIndex(x => x.id === id);
+    
+    // 2. איסוף הנתונים
+    const updated = {
+        ...clients[idx],
+        type: 'UPDATE_ROW',
+        name: document.getElementById('edit-name').value,
+        amount: parseFloat(document.getElementById('edit-amount').value),
+        service: document.getElementById('edit-service').value,
+        date: document.getElementById('edit-date').value,
+        isBride: document.getElementById('edit-isbride').checked,
+        month: MONTHS[new Date(document.getElementById('edit-date').value).getMonth()]
+    };
 
-            clients[idx] = updated;
-            localStorage.setItem('crm_clients_v3', JSON.stringify(clients));
-            
-            await fetch(SCRIPT_URL, {method:'POST', mode:'no-cors', body: JSON.stringify(updated)});
-            alert("הנתונים עודכנו!");
-            closeModal('modal-edit-row');
-            openManageModal();
-            updateStats();
-        }
+    // 3. שינוי מצב הכפתור ל-"חשיבה"
+    const originalText = btn.innerText;
+    btn.innerText = "מעדכן נתונים... ⏳";
+    btn.disabled = true;
+    btn.style.opacity = "0.7";
+
+    try {
+        // עדכון מקומי מהיר
+        clients[idx] = updated;
+        localStorage.setItem('crm_clients_v3', JSON.stringify(clients));
+        
+        // 4. שליחה לשיטס והמתנה לתשובה
+        await fetch(SCRIPT_URL, {method:'POST', mode:'no-cors', body: JSON.stringify(updated)});
+        
+        alert("הנתונים עודכנו בהצלחה!");
+        closeModal('modal-edit-row');
+        openManageModal();
+        updateStats();
+    } catch(e) {
+        console.error(e);
+        alert('הייתה בעיה בעדכון הנתונים. נסי שנית.');
+    } finally {
+        // 5. החזרת הכפתור למצב רגיל
+        btn.innerText = originalText;
+        btn.disabled = false;
+        btn.style.opacity = "1";
+    }
+}
 
         async function deleteSingle(id) {
             if(!confirm('למחוק עסקה?')) return;
@@ -417,4 +439,5 @@
     </script>
 </body>
 </html>
+
 
