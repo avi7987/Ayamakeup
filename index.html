@@ -225,32 +225,58 @@
         }
 
         // --- הכנסות ---
-        async function saveIncome() {
-            const btn = document.getElementById('btn-save');
-            const rawDate = document.getElementById('inc-date').value;
-            const data = {
-                type: 'INCOME',
-                name: document.getElementById('inc-name').value,
-                amount: parseFloat(document.getElementById('inc-amount').value),
-                date: rawDate,
-                service: document.getElementById('inc-service').value,
-                paymentMethod: document.getElementById('inc-payment').value,
-                isBride: document.getElementById('inc-isbride').checked,
-                month: MONTHS[new Date(rawDate).getMonth()],
-                id: Date.now()
-            };
-            if(!data.name || isNaN(data.amount)) return alert('מלא שם וסכום');
-            btn.innerText = "שומר..."; btn.disabled = true;
-            try {
-                await fetch(SCRIPT_URL, {method:'POST', mode:'no-cors', body: JSON.stringify(data)});
-                clients.push(data);
-                localStorage.setItem('crm_clients_v3', JSON.stringify(clients));
-                alert('נשמר בשיטס!');
-                document.getElementById('inc-name').value = '';
-                document.getElementById('inc-amount').value = '';
-            } catch(e) { alert('בעיה בסנכרון.'); }
-            btn.innerText = "שמור בשיטס"; btn.disabled = false;
-        }
+async function saveIncome() {
+    const btn = document.getElementById('btn-save');
+    const rawDate = document.getElementById('inc-date').value;
+    
+    // איסוף הנתונים מהטופס
+    const data = {
+        type: 'INCOME',
+        name: document.getElementById('inc-name').value,
+        amount: parseFloat(document.getElementById('inc-amount').value),
+        date: rawDate,
+        service: document.getElementById('inc-service').value,
+        paymentMethod: document.getElementById('inc-payment').value,
+        isBride: document.getElementById('inc-isbride').checked,
+        month: MONTHS[new Date(rawDate).getMonth()],
+        id: Date.now()
+    };
+
+    // בדיקת תקינות בסיסית
+    if(!data.name || isNaN(data.amount)) return alert('מלא שם וסכום');
+
+    // 1. שינוי מצב הכפתור ל-"חשיבה"
+    const originalText = btn.innerText;
+    btn.innerText = "שומר בשיטס... ⏳";
+    btn.disabled = true;
+    btn.style.opacity = "0.7";
+
+    try {
+        // 2. שליחה ל-Google Apps Script
+        await fetch(SCRIPT_URL, {method:'POST', mode:'no-cors', body: JSON.stringify(data)});
+        
+        // 3. עדכון מקומי בזיכרון (localStorage)
+        clients.push(data);
+        localStorage.setItem('crm_clients_v3', JSON.stringify(clients));
+        
+        alert('העסקה נשמרה בהצלחה! 🎉');
+        
+        // ניקוי השדות
+        document.getElementById('inc-name').value = '';
+        document.getElementById('inc-amount').value = '';
+        document.getElementById('inc-service').value = '';
+        document.getElementById('inc-isbride').checked = false;
+        
+    } catch(e) {
+        console.error(e);
+        alert('אופס, הייתה בעיה בסנכרון. הנתונים לא נשמרו.');
+    } finally {
+        // 4. החזרת הכפתור למצב רגיל
+        btn.innerText = originalText;
+        btn.disabled = false;
+        btn.style.opacity = "1";
+    }
+}
 
         // --- ניהול ועריכה מודאלית ---
         function openManageModal() {
@@ -439,5 +465,6 @@ async function submitEdit() {
     </script>
 </body>
 </html>
+
 
 
