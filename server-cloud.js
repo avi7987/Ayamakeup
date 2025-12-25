@@ -52,14 +52,23 @@ const leadSchema = new mongoose.Schema({
     name: { type: String, required: true },
     phone: { type: String, required: true },
     service: { type: String, required: true },
-    status: { type: String, default: '׳׳׳×׳™׳' },
+    status: { type: String, default: 'ליד חדש' },
     contactDate: { type: Date, default: Date.now },
     notes: { type: String, default: '' },
     createdAt: { type: Date, default: Date.now }
 });
 
+const goalsSchema = new mongoose.Schema({
+    userId: { type: String, default: 'default' }, // For future multi-user support
+    year: { type: Number, required: true },
+    income: { type: Number, default: 0 },
+    brides: { type: Number, default: 0 },
+    updatedAt: { type: Date, default: Date.now }
+});
+
 const Client = mongoose.model('Client', clientSchema);
 const Lead = mongoose.model('Lead', leadSchema);
+const Goals = mongoose.model('Goals', goalsSchema);
 
 // ==================== STATIC FILES ====================
 // Serve static files from public directory
@@ -332,6 +341,58 @@ app.post('/api/fix-indexes', async (req, res) => {
             // Index might not exist, that's okay
         });
         res.json({ message: 'Indexes fixed successfully' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// ==================== GOALS ROUTES ====================
+
+// Get current year goals
+app.get('/api/goals', async (req, res) => {
+    try {
+        const currentYear = new Date().getFullYear();
+        let goals = await Goals.findOne({ userId: 'default', year: currentYear });
+        
+        if (!goals) {
+            // Create default goals if not exists
+            goals = await Goals.create({
+                userId: 'default',
+                year: currentYear,
+                income: 0,
+                brides: 0
+            });
+        }
+        
+        res.json(goals);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Update goals
+app.put('/api/goals', async (req, res) => {
+    try {
+        const currentYear = new Date().getFullYear();
+        const { income, brides } = req.body;
+        
+        let goals = await Goals.findOne({ userId: 'default', year: currentYear });
+        
+        if (goals) {
+            goals.income = income;
+            goals.brides = brides;
+            goals.updatedAt = new Date();
+            await goals.save();
+        } else {
+            goals = await Goals.create({
+                userId: 'default',
+                year: currentYear,
+                income,
+                brides
+            });
+        }
+        
+        res.json(goals);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

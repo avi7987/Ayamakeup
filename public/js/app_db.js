@@ -192,7 +192,7 @@ const Navigation = {
         if (pageName === 'home') {
             // Reload data from MongoDB to sync across devices
             await State.loadFromDatabase();
-            HomeView.update();
+            await HomeView.update();
         }
         if (pageName === 'leads') LeadsView.render();
         if (pageName === 'stats') StatsView.update();
@@ -262,7 +262,7 @@ const IncomeManager = {
             State.clients.push(savedClient);
             // Update home view to reflect new data
             console.log('🔄 מעדכן תצוגת דף הבית...');
-            HomeView.update();
+            await HomeView.update();
             
             alert('הלקוח נשמר בהצלחה במסד הנתונים!');
             nameInput.value = '';
@@ -302,7 +302,7 @@ const IncomeManager = {
                 State.clients[index] = { ...State.clients[index], ...data };
             }
             // Update home view
-            HomeView.update();
+            await HomeView.update();
             
             ModalManager.close('modal-edit-row');
             ManageView.open();
@@ -322,7 +322,7 @@ const IncomeManager = {
             await API.deleteClient(id);
             State.clients = State.clients.filter(c => (c._id || c.id) !== id);
             // Update home view
-            HomeView.update();
+            await HomeView.update();
             ManageView.open();
             StatsView.update();
         } catch (error) {
@@ -500,11 +500,11 @@ const LeadsView = {
 };
 
 const HomeView = {
-    update() {
+    async update() {
         console.log('🏠 מעדכן דף הבית - סה"כ לקוחות:', State.clients.length);
-        // Load goals - always show section even if goals not set
-        const goals = JSON.parse(localStorage.getItem('stride_goals') || '{}');
-        console.log('🎯 יעדים:', goals);
+        // Load goals from MongoDB
+        const goals = await GoalsManager.load();
+        console.log('🎯 יעדים מ-MongoDB:', goals);
         
         // Always show goals section
         document.getElementById('goals-section').classList.remove('hidden');
@@ -993,7 +993,41 @@ window.checkBulkVisibility = () => ManageView.checkBulkVisibility();
 window.bulkDelete = () => ManageView.bulkDelete();
 window.updateStats = () => StatsView.update();
 window.exportToExcel = () => ExcelExporter.export();
-window.saveGoals = () => {
+// Goals Management
+const GoalsManager = {
+    async load() {
+        try {
+            const response = await fetch(`${CONFIG.API_BASE_URL}/goals`);
+            if (response.ok) {
+                const goals = await response.json();
+                return { income: goals.income, brides: goals.brides };
+            }
+        } catch (error) {
+            console.error('❌ שגיאה בטעינת יעדים:', error);
+        }
+        return { income: 0, brides: 0 };
+    },
+    
+    async save(income, brides) {
+        try {
+            const response = await fetch(`${CONFIG.API_BASE_URL}/goals`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ income, brides })
+            });
+            
+            if (response.ok) {
+                console.log('✅ יעדים נשמרו ב-MongoDB');
+                return true;
+            }
+        } catch (error) {
+            console.error('❌ שגיאה בשמירת יעדים:', error);
+        }
+        return false;
+    }
+};
+
+window.saveGoals = async () => {
     const income = parseInt(document.getElementById('goal-income').value) || 0;
     const brides = parseInt(document.getElementById('goal-brides').value) || 0;
     
@@ -1002,16 +1036,19 @@ window.saveGoals = () => {
         return;
     }
     
-    const goals = { income, brides };
-    localStorage.setItem('stride_goals', JSON.stringify(goals));
+    const saved = await GoalsManager.save(income, brides);
     
-    ModalManager.close('modal-settings');
-    HomeView.update();
-    
-    alert('✅ היעדים נשמרו בהצלחה!');
+    if (saved) {
+        ModalManager.close('modal-settings');
+        await HomeView.update();
+        alert('✅ היעדים נשמרו בהצלחה ויופיעו בכל המכשירים!');
+    } else {
+        alert('❌ שגיאה בשמירת היעדים');
+    }
 };
-window.loadGoalsToModal = () => {
-    const goals = JSON.parse(localStorage.getItem('stride_goals') || '{}');
+
+window.loadGoalsToModal = async () => {
+    const goals = await GoalsManager.load();
     document.getElementById('goal-income').value = goals.income || '';
     document.getElementById('goal-brides').value = goals.brides || '';
 };
