@@ -157,9 +157,24 @@ const State = {
                 this.clients = await clientsRes.json();
                 this.leads = await leadsRes.json();
                 
-                // Convert to booleans
+                // Convert to booleans and add missing fields for backward compatibility
                 this.clients = this.clients.map(c => ({...c, isBride: Boolean(c.isBride)}));
-                this.leads = this.leads.map(l => ({...l, isBride: Boolean(l.isBride)}));
+                this.leads = this.leads.map(l => ({
+                    ...l, 
+                    isBride: Boolean(l.isBride),
+                    // Add missing fields for old leads
+                    notes: l.notes || '',
+                    price: l.price || 0,
+                    deposit: l.deposit || 0,
+                    contractStatus: l.contractStatus || 'pending',
+                    reminders: l.reminders || [],
+                    stageHistory: l.stageHistory || [{
+                        stage: l.status || 'new',
+                        timestamp: l.createdAt || new Date().toISOString(),
+                        note: 'ליד קיים'
+                    }],
+                    calendarEventId: l.calendarEventId || null
+                }));
                 
                 console.log(`✅ נטענו ${this.clients.length} לקוחות ו-${this.leads.length} לידים מ-MongoDB`);
             } else {
@@ -558,7 +573,8 @@ const LeadsManager = {
             lead.status = newStatus;
             lead.updatedAt = new Date().toISOString();
             
-            await API.updateLeadStatus(leadId, newStatus);
+            // Save full lead data to database (not just status)
+            await API.updateLead(leadId, lead);
             
             // Handle Google Calendar for "done" (Booked) stage
             if (newStatus === 'done' && lead.eventDate && !lead.calendarEventId) {

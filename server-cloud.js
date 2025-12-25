@@ -236,6 +236,23 @@ app.put('/api/leads/:id', async (req, res) => {
     }
 });
 
+// Update lead status (PATCH)
+app.patch('/api/leads/:id/status', async (req, res) => {
+    try {
+        const lead = await Lead.findByIdAndUpdate(
+            req.params.id,
+            { status: req.body.status, updatedAt: new Date() },
+            { new: true }
+        );
+        if (!lead) {
+            return res.status(404).json({ error: 'Lead not found' });
+        }
+        res.json(lead);
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
+
 // Delete lead
 app.delete('/api/leads/:id', async (req, res) => {
     try {
