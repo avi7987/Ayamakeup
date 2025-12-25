@@ -34,7 +34,8 @@ const State = {
     
     async loadFromDatabase() {
         try {
-            // Try to load from database
+            console.log('🔄 טוען נתונים מ-MongoDB...');
+            // Always load from database
             const [clientsRes, leadsRes] = await Promise.all([
                 fetch(`${CONFIG.API_BASE_URL}/clients`),
                 fetch(`${CONFIG.API_BASE_URL}/leads`)
@@ -44,31 +45,24 @@ const State = {
                 this.clients = await clientsRes.json();
                 this.leads = await leadsRes.json();
                 
-                // Convert SQLite integers to booleans
+                // Convert to booleans
                 this.clients = this.clients.map(c => ({...c, isBride: Boolean(c.isBride)}));
                 this.leads = this.leads.map(l => ({...l, isBride: Boolean(l.isBride)}));
                 
-                console.log('נטענו נתונים מה-DB');
+                console.log(`✅ נטענו ${this.clients.length} לקוחות ו-${this.leads.length} לידים מ-MongoDB`);
             } else {
-                // Fallback to localStorage
-                this.loadFromStorage();
-                console.log('משתמש בנתונים מקומיים');
+                throw new Error('Failed to fetch from database');
             }
         } catch (error) {
-            console.error('Failed to connect to database, using localStorage:', error);
-            this.loadFromStorage();
+            console.error('❌ שגיאה בטעינה מ-MongoDB:', error);
+            alert('שגיאה בחיבור למסד הנתונים. אנא בדוק את חיבור האינטרנט.');
+            this.clients = [];
+            this.leads = [];
         }
     },
     
-    loadFromStorage() {
-        this.clients = JSON.parse(localStorage.getItem(CONFIG.STORAGE_KEYS.CLIENTS)) || [];
-        this.leads = JSON.parse(localStorage.getItem(CONFIG.STORAGE_KEYS.LEADS)) || [];
-    },
-    
-    saveToStorage() {
-        localStorage.setItem(CONFIG.STORAGE_KEYS.CLIENTS, JSON.stringify(this.clients));
-        localStorage.setItem(CONFIG.STORAGE_KEYS.LEADS, JSON.stringify(this.leads));
-    },
+    // Remove localStorage functions - use MongoDB only
+    // Goals are still saved in localStorage in separate functions
     
     getFilteredClients(monthName) {
         if (monthName === 'ALL') return this.clients;
@@ -260,8 +254,10 @@ const IncomeManager = {
             console.log('Sending data:', data);
             const savedClient = await API.addClient(data);
             console.log('Saved successfully:', savedClient);
+            // Add to local state
             State.clients.push(savedClient);
-            State.saveToStorage();
+            // Update home view to reflect new data
+            HomeView.update();
             
             alert('הלקוח נשמר בהצלחה במסד הנתונים!');
             nameInput.value = '';
@@ -299,8 +295,9 @@ const IncomeManager = {
             const index = State.clients.findIndex(c => (c._id || c.id) === id);
             if (index !== -1) {
                 State.clients[index] = { ...State.clients[index], ...data };
-                State.saveToStorage();
             }
+            // Update home view
+            HomeView.update();
             
             ModalManager.close('modal-edit-row');
             ManageView.open();
@@ -319,7 +316,8 @@ const IncomeManager = {
         try {
             await API.deleteClient(id);
             State.clients = State.clients.filter(c => (c._id || c.id) !== id);
-            State.saveToStorage();
+            // Update home view
+            HomeView.update();
             ManageView.open();
             StatsView.update();
         } catch (error) {
@@ -378,7 +376,6 @@ const LeadsManager = {
         try {
             await API.addLead(data);
             State.leads.push(data);
-            State.saveToStorage();
             
             ModalManager.close('modal-new-lead');
             LeadsView.render();
@@ -407,7 +404,6 @@ const LeadsManager = {
             const lead = State.leads.find(l => l.id === leadId);
             if (lead) {
                 lead.status = newStatus;
-                State.saveToStorage();
             }
         } catch (error) {
             console.error('Failed to update lead status:', error);
@@ -420,7 +416,6 @@ const LeadsManager = {
         try {
             await API.deleteLead(id);
             State.leads = State.leads.filter(l => l.id !== id);
-            State.saveToStorage();
             LeadsView.render();
         } catch (error) {
             alert("???ע?ש?נ?פ ?ס???ק?ש???פ: " + error.message);
@@ -769,7 +764,6 @@ const ManageView = {
         try {
             await API.bulkDeleteClients(ids);
             State.clients = State.clients.filter(c => !ids.includes(c.id));
-            State.saveToStorage();
             this.open();
             StatsView.update();
         } catch (error) {
