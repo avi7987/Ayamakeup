@@ -275,7 +275,7 @@ const IncomeManager = {
         const btn = document.getElementById('btn-edit-save');
         const data = {
             name: document.getElementById('edit-name').value,
-            amount: parseFloat(document.getElementById('edit-amount').value),
+            price: parseFloat(document.getElementById('edit-amount').value),
             service: document.getElementById('edit-service').value,
             date: document.getElementById('edit-date').value,
             isBride: document.getElementById('edit-isbride').checked,
@@ -325,7 +325,7 @@ const IncomeManager = {
         
         document.getElementById('edit-id').value = client.id;
         document.getElementById('edit-name').value = client.name;
-        document.getElementById('edit-amount').value = client.amount;
+        document.getElementById('edit-amount').value = client.price || client.amount;
         document.getElementById('edit-service').value = client.service || '';
         document.getElementById('edit-date').value = client.date;
         document.getElementById('edit-isbride').checked = client.isBride || false;
