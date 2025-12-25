@@ -305,7 +305,16 @@
             
             <input type="text" id="lead-name" placeholder="שם הלקוחה *">
             <input type="tel" id="lead-phone" placeholder="מספר טלפון *">
-            <input type="text" id="lead-source" placeholder="מקור הגעה (למשל: אינסטגרם)">
+            
+            <select id="lead-source" class="mb-4">
+                <option value="">בחרי מקור הגעה</option>
+                <option value="אינסטגרם">אינסטגרם</option>
+                <option value="פייסבוק">פייסבוק</option>
+                <option value="פה לאוזן">פה לאוזן</option>
+                <option value="לקוחה חוזרת">לקוחה חוזרת</option>
+                <option value="אחר">אחר</option>
+            </select>
+            
             <input type="text" id="lead-service" placeholder="שירות מבוקש">
             <input type="date" id="lead-event-date">
             <input type="text" id="lead-location" placeholder="מיקום / אולם">
