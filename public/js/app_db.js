@@ -330,6 +330,10 @@ const IncomeManager = {
         document.getElementById('edit-date').value = client.date;
         document.getElementById('edit-isbride').checked = client.isBride || false;
         
+        ModalManager.close('modal-manage');
+        ModalManager.open('modal-edit-row');
+        document.getElementById('edit-isbride').checked = client.isBride || false;
+        
         ModalManager.open('modal-edit-row');
     }
 };
