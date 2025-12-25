@@ -81,6 +81,7 @@ app.get('/api/health', (req, res) => {
         status: 'ok', 
         message: 'CRM API is running', 
         database: 'MongoDB Atlas',
+        databaseName: mongoose.connection.name,
         connected: mongoose.connection.readyState === 1
     });
 });
