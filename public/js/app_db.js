@@ -652,3 +652,48 @@ window.onload = async () => {
     
     console.log('?£ו CRM Ready!');
 };
+
+
+// Global functions
+window.saveIncome = () => IncomeManager.save();
+window.editClient = (id) => IncomeManager.edit(id);
+window.deleteClient = (id) => IncomeManager.delete(id);
+window.saveLead = () => LeadManager.save();
+window.editLead = (id) => LeadManager.edit(id);
+window.deleteLead = (id) => LeadManager.delete(id);
+window.convertLeadToClient = (leadId) => LeadManager.convertToClient(leadId);
+
+// Page navigation
+window.showPage = (pageId) => {
+    document.querySelectorAll('[id^="page-"]').forEach(p => p.classList.add('hidden'));
+    document.getElementById(pageId).classList.remove('hidden');
+    
+    document.querySelectorAll('.nav-button').forEach(btn => btn.classList.remove('active'));
+    event?.target?.classList?.add('active');
+    
+    if (pageId === 'page-home') IncomeView.render();
+    if (pageId === 'page-leads') LeadsView.render();
+    if (pageId === 'page-stats') StatsView.render();
+};
+
+// Modal functions
+window.openModal = (id) => document.getElementById(id).style.display = 'flex';
+window.closeModal = (id) => document.getElementById(id).style.display = 'none';
+
+// Initialize app
+async function init() {
+    console.log(' Initializing CRM...');
+    await State.init();
+    
+    const filter = document.getElementById('stats-month-filter');
+    const currentMonth = CONFIG.MONTHS[new Date().getMonth()];
+    filter.innerHTML = CONFIG.MONTHS
+        .map(month => `<option value="${month}" ${month === currentMonth ? 'selected' : ''}>${month}</option>`)
+        .join('') + `<option value="ALL">הצג הכל</option>`;
+    
+    document.getElementById('inc-date').valueAsDate = new Date();
+    LeadsView.render();
+    console.log(' CRM Ready!');
+}
+
+document.addEventListener('DOMContentLoaded', init);
