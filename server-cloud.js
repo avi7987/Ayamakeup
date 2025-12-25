@@ -1,5 +1,4 @@
-<<<<<<< HEAD
-require('dotenv').config();
+﻿require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
@@ -19,28 +18,28 @@ app.use(express.static(path.join(__dirname)));
 const MONGODB_URI = process.env.MONGODB_URI;
 
 if (!MONGODB_URI) {
-    console.error('❌ ERROR: MONGODB_URI is not defined in .env file');
+    console.error('ג ERROR: MONGODB_URI is not defined in .env file');
     process.exit(1);
 }
 
-console.log('🔄 Connecting to MongoDB Atlas...');
+console.log('נ”„ Connecting to MongoDB Atlas...');
 
 // Connect to MongoDB
 async function connectDB() {
     try {
-        console.log('🔍 Testing connection with URI:', MONGODB_URI.replace(/:[^:@]+@/, ':****@'));
+        console.log('נ” Testing connection with URI:', MONGODB_URI.replace(/:[^:@]+@/, ':****@'));
         await mongoose.connect(MONGODB_URI, {
             serverSelectionTimeoutMS: 30000, // 30 seconds timeout
             socketTimeoutMS: 45000,
         });
-        console.log('✅ Connected to MongoDB Atlas successfully!');
-        console.log(`📦 Database: ${mongoose.connection.name}`);
+        console.log('ג… Connected to MongoDB Atlas successfully!');
+        console.log(`נ“¦ Database: ${mongoose.connection.name}`);
     } catch (err) {
-        console.error('❌ MongoDB connection error:');
+        console.error('ג MongoDB connection error:');
         console.error('Error name:', err.name);
         console.error('Error message:', err.message);
         console.error('Full error:', err);
-        console.error('\n💡 Check:');
+        console.error('\nנ’¡ Check:');
         console.error('   1. MongoDB URI is correct in .env');
         console.error('   2. IP address is whitelisted (0.0.0.0/0 for all)');
         console.error('   3. Database user has correct permissions');
@@ -356,7 +355,7 @@ app.post('/api/migrate', async (req, res) => {
                 amount: c.amount,
                 date: c.date,
                 service: c.service || null,
-                paymentMethod: c.paymentMethod || 'מזומן',
+                paymentMethod: c.paymentMethod || '׳׳–׳•׳׳',
                 isBride: Boolean(c.isBride),
                 month: c.month
             })));
@@ -392,13 +391,13 @@ async function startServer() {
     
     app.listen(PORT, () => {
         console.log('');
-        console.log('🚀 ========================================');
+        console.log('נ€ ========================================');
         console.log(`   CRM Server is running in CLOUD MODE!`);
-        console.log('🚀 ========================================');
-        console.log(`📍 Server: http://localhost:${PORT}`);
-        console.log(`📊 Database: MongoDB Atlas (Cloud)`);
-        console.log(`✨ API: http://localhost:${PORT}/api`);
-        console.log(`🌐 Open: http://localhost:${PORT}/index_new.html`);
+        console.log('נ€ ========================================');
+        console.log(`נ“ Server: http://localhost:${PORT}`);
+        console.log(`נ“ Database: MongoDB Atlas (Cloud)`);
+        console.log(`ג¨ API: http://localhost:${PORT}/api`);
+        console.log(`נ Open: http://localhost:${PORT}/index_new.html`);
         console.log('========================================');
         console.log('');
     });
@@ -412,7 +411,7 @@ startServer().catch(err => {
 
 // Graceful shutdown
 process.on('SIGINT', async () => {
-    console.log('\n👋 Shutting down server...');
+    console.log('\nנ‘‹ Shutting down server...');
     await mongoose.connection.close();
     process.exit(0);
 });
@@ -437,28 +436,28 @@ app.use(express.static(path.join(__dirname)));
 const MONGODB_URI = process.env.MONGODB_URI;
 
 if (!MONGODB_URI) {
-    console.error('❌ ERROR: MONGODB_URI is not defined in .env file');
+    console.error('ג ERROR: MONGODB_URI is not defined in .env file');
     process.exit(1);
 }
 
-console.log('🔄 Connecting to MongoDB Atlas...');
+console.log('נ”„ Connecting to MongoDB Atlas...');
 
 // Connect to MongoDB
 async function connectDB() {
     try {
-        console.log('🔍 Testing connection with URI:', MONGODB_URI.replace(/:[^:@]+@/, ':****@'));
+        console.log('נ” Testing connection with URI:', MONGODB_URI.replace(/:[^:@]+@/, ':****@'));
         await mongoose.connect(MONGODB_URI, {
             serverSelectionTimeoutMS: 30000, // 30 seconds timeout
             socketTimeoutMS: 45000,
         });
-        console.log('✅ Connected to MongoDB Atlas successfully!');
-        console.log(`📦 Database: ${mongoose.connection.name}`);
+        console.log('ג… Connected to MongoDB Atlas successfully!');
+        console.log(`נ“¦ Database: ${mongoose.connection.name}`);
     } catch (err) {
-        console.error('❌ MongoDB connection error:');
+        console.error('ג MongoDB connection error:');
         console.error('Error name:', err.name);
         console.error('Error message:', err.message);
         console.error('Full error:', err);
-        console.error('\n💡 Check:');
+        console.error('\nנ’¡ Check:');
         console.error('   1. MongoDB URI is correct in .env');
         console.error('   2. IP address is whitelisted (0.0.0.0/0 for all)');
         console.error('   3. Database user has correct permissions');
@@ -774,7 +773,7 @@ app.post('/api/migrate', async (req, res) => {
                 amount: c.amount,
                 date: c.date,
                 service: c.service || null,
-                paymentMethod: c.paymentMethod || 'מזומן',
+                paymentMethod: c.paymentMethod || '׳׳–׳•׳׳',
                 isBride: Boolean(c.isBride),
                 month: c.month
             })));
@@ -810,13 +809,13 @@ async function startServer() {
     
     app.listen(PORT, () => {
         console.log('');
-        console.log('🚀 ========================================');
+        console.log('נ€ ========================================');
         console.log(`   CRM Server is running in CLOUD MODE!`);
-        console.log('🚀 ========================================');
-        console.log(`📍 Server: http://localhost:${PORT}`);
-        console.log(`📊 Database: MongoDB Atlas (Cloud)`);
-        console.log(`✨ API: http://localhost:${PORT}/api`);
-        console.log(`🌐 Open: http://localhost:${PORT}/index_new.html`);
+        console.log('נ€ ========================================');
+        console.log(`נ“ Server: http://localhost:${PORT}`);
+        console.log(`נ“ Database: MongoDB Atlas (Cloud)`);
+        console.log(`ג¨ API: http://localhost:${PORT}/api`);
+        console.log(`נ Open: http://localhost:${PORT}/index_new.html`);
         console.log('========================================');
         console.log('');
     });
@@ -830,8 +829,8 @@ startServer().catch(err => {
 
 // Graceful shutdown
 process.on('SIGINT', async () => {
-    console.log('\n👋 Shutting down server...');
+    console.log('\nנ‘‹ Shutting down server...');
     await mongoose.connection.close();
     process.exit(0);
 });
->>>>>>> 44e2edbdbede27982bb1a993c11d2726aae79e69
+
