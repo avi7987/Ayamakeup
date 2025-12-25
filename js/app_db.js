@@ -6,7 +6,7 @@
 
 // Configuration
 const CONFIG = {
-    API_BASE_URL: 'http://localhost:3000/api',
+    API_BASE_URL: 'https://ayamakeup-production.up.railway.app/api',
     STORAGE_KEYS: {
         CLIENTS: 'crm_clients_v3',
         LEADS: 'crm_leads_v3'
