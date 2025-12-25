@@ -1699,12 +1699,25 @@ const MessageSettings = {
     
     render() {
         const content = document.getElementById('message-settings-content');
-        if (!content) return;
+        if (!content) {
+            console.error('message-settings-content not found');
+            return;
+        }
+        
+        console.log('Rendering message settings...');
         
         const allStages = [...CONFIG.LEAD_STAGES, ...CONFIG.LEAD_STAGES_ARCHIVE];
         
         content.innerHTML = allStages.map(stage => {
-            const stageSettings = this.settings[stage.id] || CONFIG.DEFAULT_MESSAGE_SETTINGS[stage.id];
+            // Ensure we have settings for this stage
+            if (!this.settings[stage.id]) {
+                this.settings[stage.id] = JSON.parse(JSON.stringify(CONFIG.DEFAULT_MESSAGE_SETTINGS[stage.id] || {
+                    immediate: {enabled: false, template: ''},
+                    followUp: {enabled: false, delay: 1, unit: 'days', template: ''}
+                }));
+            }
+            
+            const stageSettings = this.settings[stage.id];
             
             return `
                 <div class="border-2 border-purple-100 rounded-2xl p-6 bg-gradient-to-br from-purple-50 to-white">
@@ -1785,6 +1798,8 @@ const MessageSettings = {
                 </div>
             `;
         }).join('');
+        
+        console.log('Message settings rendered successfully');
     },
     
     getStageEmoji(stageId) {
