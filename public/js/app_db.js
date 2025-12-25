@@ -7,11 +7,11 @@
 // ==================== SOUND EFFECTS ====================
 const SoundEffects = {
     playCashRegister() {
-        // Create a simple cash register sound using Web Audio API
+        // Create realistic coin drop sound
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
         
-        // Cash register "cha-ching" sound
-        const playTone = (frequency, startTime, duration) => {
+        // Coin drop sounds - multiple metallic impacts
+        const playMetallicImpact = (frequency, startTime, duration, volume) => {
             const oscillator = audioContext.createOscillator();
             const gainNode = audioContext.createGain();
             
@@ -19,9 +19,9 @@ const SoundEffects = {
             gainNode.connect(audioContext.destination);
             
             oscillator.frequency.value = frequency;
-            oscillator.type = 'sine';
+            oscillator.type = 'square'; // More metallic sound
             
-            gainNode.gain.setValueAtTime(0.3, startTime);
+            gainNode.gain.setValueAtTime(volume, startTime);
             gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
             
             oscillator.start(startTime);
@@ -29,10 +29,23 @@ const SoundEffects = {
         };
         
         const now = audioContext.currentTime;
-        playTone(800, now, 0.1);
-        playTone(1000, now + 0.1, 0.15);
         
-        console.log('💰 צלצול כסף!');
+        // First coin drop (higher pitch)
+        playMetallicImpact(1200, now, 0.08, 0.4);
+        playMetallicImpact(900, now + 0.02, 0.06, 0.3);
+        
+        // Second coin drop (medium pitch)
+        playMetallicImpact(1000, now + 0.15, 0.1, 0.35);
+        playMetallicImpact(800, now + 0.18, 0.08, 0.25);
+        
+        // Third coin drop (lower pitch) 
+        playMetallicImpact(850, now + 0.28, 0.12, 0.3);
+        playMetallicImpact(650, now + 0.32, 0.1, 0.2);
+        
+        // Final resonance
+        playMetallicImpact(400, now + 0.4, 0.15, 0.15);
+        
+        console.log('💰 צליל מטבעות!');
     }
 };
 
@@ -297,7 +310,7 @@ const Navigation = {
         if (pageName === 'home') {
             // Reload data from MongoDB to sync across devices
             await State.loadFromDatabase();
-            await HomeView.update();
+            await HomeView.update(true); // Show messages when navigating to home page
         }
         if (pageName === 'leads') LeadsView.render();
         if (pageName === 'stats') StatsView.update();
@@ -609,7 +622,7 @@ const LeadsView = {
 };
 
 const HomeView = {
-    async update() {
+    async update(showMessages = false) {
         console.log('🏠 מעדכן דף הבית - סה"כ לקוחות:', State.clients.length);
         // Load goals from MongoDB
         const goals = await GoalsManager.load();
@@ -665,8 +678,8 @@ const HomeView = {
             const totalBrides = yearlyClients.filter(c => c.isBride || c.notes?.includes('כלה')).length;
             console.log(`👰 כלות השנה: ${totalBrides} (מתוך ${yearlyClients.length} לקוחות)`);
             
-            // Check if brides count increased and show motivational message
-            if (totalBrides > MotivationalMessages.previousBridesCount && MotivationalMessages.previousBridesCount > 0) {
+            // Check if brides count increased and show motivational message (only when returning to home page)
+            if (showMessages && totalBrides > MotivationalMessages.previousBridesCount && MotivationalMessages.previousBridesCount > 0) {
                 const message = MotivationalMessages.getRandomMessage();
                 MotivationalMessages.showMessage(message);
                 console.log('🎊 הצגת הודעת עידוד:', message);
