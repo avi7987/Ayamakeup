@@ -186,22 +186,21 @@ const Navigation = {
     switchPage(pageName) {
         // Hide all pages
         ['home', 'entry', 'leads', 'stats'].forEach(id => {
-            document.getElementById('page-' + id).classList.add('hidden');
+            const page = document.getElementById('page-' + id);
+            if (page) page.classList.add('hidden');
         });
         
         // Show selected page
-        document.getElementById('page-' + pageName).classList.remove('hidden');
-        
-        // Update nav buttons
-        document.querySelectorAll('.nav-button').forEach(btn => {
-            btn.classList.remove('active');
-        });
-        document.getElementById('nav-' + pageName).classList.add('active');
+        const selectedPage = document.getElementById('page-' + pageName);
+        if (selectedPage) selectedPage.classList.remove('hidden');
         
         // Trigger page-specific initialization
         if (pageName === 'home') HomeView.update();
         if (pageName === 'leads') LeadsView.render();
         if (pageName === 'stats') StatsView.update();
+        
+        // Scroll to top
+        window.scrollTo(0, 0);
     }
 };
 
