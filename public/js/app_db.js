@@ -731,20 +731,20 @@ const ExcelExporter = {
     },
     
     createDashboard(workbook) {
-        const data = [];
+        const ws_data = [];
+        let currentRow = 0;
         
-        // Title
-        data.push(['דשבורד הכנסות שנתי', '', '', '', '']);
-        data.push(['שנה: ' + new Date().getFullYear(), '', '', '', '']);
-        data.push([]);
+        // Title Section - BIG and BOLD
+        ws_data.push(['דשבורד הכנסות שנתי']);
+        ws_data.push([`שנת ${new Date().getFullYear()}`]);
+        ws_data.push([]);
         
-        // Monthly summary
-        data.push(['חודש', 'סה"כ הכנסות', 'מספר עסקאות', 'מתוכן כלות', 'ממוצע לעסקה']);
-        
+        // Calculate yearly totals
         let yearlyTotal = 0;
         let yearlyCount = 0;
         let yearlyBrides = 0;
         const paymentMethods = {};
+        const monthlyData = [];
         
         CONFIG.MONTHS.forEach((month, index) => {
             const monthClients = State.clients.filter(c => {
@@ -755,7 +755,6 @@ const ExcelExporter = {
             const total = monthClients.reduce((sum, c) => sum + (c.price || c.amount || 0), 0);
             const count = monthClients.length;
             const brides = monthClients.filter(c => c.isBride).length;
-            const avg = count > 0 ? total / count : 0;
             
             yearlyTotal += total;
             yearlyCount += count;
@@ -763,84 +762,128 @@ const ExcelExporter = {
             
             // Count payment methods
             monthClients.forEach(c => {
-                const payment = c.payment || 'לא צוין';
-                paymentMethods[payment] = (paymentMethods[payment] || 0) + 1;
+                const payment = c.payment || 'מזומן';
+                paymentMethods[payment] = (paymentMethods[payment] || 0) + (c.price || c.amount || 0);
             });
             
             if (count > 0) {
-                data.push([month, total, count, brides, Math.round(avg)]);
+                monthlyData.push({ month, total, count, brides });
             }
         });
         
-        data.push([]);
-        data.push(['סה"כ שנתי', yearlyTotal, yearlyCount, yearlyBrides, Math.round(yearlyTotal / yearlyCount)]);
+        // Key Metrics Summary - Large Cards
+        ws_data.push(['📊 סיכום ביצועים שנתי']);
+        ws_data.push([]);
+        ws_data.push(['מדד', 'ערך']);
+        ws_data.push(['💰 סה"כ הכנסות שנתיות', `₪${yearlyTotal.toLocaleString()}`]);
+        ws_data.push(['📈 מספר עסקאות', yearlyCount]);
+        ws_data.push(['👰 עסקאות כלות', yearlyBrides]);
+        ws_data.push(['💵 ממוצע לעסקה', `₪${Math.round(yearlyTotal / yearlyCount).toLocaleString()}`]);
+        ws_data.push([]);
+        ws_data.push([]);
         
-        // Payment methods breakdown
-        data.push([]);
-        data.push(['התפלגות אמצעי תשלום']);
-        data.push(['אמצעי תשלום', 'כמות']);
-        Object.entries(paymentMethods).forEach(([method, count]) => {
-            data.push([method, count]);
+        // Monthly Breakdown Table
+        ws_data.push(['📅 פירוט הכנסות חודשי']);
+        ws_data.push([]);
+        ws_data.push(['חודש', 'סה"כ הכנסות (₪)', 'מספר עסקאות', 'כלות', 'ממוצע לעסקה (₪)']);
+        
+        monthlyData.forEach(({ month, total, count, brides }) => {
+            const avg = Math.round(total / count);
+            ws_data.push([month, total, count, brides, avg]);
         });
         
-        const ws = XLSX.utils.aoa_to_sheet(data);
+        // Totals row
+        ws_data.push([]);
+        ws_data.push(['סה"כ שנתי', yearlyTotal, yearlyCount, yearlyBrides, Math.round(yearlyTotal / yearlyCount)]);
         
-        // Column widths
+        // Payment Methods Section
+        ws_data.push([]);
+        ws_data.push([]);
+        ws_data.push(['💳 התפלגות לפי אמצעי תשלום']);
+        ws_data.push([]);
+        ws_data.push(['אמצעי תשלום', 'סה"כ הכנסות (₪)', 'אחוז']);
+        
+        Object.entries(paymentMethods)
+            .sort((a, b) => b[1] - a[1])
+            .forEach(([method, amount]) => {
+                const percentage = ((amount / yearlyTotal) * 100).toFixed(1);
+                ws_data.push([method, amount, `${percentage}%`]);
+            });
+        
+        const ws = XLSX.utils.aoa_to_sheet(ws_data);
+        
+        // Styling - Wide columns for better readability
         ws['!cols'] = [
-            { wch: 15 }, // חודש
-            { wch: 15 }, // סה"כ הכנסות
-            { wch: 15 }, // מספר עסקאות
-            { wch: 15 }, // כלות
-            { wch: 15 }  // ממוצע
+            { wch: 25 },  // Column A - wider for labels
+            { wch: 20 },  // Column B
+            { wch: 18 },  // Column C
+            { wch: 15 },  // Column D
+            { wch: 20 }   // Column E
         ];
         
-        XLSX.utils.book_append_sheet(workbook, ws, 'דשבורד');
+        // Row heights for title
+        ws['!rows'] = [
+            { hpx: 40 },  // Row 1 - Title
+            { hpx: 25 }   // Row 2 - Subtitle
+        ];
+        
+        XLSX.utils.book_append_sheet(workbook, ws, '📊 דשבורד');
     },
     
     createMonthSheet(workbook, monthName, clients) {
-        const data = [];
+        const ws_data = [];
         
-        // Title
-        data.push([`דוח הכנסות - ${monthName}`]);
-        data.push([]);
+        // Title with emoji
+        ws_data.push([`📅 דוח הכנסות - ${monthName} ${new Date().getFullYear()}`]);
+        ws_data.push([]);
         
-        // Headers
-        data.push(['תאריך', 'שם לקוח', 'סוג שירות', 'סכום', 'אמצעי תשלום', 'כלה']);
+        // Summary box at top
+        const total = clients.reduce((sum, c) => sum + (c.price || c.amount || 0), 0);
+        const brides = clients.filter(c => c.isBride).length;
+        const avg = Math.round(total / clients.length);
         
-        // Data rows
+        ws_data.push(['סיכום חודשי']);
+        ws_data.push(['סה"כ הכנסות:', `₪${total.toLocaleString()}`]);
+        ws_data.push(['מספר עסקאות:', clients.length]);
+        ws_data.push(['עסקאות כלות:', brides]);
+        ws_data.push(['ממוצע לעסקה:', `₪${avg.toLocaleString()}`]);
+        ws_data.push([]);
+        
+        // Headers with emojis
+        ws_data.push(['📅 תאריך', '👤 שם לקוח', '💄 סוג שירות', '💰 סכום (₪)', '💳 תשלום', '👰 כלה?']);
+        
+        // Data rows - sorted by date
         const sortedClients = clients.sort((a, b) => new Date(a.date) - new Date(b.date));
         sortedClients.forEach(client => {
-            data.push([
+            ws_data.push([
                 client.date,
                 client.name,
-                client.service || '-',
+                client.service || 'שירות רגיל',
                 client.price || client.amount || 0,
-                client.payment || '-',
-                client.isBride ? 'כן' : 'לא'
+                client.payment || 'מזומן',
+                client.isBride ? '✓ כן' : 'לא'
             ]);
         });
         
-        // Summary
-        const total = clients.reduce((sum, c) => sum + (c.price || c.amount || 0), 0);
-        const brides = clients.filter(c => c.isBride).length;
+        // Bottom summary
+        ws_data.push([]);
+        ws_data.push(['', '', 'סיכום:', total, '', '']);
         
-        data.push([]);
-        data.push(['סיכום', '', '', '', '', '']);
-        data.push(['סה"כ הכנסות:', '', '', total, '', '']);
-        data.push(['מספר עסקאות:', '', '', clients.length, '', '']);
-        data.push(['מתוכן כלות:', '', '', brides, '', '']);
-        data.push(['ממוצע לעסקה:', '', '', Math.round(total / clients.length), '', '']);
+        const ws = XLSX.utils.aoa_to_sheet(ws_data);
         
-        const ws = XLSX.utils.aoa_to_sheet(data);
-        
-        // Column widths
+        // Column widths - optimized for Hebrew text
         ws['!cols'] = [
-            { wch: 12 }, // תאריך
-            { wch: 20 }, // שם
-            { wch: 15 }, // שירות
-            { wch: 10 }, // סכום
-            { wch: 15 }, // תשלום
-            { wch: 8 }   // כלה
+            { wch: 12 },  // תאריך
+            { wch: 25 },  // שם - wider for names
+            { wch: 20 },  // שירות
+            { wch: 15 },  // סכום
+            { wch: 15 },  // תשלום
+            { wch: 10 }   // כלה
+        ];
+        
+        // Row heights
+        ws['!rows'] = [
+            { hpx: 35 }  // Title row
         ];
         
         XLSX.utils.book_append_sheet(workbook, ws, monthName);
