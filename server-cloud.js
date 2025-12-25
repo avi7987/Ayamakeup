@@ -46,7 +46,7 @@ const clientSchema = new mongoose.Schema({
     date: { type: Date, required: true },
     notes: { type: String, default: '' },
     createdAt: { type: Date, default: Date.now }
-});
+}, { strict: false }); // Allow additional fields
 
 const leadSchema = new mongoose.Schema({
     name: { type: String, required: true },
