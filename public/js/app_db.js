@@ -242,7 +242,8 @@ const IncomeManager = {
             price: parseFloat(amountInput.value),
             date: dateInput.value,
             service: serviceInput.value.trim() || 'שירות כללי',
-            notes: `אמצעי תשלום: ${paymentSelect.value}${isBrideCheck.checked ? ' | כלה 👰' : ''}`
+            notes: `אמצעי תשלום: ${paymentSelect.value}${isBrideCheck.checked ? ' | כלה 👰' : ''}`,
+            isBride: isBrideCheck.checked
         };
         
         // Don't send id field - let MongoDB create _id
