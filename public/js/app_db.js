@@ -121,7 +121,8 @@ const CONFIG = {
     API_BASE_URL: 'https://ayamakeup-production.up.railway.app/api',
     STORAGE_KEYS: {
         CLIENTS: 'crm_clients_v3',
-        LEADS: 'crm_leads_v3'
+        LEADS: 'crm_leads_v3',
+        MESSAGE_SETTINGS: 'message_settings_v1'
     },
     MONTHS: ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'],
     LEAD_STAGES: [
@@ -133,7 +134,33 @@ const CONFIG = {
     ],
     LEAD_STAGES_ARCHIVE: [
         {id: 'lost', title: 'לא נסגר', tooltip: 'לידים שלא התקדמו לסגירה - אפשר להעביר לכאן מכל שלב.'}
-    ]
+    ],
+    DEFAULT_MESSAGE_SETTINGS: {
+        'new': {
+            immediate: {enabled: false, template: 'היי {{firstName}}! 👋\nתודה שפנית אלינו.\nאשוב אליך בהקדם!'},
+            followUp: {enabled: false, delay: 1, unit: 'days', template: 'היי {{firstName}},\nעדיין מעוניינת? אשמח לעזור!'}
+        },
+        'in-process': {
+            immediate: {enabled: true, template: 'שלום {{firstName}}! 😊\nאני כאן לענות על כל שאלה.\nמה חשוב לך לדעת?'},
+            followUp: {enabled: true, delay: 2, unit: 'days', template: 'היי {{firstName}},\nהספקת לחשוב על ההצעה?\nאשמח לעזור בכל דבר!'}
+        },
+        'contract-sent': {
+            immediate: {enabled: true, template: 'היי {{firstName}}! 🎉\nשלחתי את החוזה לאישור.\nנא לאשר בהקדם כדי לשמור את התאריך!'},
+            followUp: {enabled: true, delay: 3, unit: 'days', template: 'היי {{firstName}},\nהספקת לעבור על החוזה?\nהתאריך עדיין שמור לך!'}
+        },
+        'closed': {
+            immediate: {enabled: true, template: 'מזל טוב {{firstName}}! 🎊👰\nהזמנת אושרה!\nכל הפרטים שמורים במערכת.\nנתראה בתאריך {{date}}!'},
+            followUp: {enabled: false, delay: 7, unit: 'days', template: 'היי {{firstName}},\nמתרגשת לקראת האירוע?\nאני פה לכל שאלה!'}
+        },
+        'completed': {
+            immediate: {enabled: true, template: 'תודה {{firstName}}! 💕\nהיה כיף לעבוד איתך!\nשתמיד תזכרי את היום המיוחד הזה! 🌟'},
+            followUp: {enabled: false, delay: 1, unit: 'days', template: ''}
+        },
+        'lost': {
+            immediate: {enabled: false, template: 'היי {{firstName}},\nמקווה שהכל בסדר.\nאם תרצי לחזור בעתיד - אני כאן!'},
+            followUp: {enabled: false, delay: 30, unit: 'days', template: ''}
+        }
+    }
 };
 
 // State Management
@@ -960,10 +987,12 @@ setInterval(() => ReminderSystem.check(), 60000);
 
 // Views
 const LeadsView = {
+    showLostLeads: false,
+    
     render() {
         const board = document.getElementById('kanban-board');
         
-        // Main stages (5 columns in a row)
+        // Main stages only (5 columns)
         const mainStages = CONFIG.LEAD_STAGES.map(stage => `
             <div class="kanban-col">
                 <div class="flex items-center justify-center gap-1 mb-4 border-b pb-2">
@@ -979,28 +1008,45 @@ const LeadsView = {
             </div>
         `).join('');
         
-        // Archive section (lost leads) - separate
-        const archiveStages = CONFIG.LEAD_STAGES_ARCHIVE.map(stage => `
-            <div class="kanban-col-archive">
-                <div class="flex items-center justify-center gap-1 mb-4 border-b pb-2">
-                    <h3 class="font-bold text-gray-600 text-center text-xs">${stage.title}</h3>
-                    <div class="tooltip-container relative inline-block">
-                        <span class="info-icon text-gray-400 cursor-help text-xs">ℹ️</span>
-                        <div class="tooltip-text">${stage.tooltip}</div>
-                    </div>
+        // Lost leads toggle button + conditional column
+        const lostCount = State.leads.filter(l => l.status === 'lost').length;
+        const lostColumn = this.showLostLeads ? `
+            <div class="kanban-col-lost">
+                <div class="flex items-center justify-between mb-4 border-b pb-2">
+                    <h3 class="font-bold text-gray-600 text-center text-xs">לא נסגר (${lostCount})</h3>
+                    <button onclick="LeadsView.toggleLostLeads()" class="text-xs text-gray-400 hover:text-gray-600">הסתר</button>
                 </div>
-                <div class="kanban-list space-y-2" data-status="${stage.id}">
-                    ${this.renderLeadsForStage(stage.id)}
+                <div class="kanban-list space-y-2" data-status="lost">
+                    ${this.renderLeadsForStage('lost')}
                 </div>
             </div>
-        `).join('');
+        ` : '';
         
         board.innerHTML = `
-            <div class="kanban-container-main">${mainStages}</div>
-            <div class="kanban-container-archive">${archiveStages}</div>
+            <div class="flex items-center justify-between mb-4 px-2">
+                <div></div>
+                <button 
+                    onclick="LeadsView.toggleLostLeads()" 
+                    class="px-4 py-2 rounded-lg text-sm font-bold transition-all ${
+                        this.showLostLeads 
+                        ? 'bg-gray-200 text-gray-700' 
+                        : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                    }">
+                    ${this.showLostLeads ? 'הסתר לא נסגר' : `הצג לא נסגר (${lostCount})`}
+                </button>
+            </div>
+            <div class="kanban-container-main">
+                ${mainStages}
+                ${lostColumn}
+            </div>
         `;
         
         this.initDragAndDrop();
+    },
+    
+    toggleLostLeads() {
+        this.showLostLeads = !this.showLostLeads;
+        this.render();
     },
     
     renderLeadsForStage(stageId) {

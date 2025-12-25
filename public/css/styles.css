@@ -56,22 +56,14 @@ body {
     display: flex;
 }
 
-/* Kanban Board - 5 columns main + 1 archive */
+/* Kanban Board - 5 columns main (+ optional lost column) */
 .kanban-container-main { 
     display: flex; 
     gap: 10px; 
     overflow-x: hidden; /* NO horizontal scroll */
     padding: 10px; 
-    min-height: 65vh; 
+    min-height: 70vh; 
     align-items: flex-start; 
-    margin-bottom: 20px;
-}
-
-.kanban-container-archive {
-    display: flex;
-    justify-content: center;
-    padding: 10px;
-    border-top: 2px dashed #d1d5db;
 }
 
 .kanban-col { 
@@ -85,13 +77,13 @@ body {
     max-height: 78vh; 
 }
 
-.kanban-col-archive {
+.kanban-col-lost {
     background: #f3f4f680;
     border: 2px dashed #9ca3af;
     border-radius: 12px;
     padding: 12px;
-    width: 300px;
-    max-width: 300px;
+    min-width: 0;
+    flex: 1;
     display: flex;
     flex-direction: column;
     max-height: 78vh;
