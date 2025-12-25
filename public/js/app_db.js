@@ -606,18 +606,35 @@ const LeadsManager = {
 // WhatsApp Integration
 const WhatsAppHelper = {
     templates: {
-        'new': 'שלום {name}! תודה שפנית אלינו 😊\nנשמח לעזור לך ביום המיוחד שלך!\nמה הפרטים על האירוע?',
-        'contact': 'היי {name}! 👋\nרציתי לעדכן לגבי השירות שביקשת.\nאשמח לשמוע ממך',
-        'negotiation': 'שלום {name},\nשלחתי לך הצעת מחיר מפורטת.\nהכל כלול בהצעה: {service}\nתאריך: {date}\nמחכה לתשובתך! 💜',
-        'offer': 'היי {name}! 🎉\nשלחתי את החוזה לאישור.\nנא לאשר בהקדם כדי לשמור את התאריך.\nמצפה לעבוד איתך!',
-        'done': 'מזל טוב {name}! 🎊👰\nהזמנת אושרה לתאריך {date}!\nכל הפרטים שמורים במערכת.\nנתראה ביום המיוחד! 💕'
+        'contact': 'היי {{firstName}}! 👋\nרציתי לעדכן לגבי השירות שביקשת.\nאשמח לשמוע ממך',
+        'negotiation': 'שלום {{firstName}},\nשלחתי לך הצעת מחיר מפורטת.\nהכל כלול בהצעה: {{service}}\nתאריך: {{date}}\nמחכה לתשובתך! 💜',
+        'offer': 'היי {{firstName}}! 🎉\nשלחתי את החוזה לאישור.\nנא לאשר בהקדם כדי לשמור את התאריך.\nמצפה לעבוד איתך!',
+        'done': 'מזל טוב {{firstName}}! 🎊👰\nהזמנת אושרה לתאריך {{date}}!\nכל הפרטים שמורים במערכת.\nנתראה ביום המיוחד! 💕'
+    },
+    
+    extractFirstName(fullName) {
+        if (!fullName) return '';
+        // Extract first name (text before first space)
+        const firstName = fullName.trim().split(' ')[0];
+        return firstName;
     },
     
     getTemplate(stage, lead) {
-        let template = this.templates[stage] || 'שלום {name}!';
-        template = template.replace('{name}', lead.name);
-        template = template.replace('{service}', lead.service || 'שירותי האיפור');
-        template = template.replace('{date}', lead.eventDate ? new Date(lead.eventDate).toLocaleDateString('he-IL') : 'התאריך שנקבע');
+        // Only certain stages have templates
+        const template = this.templates[stage];
+        if (!template) {
+            return `שלום ${lead.name}!`; // Default message for stages without template
+        }
+        
+        const firstName = this.extractFirstName(lead.name);
+        let message = template;
+        
+        // Replace variables
+        message = message.replace(/\{\{firstName\}\}/g, firstName || lead.name);
+        message = message.replace(/\{\{service\}\}/g, lead.service || 'שירותי האיפור');
+        message = message.replace(/\{\{date\}\}/g, lead.eventDate ? new Date(lead.eventDate).toLocaleDateString('he-IL') : 'התאריך שנקבע');
+        
+        return message;
         return template;
     },
     
@@ -864,12 +881,62 @@ const LeadProfile = {
         const lead = State.leads.find(l => (l._id || l.id) === this.currentLeadId);
         if (!lead) return;
         
+        // Get template for current stage
         const message = WhatsAppHelper.getTemplate(lead.status, lead);
-        const customMessage = prompt('ערוך את ההודעה:', message);
         
-        if (customMessage !== null) {
-            WhatsAppHelper.send(lead, customMessage);
+        // Show edit modal
+        this.showWhatsAppModal(lead, message);
+    },
+    
+    showWhatsAppModal(lead, defaultMessage) {
+        const modalHTML = `
+            <div class="bg-white rounded-3xl w-full max-w-md shadow-2xl text-right p-6">
+                <h3 class="text-xl font-bold mb-4 text-green-600">📱 שליחת הודעת WhatsApp</h3>
+                <div class="mb-4">
+                    <p class="text-sm text-gray-600 mb-2">שלח ל: <strong>${lead.name}</strong></p>
+                    <p class="text-sm text-gray-600 mb-4">שלב נוכחי: <strong>${CONFIG.LEAD_STAGES.find(s => s.id === lead.status)?.title || lead.status}</strong></p>
+                </div>
+                
+                <label class="block text-sm font-bold mb-2">ערוך את ההודעה:</label>
+                <textarea id="whatsapp-message" class="w-full p-3 border rounded-lg text-sm" rows="8">${defaultMessage}</textarea>
+                
+                <div class="flex gap-2 mt-4">
+                    <button onclick="LeadProfile.confirmSendWhatsApp()" class="flex-1 bg-green-500 text-white py-3 rounded-xl font-bold hover:bg-green-600">
+                        שלח WhatsApp
+                    </button>
+                    <button onclick="LeadProfile.closeWhatsAppModal()" class="flex-1 bg-gray-100 text-gray-600 py-3 rounded-xl font-bold hover:bg-gray-200">
+                        ביטול
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        const modal = document.getElementById('modal-whatsapp');
+        if (!modal) {
+            // Create modal if doesn't exist
+            const newModal = document.createElement('div');
+            newModal.id = 'modal-whatsapp';
+            newModal.className = 'modal';
+            document.body.appendChild(newModal);
         }
+        document.getElementById('modal-whatsapp').innerHTML = modalHTML;
+        ModalManager.open('modal-whatsapp');
+    },
+    
+    confirmSendWhatsApp() {
+        const lead = State.leads.find(l => (l._id || l.id) === this.currentLeadId);
+        if (!lead) return;
+        
+        const customMessage = document.getElementById('whatsapp-message').value;
+        
+        if (customMessage) {
+            WhatsAppHelper.send(lead, customMessage);
+            this.closeWhatsAppModal();
+        }
+    },
+    
+    closeWhatsAppModal() {
+        ModalManager.close('modal-whatsapp');
     },
     
     addReminder() {
