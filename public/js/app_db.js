@@ -500,12 +500,14 @@ const LeadsView = {
 
 const HomeView = {
     update() {
-        // Load goals
+        // Load goals - always show section even if goals not set
         const goals = JSON.parse(localStorage.getItem('stride_goals') || '{}');
         
+        // Always show goals section
+        document.getElementById('goals-section').classList.remove('hidden');
+        
+        // If no goals set, show zeros
         if (goals.income || goals.brides) {
-            document.getElementById('goals-section').classList.remove('hidden');
-            
             // Calculate yearly totals
             const now = new Date();
             const thisYear = now.getFullYear();
@@ -548,7 +550,18 @@ const HomeView = {
                 document.getElementById('brides-remaining').innerHTML = `נותרו <strong>${bridesRemaining} כלות</strong> להשגת היעד`;
             }
         } else {
-            document.getElementById('goals-section').classList.add('hidden');
+            // No goals set - show message to set goals
+            document.getElementById('income-current').innerText = '₪0';
+            document.getElementById('income-goal').innerText = 'לא הוגדר';
+            document.getElementById('income-percentage').innerText = '0%';
+            document.getElementById('income-progress').style.width = '0%';
+            document.getElementById('income-remaining').innerHTML = 'הגדר יעד בהגדרות ⚙️';
+            
+            document.getElementById('brides-current').innerText = '0';
+            document.getElementById('brides-goal').innerText = 'לא הוגדר';
+            document.getElementById('brides-percentage').innerText = '0%';
+            document.getElementById('brides-progress').style.width = '0%';
+            document.getElementById('brides-remaining').innerHTML = 'הגדר יעד בהגדרות ⚙️';
         }
     }
 };
