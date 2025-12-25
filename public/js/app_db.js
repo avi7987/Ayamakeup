@@ -13,12 +13,12 @@ const CONFIG = {
     },
     MONTHS: ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'],
     LEAD_STAGES: [
-        {id: 'new', title: '?ƒזץ ?ק?ף??'},
-        {id: 'contact', title: '?ƒף? ?????¿'},
-        {id: 'negotiation', title: '?ƒ?¥ ???ץ"??'},
-        {id: 'offer', title: '?ƒף£ ?פ?????פ'},
-        {id: 'done', title: '?£ו ?????ע?¿'},
-        {id: 'archive', title: '?ƒףב ?נ?¿?¢?ש?ץ?ƒ'}
+        {id: 'new', title: 'ליד חדש'},
+        {id: 'contact', title: 'במגע'},
+        {id: 'negotiation', title: 'במשא ומתן'},
+        {id: 'offer', title: 'בהצעה'},
+        {id: 'done', title: 'נסגר'},
+        {id: 'archive', title: 'בארכיון'}
     ]
 };
 
@@ -48,11 +48,11 @@ const State = {
                 this.clients = this.clients.map(c => ({...c, isBride: Boolean(c.isBride)}));
                 this.leads = this.leads.map(l => ({...l, isBride: Boolean(l.isBride)}));
                 
-                console.log('?£ו Data loaded from database');
+                console.log('נטענו נתונים מה-DB');
             } else {
                 // Fallback to localStorage
                 this.loadFromStorage();
-                console.log('?ת???ן Using localStorage data');
+                console.log('משתמש בנתונים מקומיים');
             }
         } catch (error) {
             console.error('Failed to connect to database, using localStorage:', error);
@@ -282,7 +282,7 @@ const IncomeManager = {
             month: CONFIG.MONTHS[new Date(document.getElementById('edit-date').value).getMonth()]
         };
         
-        btn.innerText = "?????ף?¢?ƒ... ?ן?";
+        btn.innerText = "מעדכן... אנא המתן";
         btn.disabled = true;
         
         try {
@@ -298,15 +298,15 @@ const IncomeManager = {
             ManageView.open();
             StatsView.update();
         } catch (error) {
-            alert("???ע?ש?נ?פ ?ס???ף?¢?ץ?ƒ: " + error.message);
+            alert("העידכון נכשל: " + error.message);
         }
         
-        btn.innerText = "?????ץ?¿ ???ש???ץ?ש?ש?¥";
+        btn.innerText = "שמור שינויים";
         btn.disabled = false;
     },
     
     async delete(id) {
-        if (!confirm('?£???ק?ץ?? ?נ?¬ ?פ???????פ?')) return;
+        if (!confirm('למחוק את הרשומה?')) return;
         
         try {
             await API.deleteClient(id);
@@ -315,7 +315,7 @@ const IncomeManager = {
             ManageView.open();
             StatsView.update();
         } catch (error) {
-            alert("???ע?ש?נ?פ ?ס???ק?ש???פ: " + error.message);
+            alert("העידכון נכשל: " + error.message);
         }
     },
     
@@ -351,11 +351,11 @@ const LeadsManager = {
         };
         
         if (!data.name || !data.phone) {
-            alert('???¥ ?ץ?ר?£???ץ?ƒ ?ק?ץ?ס?פ');
+            alert('מלא את השדות החובה');
             return;
         }
         
-        btn.innerText = "???ץ???¿...";
+        btn.innerText = "שומר...";
         btn.disabled = true;
         
         try {
@@ -457,8 +457,8 @@ const LeadsView = {
                 </div>
                 <div class="text-[10px] text-gray-400 mb-2">${lead.service || ''}</div>
                 <div class="flex gap-2 border-t pt-2 mt-1">
-                    <button onclick="viewLead(${lead.id})" class="text-[10px] bg-purple-50 text-purple-600 px-2 py-1 rounded font-bold">?ƒסב??ן ???¿?ר?ש?¥</button>
-                    <button onclick="deleteLead(${lead.id})" class="text-[10px] text-red-300 mr-auto">???ק??</button>
+                    <button onclick="viewLead(${lead.id})" class="text-[10px] bg-purple-50 text-purple-600 px-2 py-1 rounded font-bold">הצג פרטים</button>
+                    <button onclick="deleteLead(${lead.id})" class="text-[10px] text-red-300 mr-auto">מחק</button>
                 </div>
             </div>
         `).join('');
@@ -643,10 +643,10 @@ const ManageView = {
                     <td class="p-3 text-xs text-gray-500">${client.date}</td>
                     <td class="p-3 font-bold">${client.name}</td>
                     <td class="p-3 text-sm text-gray-600">${client.service || '-'}</td>
-                    <td class="p-3 text-purple-600 font-bold">${client.amount} ?ג¬</td>
+                    <td class="p-3 text-purple-600 font-bold">${client.price || client.amount} ₪</td>
                     <td class="p-3 flex gap-2">
-                        <button onclick="startEdit(${client.id})" class="text-blue-500 font-bold text-xs bg-blue-50 px-2 py-1 rounded">???¿?ץ?ת</button>
-                        <button onclick="deleteRow(${client.id})" class="text-red-500 font-bold text-xs bg-red-50 px-2 py-1 rounded">???ק??</button>
+                        <button onclick="startEdit(${client.id})" class="text-blue-500 font-bold text-xs bg-blue-50 px-2 py-1 rounded">ערוך</button>
+                        <button onclick="deleteRow(${client.id})" class="text-red-500 font-bold text-xs bg-red-50 px-2 py-1 rounded">מחק</button>
                     </td>
                 </tr>
             `).join('');
@@ -666,7 +666,7 @@ const ManageView = {
         const checked = document.querySelectorAll('.row-sel:checked');
         const btn = document.getElementById('bulk-del-btn');
         btn.classList.toggle('hidden', checked.length === 0);
-        btn.innerText = `???ק?? ${checked.length} ???ץ?¿?ץ?¬`;
+        btn.innerText = `מחק ${checked.length} רשומות`;
     },
     
     async bulkDelete() {
@@ -707,7 +707,7 @@ const MigrationTool = {
             LeadsView.render();
             StatsView.update();
         } catch (error) {
-            alert('???ע?ש?נ?פ ?ס?פ???ס?¿?¬ ???¬?ץ???ש?¥: ' + error.message);
+            alert('העברת הנתונים נכשלה: ' + error.message);
         }
     }
 };
@@ -745,7 +745,7 @@ window.onload = async () => {
     const currentMonth = CONFIG.MONTHS[new Date().getMonth()];
     filter.innerHTML = CONFIG.MONTHS
         .map(month => `<option value="${month}" ${month === currentMonth ? 'selected' : ''}>${month}</option>`)
-        .join('') + `<option value="ALL">?ƒףט ?????¬?ש</option>`;
+        .join('') + `<option value="ALL">הכל (שנתי)</option>`;
     
     // Set today's date
     document.getElementById('inc-date').valueAsDate = new Date();
