@@ -321,6 +321,21 @@ app.post('/api/migrate', async (req, res) => {
     }
 });
 
+// ==================== MAINTENANCE ROUTES ====================
+
+// Fix MongoDB indexes - drop the problematic id_1 index
+app.post('/api/fix-indexes', async (req, res) => {
+    try {
+        // Drop the id_1 index if it exists
+        await Client.collection.dropIndex('id_1').catch(() => {
+            // Index might not exist, that's okay
+        });
+        res.json({ message: 'Indexes fixed successfully' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // ==================== START SERVER ====================
 
 async function startServer() {
