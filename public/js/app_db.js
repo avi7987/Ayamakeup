@@ -4,6 +4,111 @@
  * Date: 25.12.2025
  */
 
+// ==================== SOUND EFFECTS ====================
+const SoundEffects = {
+    playCashRegister() {
+        // Create a simple cash register sound using Web Audio API
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        
+        // Cash register "cha-ching" sound
+        const playTone = (frequency, startTime, duration) => {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = frequency;
+            oscillator.type = 'sine';
+            
+            gainNode.gain.setValueAtTime(0.3, startTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+            
+            oscillator.start(startTime);
+            oscillator.stop(startTime + duration);
+        };
+        
+        const now = audioContext.currentTime;
+        playTone(800, now, 0.1);
+        playTone(1000, now + 0.1, 0.15);
+        
+        console.log('💰 צלצול כסף!');
+    }
+};
+
+// ==================== MOTIVATIONAL MESSAGES ====================
+const MotivationalMessages = {
+    brideMessages: [
+        '🎉 כל הכבוד! עוד כלה במאגר!',
+        '👰 יופי! צועדים לעבר היעד!',
+        '💪 אחלה! המומנטום עובד!',
+        '🌟 מדהים! היעד מתקרב!',
+        '🔥 בום! עוד כלה בפוקט!',
+        '⭐ שיא! היעד בהישג יד!',
+        '💎 מושלם! ככה ממשיכים!',
+        '🚀 יאללה! זורמים לעבר המטרה!',
+        '✨ וואו! עוד צעד קדימה!',
+        '🎯 יפה! היעד השנתי מתקדם!',
+        '💫 אדיר! הכל זורם נהדר!',
+        '🌈 מעולה! עוד הצלחה בדרך!',
+        '🎊 חזק! המטרה מתקרבת!',
+        '💝 טוב מאוד! ממשיכים ככה!',
+        '🏆 גאון! זה הולך מצוין!'
+    ],
+    
+    previousBridesCount: 0,
+    
+    getRandomMessage() {
+        const randomIndex = Math.floor(Math.random() * this.brideMessages.length);
+        return this.brideMessages[randomIndex];
+    },
+    
+    showMessage(message) {
+        // Create floating message element
+        const messageEl = document.createElement('div');
+        messageEl.className = 'fixed top-20 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-pink-500 to-purple-600 text-white px-8 py-4 rounded-2xl shadow-2xl z-50 text-xl font-bold';
+        messageEl.style.cssText = 'animation: slideDown 0.5s ease-out, pulse 0.5s ease-in-out 0.5s 3';
+        messageEl.innerHTML = `<div class="text-center">${message}</div>`;
+        
+        document.body.appendChild(messageEl);
+        
+        // Remove after 3 seconds
+        setTimeout(() => {
+            messageEl.style.transition = 'all 0.5s ease-out';
+            messageEl.style.opacity = '0';
+            messageEl.style.transform = 'translateX(-50%) translateY(-30px) scale(0.8)';
+            setTimeout(() => messageEl.remove(), 500);
+        }, 2500);
+    }
+};
+
+// Add CSS animations
+if (!document.getElementById('motivational-styles')) {
+    const style = document.createElement('style');
+    style.id = 'motivational-styles';
+    style.textContent = `
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(-50px) scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0) scale(1);
+            }
+        }
+        @keyframes pulse {
+            0%, 100% {
+                transform: translateX(-50%) translateY(0) scale(1);
+            }
+            50% {
+                transform: translateX(-50%) translateY(0) scale(1.05);
+            }
+        }
+    `;
+    document.head.appendChild(style);
+}
+
 // Configuration
 const CONFIG = {
     API_BASE_URL: 'https://ayamakeup-production.up.railway.app/api',
@@ -258,6 +363,10 @@ const IncomeManager = {
             console.log('📤 שולח נתונים למסד נתונים:', data);
             const savedClient = await API.addClient(data);
             console.log('✅ נשמר בהצלחה! isBride:', savedClient.isBride, 'notes:', savedClient.notes);
+            
+            // Play cash register sound
+            SoundEffects.playCashRegister();
+            
             // Add to local state
             State.clients.push(savedClient);
             // Update home view to reflect new data
@@ -509,6 +618,20 @@ const HomeView = {
         // Always show goals section
         document.getElementById('goals-section').classList.remove('hidden');
         
+        // Calculate current brides count for comparison
+        const now = new Date();
+        const thisYear = now.getFullYear();
+        const yearlyClients = State.clients.filter(c => {
+            const date = new Date(c.date);
+            return date.getFullYear() === thisYear;
+        });
+        const currentBrides = yearlyClients.filter(c => c.isBride || c.notes?.includes('כלה')).length;
+        
+        // Initialize previous count if not set
+        if (MotivationalMessages.previousBridesCount === 0) {
+            MotivationalMessages.previousBridesCount = currentBrides;
+        }
+        
         // If no goals set, show zeros
         if (goals.income || goals.brides) {
             // Calculate yearly totals
@@ -541,6 +664,15 @@ const HomeView = {
             // Brides progress - check both isBride field AND notes
             const totalBrides = yearlyClients.filter(c => c.isBride || c.notes?.includes('כלה')).length;
             console.log(`👰 כלות השנה: ${totalBrides} (מתוך ${yearlyClients.length} לקוחות)`);
+            
+            // Check if brides count increased and show motivational message
+            if (totalBrides > MotivationalMessages.previousBridesCount && MotivationalMessages.previousBridesCount > 0) {
+                const message = MotivationalMessages.getRandomMessage();
+                MotivationalMessages.showMessage(message);
+                console.log('🎊 הצגת הודעת עידוד:', message);
+            }
+            MotivationalMessages.previousBridesCount = totalBrides;
+            
             const bridesGoal = goals.brides || 0;
             const bridesPercent = bridesGoal > 0 ? Math.min(100, Math.round((totalBrides / bridesGoal) * 100)) : 0;
             const bridesRemaining = Math.max(0, bridesGoal - totalBrides);
