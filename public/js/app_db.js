@@ -868,6 +868,55 @@ const LeadProfile = {
                         </button>
                     </div>
                     
+                    <!-- Message History -->
+                    <div class="bg-green-50 p-4 rounded-xl">
+                        <h3 class="font-bold text-green-800 mb-3">💬 הודעות שנשלחו</h3>
+                        <div class="space-y-2">
+                            ${(lead.messageHistory || []).length > 0 ? (lead.messageHistory || []).map(msg => `
+                                <div class="text-xs bg-white p-3 rounded-lg border-r-4 ${msg.type === 'immediate' ? 'border-green-400' : 'border-blue-400'}">
+                                    <div class="flex justify-between items-start mb-1">
+                                        <span class="font-bold">${msg.type === 'immediate' ? '📩 הודעה מיידית' : '⏰ Follow-up'}</span>
+                                        <span class="text-gray-500">${new Date(msg.sentAt).toLocaleString('he-IL')}</span>
+                                    </div>
+                                    <div class="text-gray-600 bg-gray-50 p-2 rounded mt-1 font-mono text-[10px]">${msg.message}</div>
+                                    <div class="text-[9px] text-gray-400 mt-1">שלב: ${CONFIG.LEAD_STAGES.find(s => s.id === msg.stage)?.title || msg.stage}</div>
+                                </div>
+                            `).join('') : '<p class="text-sm text-gray-500">עדיין לא נשלחו הודעות</p>'}
+                        </div>
+                    </div>
+                    
+                    <!-- Active Timers -->
+                    ${(() => {
+                        const activeTimers = FollowUpTimers.getActiveTimers(lead._id || lead.id);
+                        if (activeTimers.length === 0) return '';
+                        
+                        return `
+                        <div class="bg-orange-50 p-4 rounded-xl">
+                            <h3 class="font-bold text-orange-800 mb-3">⏰ טיימרים פעילים</h3>
+                            <div class="space-y-2">
+                                ${activeTimers.map(timer => {
+                                    const timeLeft = timer.triggerTime - Date.now();
+                                    const hoursLeft = Math.floor(timeLeft / (1000 * 60 * 60));
+                                    const daysLeft = Math.floor(hoursLeft / 24);
+                                    const timeStr = daysLeft > 0 ? `${daysLeft} ימים` : `${hoursLeft} שעות`;
+                                    
+                                    return `
+                                    <div class="text-xs bg-white p-3 rounded-lg border-r-4 border-orange-400">
+                                        <div class="flex justify-between items-center">
+                                            <span class="font-bold">Follow-up - ${CONFIG.LEAD_STAGES.find(s => s.id === timer.stage)?.title}</span>
+                                            <span class="text-orange-600 font-bold">${timeStr}</span>
+                                        </div>
+                                        <div class="text-gray-500 text-[10px] mt-1">
+                                            יופעל ב: ${new Date(timer.triggerTime).toLocaleString('he-IL')}
+                                        </div>
+                                    </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </div>
+                        `;
+                    })()}
+                    
                     <!-- Actions -->
                     <div class="flex gap-2">
                         <button onclick="LeadProfile.sendWhatsApp()" class="flex-1 bg-green-500 text-white py-3 rounded-xl font-bold">
@@ -1091,7 +1140,9 @@ const LeadsView = {
                 onEnd: async function(evt) {
                     const leadId = evt.item.getAttribute('data-id');
                     const newStatus = evt.to.getAttribute('data-status');
-                    await LeadsManager.updateStatus(leadId, newStatus);
+                    
+                    // Use WhatsApp automation system
+                    await WhatsAppAutomation.checkAndPrompt(leadId, newStatus);
                 }
             });
         });
@@ -1784,6 +1835,232 @@ const MessageSettings = {
     }
 };
 
+// ==================== WHATSAPP AUTOMATION ====================
+const WhatsAppAutomation = {
+    pendingLead: null,
+    pendingStage: null,
+    
+    async checkAndPrompt(leadId, newStage) {
+        const lead = State.leads.find(l => (l._id || l.id) === leadId);
+        if (!lead) return;
+        
+        const stageSettings = MessageSettings.getSettings(newStage);
+        
+        // Check if immediate message is enabled
+        if (stageSettings.immediate.enabled && stageSettings.immediate.template) {
+            this.pendingLead = lead;
+            this.pendingStage = newStage;
+            
+            // Generate message with variables
+            const message = this.fillTemplate(stageSettings.immediate.template, lead);
+            
+            // Show confirmation modal
+            document.getElementById('whatsapp-confirm-message').textContent = message;
+            openModal('modal-whatsapp-confirm');
+        } else {
+            // No message configured, just update status
+            await this.completeStageChange(leadId, newStage);
+        }
+    },
+    
+    fillTemplate(template, lead) {
+        const firstName = lead.name.trim().split(' ')[0];
+        let message = template;
+        
+        message = message.replace(/\{\{firstName\}\}/g, firstName || lead.name);
+        message = message.replace(/\{\{service\}\}/g, lead.service || 'שירותי האיפור');
+        message = message.replace(/\{\{date\}\}/g, lead.eventDate ? new Date(lead.eventDate).toLocaleDateString('he-IL') : 'התאריך שנקבע');
+        
+        return message;
+    },
+    
+    async sendConfirmed() {
+        if (!this.pendingLead || !this.pendingStage) return;
+        
+        const stageSettings = MessageSettings.getSettings(this.pendingStage);
+        const message = this.fillTemplate(stageSettings.immediate.template, this.pendingLead);
+        
+        // Send via WhatsApp
+        const phone = this.pendingLead.phone.replace(/[^0-9]/g, '').replace(/^0/, '');
+        const url = `https://wa.me/972${phone}?text=${encodeURIComponent(message)}`;
+        window.open(url, '_blank');
+        
+        // Record message sent
+        if (!this.pendingLead.messageHistory) this.pendingLead.messageHistory = [];
+        this.pendingLead.messageHistory.push({
+            type: 'immediate',
+            stage: this.pendingStage,
+            message: message,
+            sentAt: new Date().toISOString()
+        });
+        
+        // Complete stage change
+        await this.completeStageChange(this.pendingLead._id || this.pendingLead.id, this.pendingStage);
+        
+        closeModal('modal-whatsapp-confirm');
+        this.pendingLead = null;
+        this.pendingStage = null;
+    },
+    
+    async skipMessage() {
+        if (!this.pendingLead || !this.pendingStage) return;
+        
+        // Just update stage without sending
+        await this.completeStageChange(this.pendingLead._id || this.pendingLead.id, this.pendingStage);
+        
+        closeModal('modal-whatsapp-confirm');
+        this.pendingLead = null;
+        this.pendingStage = null;
+    },
+    
+    async completeStageChange(leadId, newStage) {
+        const lead = State.leads.find(l => (l._id || l.id) === leadId);
+        if (!lead) return;
+        
+        const oldStatus = lead.status;
+        
+        // Add to stage history
+        if (!lead.stageHistory) lead.stageHistory = [];
+        lead.stageHistory.push({
+            stage: newStage,
+            timestamp: new Date().toISOString(),
+            note: `עבר לשלב: ${CONFIG.LEAD_STAGES.find(s => s.id === newStage)?.title || newStage}`
+        });
+        
+        lead.status = newStage;
+        lead.updatedAt = new Date().toISOString();
+        
+        // Cancel old timers for previous stage
+        FollowUpTimers.cancelTimer(leadId, oldStatus);
+        
+        // Start new follow-up timer if enabled
+        const stageSettings = MessageSettings.getSettings(newStage);
+        if (stageSettings.followUp.enabled && stageSettings.followUp.template) {
+            FollowUpTimers.startTimer(leadId, newStage, stageSettings.followUp);
+        }
+        
+        // Save to database
+        await API.updateLead(leadId, lead);
+        
+        // Handle Google Calendar for "closed" stage
+        if (newStage === 'closed' && lead.eventDate && !lead.calendarEventId) {
+            GoogleCalendar.createEvent(lead);
+        }
+        
+        // Refresh view
+        LeadsView.render();
+    }
+};
+
+// ==================== FOLLOW-UP TIMERS ====================
+const FollowUpTimers = {
+    timers: {},
+    checkInterval: null,
+    
+    init() {
+        // Load timers from localStorage
+        const saved = localStorage.getItem('followup_timers');
+        if (saved) {
+            this.timers = JSON.parse(saved);
+        }
+        
+        // Start checking every minute
+        this.checkInterval = setInterval(() => this.checkTimers(), 60000);
+        
+        // Check immediately on load
+        setTimeout(() => this.checkTimers(), 5000);
+    },
+    
+    startTimer(leadId, stage, followUpSettings) {
+        const { delay, unit } = followUpSettings;
+        
+        // Calculate trigger time
+        let milliseconds = delay;
+        if (unit === 'hours') milliseconds *= 60 * 60 * 1000;
+        else if (unit === 'days') milliseconds *= 24 * 60 * 60 * 1000;
+        else if (unit === 'weeks') milliseconds *= 7 * 24 * 60 * 60 * 1000;
+        
+        const triggerTime = Date.now() + milliseconds;
+        
+        this.timers[`${leadId}_${stage}`] = {
+            leadId,
+            stage,
+            triggerTime,
+            createdAt: Date.now()
+        };
+        
+        this.save();
+        console.log(`⏰ Timer started for lead ${leadId} in stage ${stage} - triggers at ${new Date(triggerTime).toLocaleString('he-IL')}`);
+    },
+    
+    cancelTimer(leadId, stage) {
+        const key = `${leadId}_${stage}`;
+        if (this.timers[key]) {
+            delete this.timers[key];
+            this.save();
+            console.log(`⏰ Timer cancelled for lead ${leadId} in stage ${stage}`);
+        }
+    },
+    
+    checkTimers() {
+        const now = Date.now();
+        
+        Object.entries(this.timers).forEach(([key, timer]) => {
+            if (now >= timer.triggerTime) {
+                this.triggerTimer(timer);
+                delete this.timers[key];
+            }
+        });
+        
+        this.save();
+    },
+    
+    triggerTimer(timer) {
+        const lead = State.leads.find(l => (l._id || l.id) === timer.leadId);
+        if (!lead) return;
+        
+        // Check if lead is still in the same stage
+        if (lead.status !== timer.stage) {
+            console.log(`⏰ Timer skipped - lead moved from ${timer.stage} to ${lead.status}`);
+            return;
+        }
+        
+        const stageSettings = MessageSettings.getSettings(timer.stage);
+        if (!stageSettings.followUp.enabled) return;
+        
+        const message = WhatsAppAutomation.fillTemplate(stageSettings.followUp.template, lead);
+        
+        // Show popup notification
+        const sendNow = confirm(`⏰ הגיע הזמן לעקוב אחרי ${lead.name}!\n\nשלח הודעת follow-up ב-WhatsApp?\n\n"${message}"`);
+        
+        if (sendNow) {
+            // Send message
+            const phone = lead.phone.replace(/[^0-9]/g, '').replace(/^0/, '');
+            const url = `https://wa.me/972${phone}?text=${encodeURIComponent(message)}`;
+            window.open(url, '_blank');
+            
+            // Record message
+            if (!lead.messageHistory) lead.messageHistory = [];
+            lead.messageHistory.push({
+                type: 'followup',
+                stage: timer.stage,
+                message: message,
+                sentAt: new Date().toISOString()
+            });
+            
+            API.updateLead(lead._id || lead.id, lead);
+        }
+    },
+    
+    save() {
+        localStorage.setItem('followup_timers', JSON.stringify(this.timers));
+    },
+    
+    getActiveTimers(leadId) {
+        return Object.values(this.timers).filter(t => t.leadId === leadId);
+    }
+};
+
 // Global Functions (for onclick handlers in HTML)
 window.switchPage = async (page) => await Navigation.switchPage(page);
 window.openModal = (id) => ModalManager.open(id);
@@ -1916,6 +2193,7 @@ async function init() {
     console.log('🚀 Initializing CRM...');
     await State.init();
     await MessageSettings.init();
+    FollowUpTimers.init();
     
     const filter = document.getElementById('stats-month-filter');
     const currentMonth = CONFIG.MONTHS[new Date().getMonth()];
