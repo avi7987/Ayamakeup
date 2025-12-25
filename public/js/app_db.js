@@ -10,8 +10,8 @@ const SoundEffects = {
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
         const now = audioContext.currentTime;
         
-        // Simple "cha-ching" sound - two quick tones
-        const playTone = (frequency, startTime, duration) => {
+        // Classic "ka-ching" cash register sound
+        const playTone = (frequency, startTime, duration, volume = 0.25) => {
             const oscillator = audioContext.createOscillator();
             const gainNode = audioContext.createGain();
             
@@ -19,21 +19,23 @@ const SoundEffects = {
             gainNode.connect(audioContext.destination);
             
             oscillator.frequency.value = frequency;
-            oscillator.type = 'sine';
+            oscillator.type = 'triangle'; // Warmer sound
             
-            gainNode.gain.setValueAtTime(0.3, startTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+            gainNode.gain.setValueAtTime(volume, startTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
             
             oscillator.start(startTime);
             oscillator.stop(startTime + duration);
         };
         
-        // "Cha" (lower)
-        playTone(523, now, 0.1);
-        // "Ching" (higher)
-        playTone(784, now + 0.08, 0.2);
+        // "Ka" - Quick low impact
+        playTone(440, now, 0.06, 0.3);
+        // "Ching" - Bell-like high notes
+        playTone(1047, now + 0.05, 0.25, 0.25);
+        playTone(1319, now + 0.06, 0.3, 0.2);
+        playTone(1568, now + 0.07, 0.35, 0.15);
         
-        console.log('💰 צ\'ה-צ\'ינג!');
+        console.log('💰 קא-צ\'ינג!');
     }
 };
 
@@ -108,7 +110,7 @@ if (!document.getElementById('motivational-styles')) {
         }
         /* Smooth progress bar animation */
         .progress-bar {
-            transition: width 0.8s ease-out !important;
+            transition: width 0.8s ease-out, transform 0.4s ease-out !important;
         }
     `;
     document.head.appendChild(style);
@@ -374,9 +376,9 @@ const IncomeManager = {
             
             // Add to local state
             State.clients.push(savedClient);
-            // Update home view to reflect new data (with messages if bride count increased)
-            console.log('🔄 מעדכן תצוגת דף הבית...');
-            await HomeView.update(true);
+            // Update home view to reflect new data (NO messages here - only when returning to home page)
+            console.log('🔄 מעדכן תצוגת דף הבית (ללא הודעות)...');
+            await HomeView.update(false);
             
             alert('הלקוח נשמר בהצלחה במסד הנתונים!');
             nameInput.value = '';
@@ -663,7 +665,13 @@ const HomeView = {
             document.getElementById('income-current').innerText = `₪${totalIncome.toLocaleString()}`;
             document.getElementById('income-goal').innerText = `₪${incomeGoal.toLocaleString()}`;
             document.getElementById('income-percentage').innerText = `${incomePercent}%`;
-            document.getElementById('income-progress').style.width = `${incomePercent}%`;
+            const incomeBar = document.getElementById('income-progress');
+            incomeBar.style.width = `${incomePercent}%`;
+            // Trigger animation
+            if (showMessages && incomePercent > 0) {
+                incomeBar.style.transform = 'scaleY(1.1)';
+                setTimeout(() => incomeBar.style.transform = 'scaleY(1)', 400);
+            }
             
             if (incomePercent >= 100) {
                 document.getElementById('income-remaining').innerHTML = '🎉 <strong>יעד הושג!</strong> מזל טוב!';
@@ -689,7 +697,13 @@ const HomeView = {
             document.getElementById('brides-current').innerText = totalBrides;
             document.getElementById('brides-goal').innerText = bridesGoal;
             document.getElementById('brides-percentage').innerText = `${bridesPercent}%`;
-            document.getElementById('brides-progress').style.width = `${bridesPercent}%`;
+            const bridesBar = document.getElementById('brides-progress');
+            bridesBar.style.width = `${bridesPercent}%`;
+            // Trigger animation when returning to home page
+            if (showMessages && bridesPercent > 0) {
+                bridesBar.style.transform = 'scaleY(1.1)';
+                setTimeout(() => bridesBar.style.transform = 'scaleY(1)', 400);
+            }
             
             if (bridesPercent >= 100) {
                 document.getElementById('brides-remaining').innerHTML = '🎉 <strong>יעד הושג!</strong> מזל טוב!';
