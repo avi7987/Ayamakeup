@@ -216,39 +216,37 @@ const IncomeManager = {
         const isBrideCheck = document.getElementById('inc-isbride');
         
         const data = {
-            id: Date.now(),
             name: nameInput.value.trim(),
-            amount: parseFloat(amountInput.value),
+            phone: '0000000000', // Default phone if not collected
+            price: parseFloat(amountInput.value),
             date: dateInput.value,
-            service: serviceInput.value.trim(),
-            paymentMethod: paymentSelect.value,
-            isBride: isBrideCheck.checked,
-            month: CONFIG.MONTHS[new Date(dateInput.value).getMonth()]
+            service: serviceInput.value.trim() || 'שירות כללי',
+            notes: `אמצעי תשלום: ${paymentSelect.value}${isBrideCheck.checked ? ' | כלה 👰' : ''}`
         };
         
-        if (!data.name || isNaN(data.amount)) {
-            alert('???£?נ ???¥ ?ץ???¢?ץ?¥');
+        if (!data.name || isNaN(data.price)) {
+            alert('נא למלא את כל השדות');
             return;
         }
         
-        btn.innerText = "???ץ???¿... ?ן?";
+        btn.innerText = "שומר...";
         btn.disabled = true;
         
         try {
-            await API.addClient(data);
-            State.clients.push(data);
+            const savedClient = await API.addClient(data);
+            State.clients.push(savedClient);
             State.saveToStorage();
             
-            alert('?פ???????פ ???????¿?פ ?ס?פ???£?ק?פ!');
+            alert('הלקוח נשמר בהצלחה במסד הנתונים!');
             nameInput.value = '';
             amountInput.value = '';
             serviceInput.value = '';
             isBrideCheck.checked = false;
         } catch (error) {
-            alert("???ע?ש?נ?פ ?ס?????ש?¿?פ: " + error.message);
+            alert("שגיאה בשמירה: " + error.message);
         }
         
-        btn.innerText = "?????ץ?¿ ?סDB";
+        btn.innerText = "שמור במסד נתונים";
         btn.disabled = false;
     },
     
