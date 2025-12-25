@@ -272,6 +272,13 @@ const API = {
         });
     },
     
+    async updateLead(id, data) {
+        return await this.request(`/leads/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(data)
+        });
+    },
+    
     async deleteLead(id) {
         return await this.request(`/leads/${id}`, {
             method: 'DELETE'
@@ -474,6 +481,7 @@ const IncomeManager = {
 const LeadsManager = {
     async add() {
         const btn = document.getElementById('btn-save-lead');
+        const now = new Date().toISOString();
         const data = {
             id: Date.now(),
             status: 'new',
@@ -483,7 +491,21 @@ const LeadsManager = {
             service: document.getElementById('lead-service').value.trim(),
             eventDate: document.getElementById('lead-event-date').value,
             location: document.getElementById('lead-location').value.trim(),
-            isBride: document.getElementById('lead-is-bride').checked
+            isBride: document.getElementById('lead-is-bride').checked,
+            // New fields
+            notes: '',
+            price: 0,
+            deposit: 0,
+            contractStatus: 'pending',
+            reminders: [],
+            stageHistory: [{
+                stage: 'new',
+                timestamp: now,
+                note: 'ליד חדש נוצר'
+            }],
+            createdAt: now,
+            updatedAt: now,
+            calendarEventId: null
         };
         
         if (!data.name || !data.phone) {
@@ -520,11 +542,28 @@ const LeadsManager = {
     
     async updateStatus(leadId, newStatus) {
         try {
+            const lead = State.leads.find(l => l.id === leadId);
+            if (!lead) return;
+            
+            const oldStatus = lead.status;
+            
+            // Add to stage history
+            if (!lead.stageHistory) lead.stageHistory = [];
+            lead.stageHistory.push({
+                stage: newStatus,
+                timestamp: new Date().toISOString(),
+                note: `עובר מ-${CONFIG.LEAD_STAGES.find(s => s.id === oldStatus)?.title || oldStatus} ל-${CONFIG.LEAD_STAGES.find(s => s.id === newStatus)?.title || newStatus}`
+            });
+            
+            lead.status = newStatus;
+            lead.updatedAt = new Date().toISOString();
+            
             await API.updateLeadStatus(leadId, newStatus);
             
-            const lead = State.leads.find(l => l.id === leadId);
-            if (lead) {
-                lead.status = newStatus;
+            // Handle Google Calendar for "done" (Booked) stage
+            if (newStatus === 'done' && lead.eventDate && !lead.calendarEventId) {
+                // Trigger calendar integration
+                GoogleCalendar.createEvent(lead);
             }
         } catch (error) {
             console.error('Failed to update lead status:', error);
@@ -532,35 +571,298 @@ const LeadsManager = {
     },
     
     async delete(id) {
-        if (!confirm('?£???ק?ץ?? ?נ?¬ ?פ?£?ש?ף?')) return;
+        if (!confirm('למחוק את הליד?')) return;
         
         try {
             await API.deleteLead(id);
             State.leads = State.leads.filter(l => l.id !== id);
             LeadsView.render();
         } catch (error) {
-            alert("???ע?ש?נ?פ ?ס???ק?ש???פ: " + error.message);
+            alert("שגיאה במחיקה: " + error.message);
         }
     },
     
     view(id) {
-        const lead = State.leads.find(l => l.id === id);
-        if (!lead) return;
-        
-        document.getElementById('view-name').innerText = lead.name;
-        document.getElementById('view-phone').innerText = lead.phone;
-        document.getElementById('view-source').innerText = lead.source || '-';
-        document.getElementById('view-service').innerText = lead.service || '-';
-        document.getElementById('view-date').innerText = lead.eventDate || '?£?נ ?????ס??';
-        document.getElementById('view-location').innerText = lead.location || '-';
-        document.getElementById('view-tag-bride').classList.toggle('hidden', !lead.isBride);
-        
-        const whatsappLink = `https://wa.me/972${lead.phone.replace(/[^0-9]/g, '').replace(/^0/, '')}`;
-        document.getElementById('view-wa-link').href = whatsappLink;
-        
-        ModalManager.open('modal-view-lead');
+        LeadProfile.open(id);
     }
 };
+
+// WhatsApp Integration
+const WhatsAppHelper = {
+    templates: {
+        'new': 'שלום {name}! תודה שפנית אלינו 😊\nנשמח לעזור לך ביום המיוחד שלך!\nמה הפרטים על האירוע?',
+        'contact': 'היי {name}! 👋\nרציתי לעדכן לגבי השירות שביקשת.\nאשמח לשמוע ממך',
+        'negotiation': 'שלום {name},\nשלחתי לך הצעת מחיר מפורטת.\nהכל כלול בהצעה: {service}\nתאריך: {date}\nמחכה לתשובתך! 💜',
+        'offer': 'היי {name}! 🎉\nשלחתי את החוזה לאישור.\nנא לאשר בהקדם כדי לשמור את התאריך.\nמצפה לעבוד איתך!',
+        'done': 'מזל טוב {name}! 🎊👰\nהזמנת אושרה לתאריך {date}!\nכל הפרטים שמורים במערכת.\nנתראה ביום המיוחד! 💕'
+    },
+    
+    getTemplate(stage, lead) {
+        let template = this.templates[stage] || 'שלום {name}!';
+        template = template.replace('{name}', lead.name);
+        template = template.replace('{service}', lead.service || 'שירותי האיפור');
+        template = template.replace('{date}', lead.eventDate ? new Date(lead.eventDate).toLocaleDateString('he-IL') : 'התאריך שנקבע');
+        return template;
+    },
+    
+    send(lead, customMessage = null) {
+        const phone = lead.phone.replace(/[^0-9]/g, '').replace(/^0/, '');
+        const message = customMessage || this.getTemplate(lead.status, lead);
+        const url = `https://wa.me/972${phone}?text=${encodeURIComponent(message)}`;
+        window.open(url, '_blank');
+    }
+};
+
+// Reminder System
+const ReminderSystem = {
+    add(leadId, reminderData) {
+        const lead = State.leads.find(l => l.id === leadId);
+        if (!lead) return;
+        
+        if (!lead.reminders) lead.reminders = [];
+        lead.reminders.push({
+            id: Date.now(),
+            date: reminderData.date,
+            time: reminderData.time,
+            note: reminderData.note,
+            completed: false,
+            createdAt: new Date().toISOString()
+        });
+        
+        lead.updatedAt = new Date().toISOString();
+        // Save to DB
+        API.updateLead(leadId, lead);
+    },
+    
+    check() {
+        const now = new Date();
+        State.leads.forEach(lead => {
+            if (!lead.reminders) return;
+            
+            lead.reminders.forEach(reminder => {
+                if (reminder.completed) return;
+                
+                const reminderDateTime = new Date(`${reminder.date}T${reminder.time}`);
+                const diff = reminderDateTime - now;
+                
+                // Alert if within 15 minutes
+                if (diff > 0 && diff < 15 * 60 * 1000) {
+                    this.showAlert(lead, reminder);
+                    reminder.completed = true;
+                }
+            });
+        });
+    },
+    
+    showAlert(lead, reminder) {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = 'fixed top-4 left-1/2 transform -translate-x-1/2 bg-amber-500 text-white px-6 py-4 rounded-xl shadow-2xl z-50 animate-bounce';
+        alertDiv.innerHTML = `
+            <div class="font-bold text-lg">🔔 תזכורת!</div>
+            <div class="text-sm mt-1">${lead.name}: ${reminder.note}</div>
+            <button onclick="this.parentElement.remove()" class="mt-2 bg-white text-amber-600 px-3 py-1 rounded text-xs font-bold">
+                הבנתי
+            </button>
+        `;
+        document.body.appendChild(alertDiv);
+        
+        // Auto remove after 10 seconds
+        setTimeout(() => alertDiv.remove(), 10000);
+    }
+};
+
+// Google Calendar Integration
+const GoogleCalendar = {
+    createEvent(lead) {
+        if (!lead.eventDate) {
+            alert('אין תאריך אירוע להוספה ליומן');
+            return;
+        }
+        
+        const eventTitle = `${lead.name} - Wedding`;
+        const eventDate = lead.eventDate;
+        const eventTime = '18:00'; // Default time
+        const location = lead.location || '';
+        const description = `Client: ${lead.name}\nPhone: ${lead.phone}\nService: ${lead.service || 'Bridal Makeup'}\nSource: ${lead.source || 'N/A'}`;
+        
+        // Create Google Calendar link
+        const startDateTime = `${eventDate}T${eventTime.replace(':', '')}00`;
+        const endDateTime = `${eventDate}T${eventTime.split(':')[0]}${(parseInt(eventTime.split(':')[1]) + 180) % 60}00`;
+        
+        const calendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(eventTitle)}&dates=${startDateTime}/${endDateTime}&details=${encodeURIComponent(description)}&location=${encodeURIComponent(location)}`;
+        
+        window.open(calendarUrl, '_blank');
+        
+        // Mark as calendar event created
+        lead.calendarEventId = `gcal_${Date.now()}`;
+        lead.updatedAt = new Date().toISOString();
+    }
+};
+
+// Lead Profile View
+const LeadProfile = {
+    currentLeadId: null,
+    
+    open(leadId) {
+        this.currentLeadId = leadId;
+        const lead = State.leads.find(l => l.id === leadId);
+        if (!lead) return;
+        
+        this.render(lead);
+        ModalManager.open('modal-lead-profile');
+    },
+    
+    render(lead) {
+        const profileHTML = `
+            <div class="bg-white rounded-3xl w-full max-w-2xl shadow-2xl text-right overflow-y-auto max-h-[90vh]">
+                <!-- Header -->
+                <div class="bg-gradient-to-r from-purple-600 to-indigo-700 p-6 text-white sticky top-0 z-10">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h2 class="text-2xl font-bold">${lead.name}</h2>
+                            ${lead.isBride ? '<span class="text-pink-300 text-sm">👰 לקוחת כלה</span>' : ''}
+                        </div>
+                        <button onclick="LeadProfile.close()" class="text-white hover:bg-white/20 rounded-full p-2">
+                            ✕
+                        </button>
+                    </div>
+                    <div class="mt-2 text-sm opacity-90">
+                        ${CONFIG.LEAD_STAGES.find(s => s.id === lead.status)?.title || lead.status}
+                    </div>
+                </div>
+                
+                <div class="p-6 space-y-6">
+                    <!-- Contact Info -->
+                    <div class="bg-gray-50 p-4 rounded-xl">
+                        <h3 class="font-bold text-purple-800 mb-3">פרטי קשר</h3>
+                        <div class="space-y-2 text-sm">
+                            <p><b>טלפון:</b> ${lead.phone}</p>
+                            <p><b>מקור:</b> ${lead.source || 'לא צוין'}</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Event Details -->
+                    <div class="bg-blue-50 p-4 rounded-xl">
+                        <h3 class="font-bold text-blue-800 mb-3">פרטי אירוע</h3>
+                        <div class="space-y-2 text-sm">
+                            <p><b>שירות:</b> ${lead.service || 'לא צוין'}</p>
+                            <p><b>תאריך:</b> ${lead.eventDate ? new Date(lead.eventDate).toLocaleDateString('he-IL') : 'לא נקבע'}</p>
+                            <p><b>מיקום:</b> ${lead.location || 'לא צוין'}</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Financial Info -->
+                    <div class="bg-green-50 p-4 rounded-xl">
+                        <h3 class="font-bold text-green-800 mb-3">פרטים כספיים</h3>
+                        <div class="space-y-2 text-sm">
+                            <p><b>מחיר:</b> ₪${(lead.price || 0).toLocaleString()}</p>
+                            <p><b>מקדמה:</b> ₪${(lead.deposit || 0).toLocaleString()}</p>
+                            <p><b>חוזה:</b> ${lead.contractStatus === 'signed' ? '✅ נחתם' : lead.contractStatus === 'sent' ? '📄 נשלח' : '⏳ ממתין'}</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Stage History -->
+                    <div class="bg-purple-50 p-4 rounded-xl">
+                        <h3 class="font-bold text-purple-800 mb-3">היסטוריית שלבים</h3>
+                        <div class="space-y-2">
+                            ${(lead.stageHistory || []).map(h => `
+                                <div class="text-xs bg-white p-2 rounded border-r-4 border-purple-400">
+                                    <div class="font-bold">${h.note}</div>
+                                    <div class="text-gray-500">${new Date(h.timestamp).toLocaleString('he-IL')}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    
+                    <!-- Reminders -->
+                    <div class="bg-amber-50 p-4 rounded-xl">
+                        <h3 class="font-bold text-amber-800 mb-3">תזכורות</h3>
+                        <div id="reminders-list" class="space-y-2 mb-3">
+                            ${(lead.reminders || []).filter(r => !r.completed).map(r => `
+                                <div class="text-xs bg-white p-2 rounded">
+                                    <div class="font-bold">📅 ${r.date} ${r.time}</div>
+                                    <div>${r.note}</div>
+                                </div>
+                            `).join('') || '<p class="text-sm text-gray-500">אין תזכורות</p>'}
+                        </div>
+                        <button onclick="LeadProfile.addReminder()" class="text-xs bg-amber-200 text-amber-800 px-3 py-2 rounded-lg font-bold w-full">
+                            + הוסף תזכורת
+                        </button>
+                    </div>
+                    
+                    <!-- Notes -->
+                    <div class="bg-gray-50 p-4 rounded-xl">
+                        <h3 class="font-bold text-gray-800 mb-3">הערות</h3>
+                        <textarea id="lead-notes" class="w-full p-3 border rounded-lg text-sm" rows="3" placeholder="הוסף הערות...">${lead.notes || ''}</textarea>
+                        <button onclick="LeadProfile.saveNotes()" class="mt-2 bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-bold">
+                            שמור הערות
+                        </button>
+                    </div>
+                    
+                    <!-- Actions -->
+                    <div class="flex gap-2">
+                        <button onclick="LeadProfile.sendWhatsApp()" class="flex-1 bg-green-500 text-white py-3 rounded-xl font-bold">
+                            📱 WhatsApp
+                        </button>
+                        ${lead.status === 'done' && lead.eventDate ? `
+                            <button onclick="GoogleCalendar.createEvent(State.leads.find(l => l.id === ${lead.id}))" class="flex-1 bg-blue-500 text-white py-3 rounded-xl font-bold">
+                                📅 יומן
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        const modal = document.getElementById('modal-lead-profile');
+        modal.innerHTML = profileHTML;
+    },
+    
+    close() {
+        ModalManager.close('modal-lead-profile');
+    },
+    
+    saveNotes() {
+        const lead = State.leads.find(l => l.id === this.currentLeadId);
+        if (!lead) return;
+        
+        lead.notes = document.getElementById('lead-notes').value;
+        lead.updatedAt = new Date().toISOString();
+        
+        // Save to DB
+        API.updateLead(this.currentLeadId, lead);
+        alert('ההערות נשמרו!');
+    },
+    
+    sendWhatsApp() {
+        const lead = State.leads.find(l => l.id === this.currentLeadId);
+        if (!lead) return;
+        
+        const message = WhatsAppHelper.getTemplate(lead.status, lead);
+        const customMessage = prompt('ערוך את ההודעה:', message);
+        
+        if (customMessage !== null) {
+            WhatsAppHelper.send(lead, customMessage);
+        }
+    },
+    
+    addReminder() {
+        const lead = State.leads.find(l => l.id === this.currentLeadId);
+        if (!lead) return;
+        
+        const date = prompt('תאריך (YYYY-MM-DD):');
+        const time = prompt('שעה (HH:MM):');
+        const note = prompt('הערה:');
+        
+        if (date && time && note) {
+            ReminderSystem.add(this.currentLeadId, { date, time, note });
+            this.render(lead);
+        }
+    }
+};
+
+// Check reminders every minute
+setInterval(() => ReminderSystem.check(), 60000);
 
 // Views
 const LeadsView = {
@@ -582,19 +884,26 @@ const LeadsView = {
     renderLeadsForStage(stageId) {
         const leads = State.leads.filter(l => (l.status || 'new') === stageId);
         
-        return leads.map(lead => `
+        return leads.map(lead => {
+            // Check for active reminders
+            const hasReminders = lead.reminders && lead.reminders.filter(r => !r.completed).length > 0;
+            const reminderBadge = hasReminders ? '<span class="text-amber-500 text-xs">🔔</span>' : '';
+            
+            return `
             <div class="lead-card text-right" data-id="${lead.id}">
                 <div class="flex justify-between mb-1">
-                    <span class="font-bold text-gray-800 text-sm">${lead.name}</span>
-                    <span class="source-tag">${lead.source || '?¢?£?£?ש'}</span>
+                    <span class="font-bold text-gray-800 text-sm">${lead.name} ${reminderBadge}</span>
+                    <span class="source-tag">${lead.source || 'אחר'}</span>
                 </div>
                 <div class="text-[10px] text-gray-400 mb-2">${lead.service || ''}</div>
+                ${lead.isBride ? '<div class="text-[10px] text-pink-500 mb-1">👰 כלה</div>' : ''}
                 <div class="flex gap-2 border-t pt-2 mt-1">
                     <button onclick="viewLead(${lead.id})" class="text-[10px] bg-purple-50 text-purple-600 px-2 py-1 rounded font-bold">הצג פרטים</button>
                     <button onclick="deleteLead(${lead.id})" class="text-[10px] text-red-300 mr-auto">מחק</button>
                 </div>
             </div>
-        `).join('');
+        `;
+        }).join('');
     },
     
     initDragAndDrop() {

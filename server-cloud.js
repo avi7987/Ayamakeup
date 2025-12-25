@@ -51,11 +51,33 @@ const clientSchema = new mongoose.Schema({
 const leadSchema = new mongoose.Schema({
     name: { type: String, required: true },
     phone: { type: String, required: true },
-    service: { type: String, required: true },
-    status: { type: String, default: 'ליד חדש' },
-    contactDate: { type: Date, default: Date.now },
+    service: { type: String, default: '' },
+    status: { type: String, default: 'new' },
+    source: { type: String, default: '' },
+    eventDate: { type: String, default: '' },
+    location: { type: String, default: '' },
+    isBride: { type: Boolean, default: false },
+    // Enhanced fields
     notes: { type: String, default: '' },
-    createdAt: { type: Date, default: Date.now }
+    price: { type: Number, default: 0 },
+    deposit: { type: Number, default: 0 },
+    contractStatus: { type: String, default: 'pending' }, // pending, sent, signed
+    reminders: [{ 
+        id: Number,
+        date: String,
+        time: String,
+        note: String,
+        completed: Boolean,
+        createdAt: String
+    }],
+    stageHistory: [{
+        stage: String,
+        timestamp: String,
+        note: String
+    }],
+    calendarEventId: { type: String, default: null },
+    createdAt: { type: Date, default: Date.now },
+    updatedAt: { type: Date, default: Date.now }
 });
 
 const goalsSchema = new mongoose.Schema({
