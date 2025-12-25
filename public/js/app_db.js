@@ -696,28 +696,154 @@ const ManageView = {
     }
 };
 
-// Migration Tool
-const MigrationTool = {
-    async migrateFromLocalStorage() {
-        if (!confirm('?£?פ???ס?ש?¿ ?נ?¬ ?¢?£ ?פ???¬?ץ???ש?¥ ??-localStorage ?£?????ף ?פ???¬?ץ???ש?¥?')) return;
+// Excel Export Tool
+const ExcelExporter = {
+    export() {
+        const filterVal = document.getElementById('stats-month-filter').value;
+        const isYearView = filterVal === 'ALL';
+        const workbook = XLSX.utils.book_new();
         
-        const clients = JSON.parse(localStorage.getItem(CONFIG.STORAGE_KEYS.CLIENTS)) || [];
-        const leads = JSON.parse(localStorage.getItem(CONFIG.STORAGE_KEYS.LEADS)) || [];
-        
-        if (clients.length === 0 && leads.length === 0) {
-            alert('?נ?ש?ƒ ???¬?ץ???ש?¥ ?ס-localStorage ?£?פ???ס?¿?פ');
-            return;
+        if (isYearView) {
+            // Create dashboard sheet
+            this.createDashboard(workbook);
+            
+            // Create a sheet for each month
+            CONFIG.MONTHS.forEach((month, index) => {
+                const monthData = State.clients.filter(c => {
+                    const date = new Date(c.date);
+                    return date.getMonth() === index;
+                });
+                if (monthData.length > 0) {
+                    this.createMonthSheet(workbook, month, monthData);
+                }
+            });
+        } else {
+            // Single month export
+            const monthData = State.getFilteredClients(filterVal);
+            this.createMonthSheet(workbook, filterVal, monthData);
         }
         
-        try {
-            const result = await API.migrateData(clients, leads);
-            alert(result.message);
-            await State.init();
-            LeadsView.render();
-            StatsView.update();
-        } catch (error) {
-            alert('העברת הנתונים נכשלה: ' + error.message);
-        }
+        // Download file
+        const fileName = isYearView 
+            ? `דוח_שנתי_${new Date().getFullYear()}.xlsx`
+            : `דוח_${filterVal}_${new Date().getFullYear()}.xlsx`;
+        XLSX.writeFile(workbook, fileName);
+    },
+    
+    createDashboard(workbook) {
+        const data = [];
+        
+        // Title
+        data.push(['דשבורד הכנסות שנתי', '', '', '', '']);
+        data.push(['שנה: ' + new Date().getFullYear(), '', '', '', '']);
+        data.push([]);
+        
+        // Monthly summary
+        data.push(['חודש', 'סה"כ הכנסות', 'מספר עסקאות', 'מתוכן כלות', 'ממוצע לעסקה']);
+        
+        let yearlyTotal = 0;
+        let yearlyCount = 0;
+        let yearlyBrides = 0;
+        const paymentMethods = {};
+        
+        CONFIG.MONTHS.forEach((month, index) => {
+            const monthClients = State.clients.filter(c => {
+                const date = new Date(c.date);
+                return date.getMonth() === index;
+            });
+            
+            const total = monthClients.reduce((sum, c) => sum + (c.price || c.amount || 0), 0);
+            const count = monthClients.length;
+            const brides = monthClients.filter(c => c.isBride).length;
+            const avg = count > 0 ? total / count : 0;
+            
+            yearlyTotal += total;
+            yearlyCount += count;
+            yearlyBrides += brides;
+            
+            // Count payment methods
+            monthClients.forEach(c => {
+                const payment = c.payment || 'לא צוין';
+                paymentMethods[payment] = (paymentMethods[payment] || 0) + 1;
+            });
+            
+            if (count > 0) {
+                data.push([month, total, count, brides, Math.round(avg)]);
+            }
+        });
+        
+        data.push([]);
+        data.push(['סה"כ שנתי', yearlyTotal, yearlyCount, yearlyBrides, Math.round(yearlyTotal / yearlyCount)]);
+        
+        // Payment methods breakdown
+        data.push([]);
+        data.push(['התפלגות אמצעי תשלום']);
+        data.push(['אמצעי תשלום', 'כמות']);
+        Object.entries(paymentMethods).forEach(([method, count]) => {
+            data.push([method, count]);
+        });
+        
+        const ws = XLSX.utils.aoa_to_sheet(data);
+        
+        // Column widths
+        ws['!cols'] = [
+            { wch: 15 }, // חודש
+            { wch: 15 }, // סה"כ הכנסות
+            { wch: 15 }, // מספר עסקאות
+            { wch: 15 }, // כלות
+            { wch: 15 }  // ממוצע
+        ];
+        
+        XLSX.utils.book_append_sheet(workbook, ws, 'דשבורד');
+    },
+    
+    createMonthSheet(workbook, monthName, clients) {
+        const data = [];
+        
+        // Title
+        data.push([`דוח הכנסות - ${monthName}`]);
+        data.push([]);
+        
+        // Headers
+        data.push(['תאריך', 'שם לקוח', 'סוג שירות', 'סכום', 'אמצעי תשלום', 'כלה']);
+        
+        // Data rows
+        const sortedClients = clients.sort((a, b) => new Date(a.date) - new Date(b.date));
+        sortedClients.forEach(client => {
+            data.push([
+                client.date,
+                client.name,
+                client.service || '-',
+                client.price || client.amount || 0,
+                client.payment || '-',
+                client.isBride ? 'כן' : 'לא'
+            ]);
+        });
+        
+        // Summary
+        const total = clients.reduce((sum, c) => sum + (c.price || c.amount || 0), 0);
+        const brides = clients.filter(c => c.isBride).length;
+        
+        data.push([]);
+        data.push(['סיכום', '', '', '', '', '']);
+        data.push(['סה"כ הכנסות:', '', '', total, '', '']);
+        data.push(['מספר עסקאות:', '', '', clients.length, '', '']);
+        data.push(['מתוכן כלות:', '', '', brides, '', '']);
+        data.push(['ממוצע לעסקה:', '', '', Math.round(total / clients.length), '', '']);
+        
+        const ws = XLSX.utils.aoa_to_sheet(data);
+        
+        // Column widths
+        ws['!cols'] = [
+            { wch: 12 }, // תאריך
+            { wch: 20 }, // שם
+            { wch: 15 }, // שירות
+            { wch: 10 }, // סכום
+            { wch: 15 }, // תשלום
+            { wch: 8 }   // כלה
+        ];
+        
+        XLSX.utils.book_append_sheet(workbook, ws, monthName);
     }
 };
 
@@ -737,7 +863,7 @@ window.toggleSelectAll = (checkbox) => ManageView.toggleSelectAll(checkbox);
 window.checkBulkVisibility = () => ManageView.checkBulkVisibility();
 window.bulkDelete = () => ManageView.bulkDelete();
 window.updateStats = () => StatsView.update();
-window.migrateData = () => MigrationTool.migrateFromLocalStorage();
+window.exportToExcel = () => ExcelExporter.export();
 
 // Initialize Application
 window.onload = async () => {
