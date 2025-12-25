@@ -2199,10 +2199,6 @@ window.showPage = (pageId) => {
     if (pageId === 'page-stats') StatsView.render();
 };
 
-// Modal functions
-window.openModal = (id) => document.getElementById(id).style.display = 'flex';
-window.closeModal = (id) => document.getElementById(id).style.display = 'none';
-
 // Initialize app
 async function init() {
     console.log('🚀 Initializing CRM...');
