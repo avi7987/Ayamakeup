@@ -177,7 +177,7 @@ const API = {
 
 // UI Controllers
 const Navigation = {
-    switchPage(pageName) {
+    async switchPage(pageName) {
         // Hide all pages
         ['home', 'entry', 'leads', 'stats'].forEach(id => {
             const page = document.getElementById('page-' + id);
@@ -189,7 +189,11 @@ const Navigation = {
         if (selectedPage) selectedPage.classList.remove('hidden');
         
         // Trigger page-specific initialization
-        if (pageName === 'home') HomeView.update();
+        if (pageName === 'home') {
+            // Reload data from MongoDB to sync across devices
+            await State.loadFromDatabase();
+            HomeView.update();
+        }
         if (pageName === 'leads') LeadsView.render();
         if (pageName === 'stats') StatsView.update();
         
@@ -251,12 +255,13 @@ const IncomeManager = {
         btn.disabled = true;
         
         try {
-            console.log('Sending data:', data);
+            console.log('📤 שולח נתונים למסד נתונים:', data);
             const savedClient = await API.addClient(data);
-            console.log('Saved successfully:', savedClient);
+            console.log('✅ נשמר בהצלחה! isBride:', savedClient.isBride, 'notes:', savedClient.notes);
             // Add to local state
             State.clients.push(savedClient);
             // Update home view to reflect new data
+            console.log('🔄 מעדכן תצוגת דף הבית...');
             HomeView.update();
             
             alert('הלקוח נשמר בהצלחה במסד הנתונים!');
@@ -496,8 +501,10 @@ const LeadsView = {
 
 const HomeView = {
     update() {
+        console.log('🏠 מעדכן דף הבית - סה"כ לקוחות:', State.clients.length);
         // Load goals - always show section even if goals not set
         const goals = JSON.parse(localStorage.getItem('stride_goals') || '{}');
+        console.log('🎯 יעדים:', goals);
         
         // Always show goals section
         document.getElementById('goals-section').classList.remove('hidden');
@@ -511,6 +518,8 @@ const HomeView = {
                 const date = new Date(c.date);
                 return date.getFullYear() === thisYear;
             });
+            
+            console.log(`📊 לקוחות השנה: ${yearlyClients.length}`);
             
             // Income progress
             const totalIncome = yearlyClients.reduce((sum, c) => sum + (c.price || c.amount || 0), 0);
@@ -529,8 +538,9 @@ const HomeView = {
                 document.getElementById('income-remaining').innerHTML = `נותרו <strong>₪${incomeRemaining.toLocaleString()}</strong> להשגת היעד`;
             }
             
-            // Brides progress
-            const totalBrides = yearlyClients.filter(c => c.isBride).length;
+            // Brides progress - check both isBride field AND notes
+            const totalBrides = yearlyClients.filter(c => c.isBride || c.notes?.includes('כלה')).length;
+            console.log(`👰 כלות השנה: ${totalBrides} (מתוך ${yearlyClients.length} לקוחות)`);
             const bridesGoal = goals.brides || 0;
             const bridesPercent = bridesGoal > 0 ? Math.min(100, Math.round((totalBrides / bridesGoal) * 100)) : 0;
             const bridesRemaining = Math.max(0, bridesGoal - totalBrides);
@@ -967,7 +977,7 @@ const ExcelExporter = {
 };
 
 // Global Functions (for onclick handlers in HTML)
-window.switchPage = (page) => Navigation.switchPage(page);
+window.switchPage = async (page) => await Navigation.switchPage(page);
 window.openModal = (id) => ModalManager.open(id);
 window.closeModal = (id) => ModalManager.close(id);
 window.saveIncome = () => IncomeManager.save();
