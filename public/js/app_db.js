@@ -522,7 +522,7 @@ const LeadsManager = {
             
             ModalManager.close('modal-new-lead');
             LeadsView.render();
-            alert('?£?ש?ף ???ץ???? ?ס?פ???£?ק?פ');
+            alert('ליד חדש נוסף בהצלחה!');
             
             // Clear form
             document.getElementById('lead-name').value = '';
@@ -533,16 +533,16 @@ const LeadsManager = {
             document.getElementById('lead-location').value = '';
             document.getElementById('lead-is-bride').checked = false;
         } catch (error) {
-            alert("???ע?ש?נ?פ ?ס?פ?ץ?????¬ ?£?ש?ף: " + error.message);
+            alert("שגיאה בהוספת ליד: " + error.message);
         }
         
-        btn.innerText = "?????ץ?¿ ?£?ש?ף";
+        btn.innerText = "שמור ליד";
         btn.disabled = false;
     },
     
     async updateStatus(leadId, newStatus) {
         try {
-            const lead = State.leads.find(l => l.id === leadId);
+            const lead = State.leads.find(l => (l._id || l.id) === leadId);
             if (!lead) return;
             
             const oldStatus = lead.status;
@@ -616,7 +616,7 @@ const WhatsAppHelper = {
 // Reminder System
 const ReminderSystem = {
     add(leadId, reminderData) {
-        const lead = State.leads.find(l => l.id === leadId);
+        const lead = State.leads.find(l => (l._id || l.id) === leadId);
         if (!lead) return;
         
         if (!lead.reminders) lead.reminders = [];
@@ -705,8 +705,11 @@ const LeadProfile = {
     
     open(leadId) {
         this.currentLeadId = leadId;
-        const lead = State.leads.find(l => l.id === leadId);
-        if (!lead) return;
+        const lead = State.leads.find(l => (l._id || l.id) === leadId);
+        if (!lead) {
+            console.error('Lead not found:', leadId);
+            return;
+        }
         
         this.render(lead);
         ModalManager.open('modal-lead-profile');
@@ -805,7 +808,7 @@ const LeadProfile = {
                             📱 WhatsApp
                         </button>
                         ${lead.status === 'done' && lead.eventDate ? `
-                            <button onclick="GoogleCalendar.createEvent(State.leads.find(l => l.id === ${lead.id}))" class="flex-1 bg-blue-500 text-white py-3 rounded-xl font-bold">
+                            <button onclick="LeadProfile.openCalendar()" class="flex-1 bg-blue-500 text-white py-3 rounded-xl font-bold">
                                 📅 יומן
                             </button>
                         ` : ''}
@@ -822,8 +825,15 @@ const LeadProfile = {
         ModalManager.close('modal-lead-profile');
     },
     
+    openCalendar() {
+        const lead = State.leads.find(l => (l._id || l.id) === this.currentLeadId);
+        if (lead) {
+            GoogleCalendar.createEvent(lead);
+        }
+    },
+    
     saveNotes() {
-        const lead = State.leads.find(l => l.id === this.currentLeadId);
+        const lead = State.leads.find(l => (l._id || l.id) === this.currentLeadId);
         if (!lead) return;
         
         lead.notes = document.getElementById('lead-notes').value;
@@ -835,7 +845,7 @@ const LeadProfile = {
     },
     
     sendWhatsApp() {
-        const lead = State.leads.find(l => l.id === this.currentLeadId);
+        const lead = State.leads.find(l => (l._id || l.id) === this.currentLeadId);
         if (!lead) return;
         
         const message = WhatsAppHelper.getTemplate(lead.status, lead);
@@ -847,7 +857,7 @@ const LeadProfile = {
     },
     
     addReminder() {
-        const lead = State.leads.find(l => l.id === this.currentLeadId);
+        const lead = State.leads.find(l => (l._id || l.id) === this.currentLeadId);
         if (!lead) return;
         
         const date = prompt('תאריך (YYYY-MM-DD):');
@@ -888,9 +898,10 @@ const LeadsView = {
             // Check for active reminders
             const hasReminders = lead.reminders && lead.reminders.filter(r => !r.completed).length > 0;
             const reminderBadge = hasReminders ? '<span class="text-amber-500 text-xs">🔔</span>' : '';
+            const leadId = lead._id || lead.id;
             
             return `
-            <div class="lead-card text-right" data-id="${lead.id}">
+            <div class="lead-card text-right" data-id="${leadId}">
                 <div class="flex justify-between mb-1">
                     <span class="font-bold text-gray-800 text-sm">${lead.name} ${reminderBadge}</span>
                     <span class="source-tag">${lead.source || 'אחר'}</span>
@@ -898,8 +909,8 @@ const LeadsView = {
                 <div class="text-[10px] text-gray-400 mb-2">${lead.service || ''}</div>
                 ${lead.isBride ? '<div class="text-[10px] text-pink-500 mb-1">👰 כלה</div>' : ''}
                 <div class="flex gap-2 border-t pt-2 mt-1">
-                    <button onclick="viewLead(${lead.id})" class="text-[10px] bg-purple-50 text-purple-600 px-2 py-1 rounded font-bold">הצג פרטים</button>
-                    <button onclick="deleteLead(${lead.id})" class="text-[10px] text-red-300 mr-auto">מחק</button>
+                    <button onclick="viewLead('${leadId}')" class="text-[10px] bg-purple-50 text-purple-600 px-2 py-1 rounded font-bold">הצג פרטים</button>
+                    <button onclick="deleteLead('${leadId}')" class="text-[10px] text-red-300 mr-auto">מחק</button>
                 </div>
             </div>
         `;
@@ -915,7 +926,7 @@ const LeadsView = {
                 delay: 200,
                 delayOnTouchOnly: true,
                 onEnd: async function(evt) {
-                    const leadId = parseInt(evt.item.getAttribute('data-id'));
+                    const leadId = evt.item.getAttribute('data-id');
                     const newStatus = evt.to.getAttribute('data-status');
                     await LeadsManager.updateStatus(leadId, newStatus);
                 }
