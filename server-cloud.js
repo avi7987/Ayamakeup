@@ -30,9 +30,9 @@ async function connectDB() {
             useNewUrlParser: true,
             useUnifiedTopology: true,
         });
-        console.log('ג… Connected to MongoDB Atlas successfully!');
+        console.log('✅ Connected to MongoDB Atlas successfully!');
     } catch (error) {
-        console.error('ג MongoDB connection error:', error);
+        console.error('❌ MongoDB connection error:', error);
         process.exit(1);
     }
 }
@@ -442,6 +442,17 @@ app.put('/api/goals', async (req, res) => {
 async function startServer() {
     try {
         await connectDB();
+        
+        // Drop the old 'id' index if it exists (after models are loaded)
+        try {
+            await Lead.collection.dropIndex('id_1');
+            console.log('🗑️  Dropped old id_1 index from leads collection');
+        } catch (dropError) {
+            // Index doesn't exist, that's fine
+            if (dropError.code !== 27) { // 27 = IndexNotFound
+                console.log('ℹ️  No id_1 index to drop (already clean)');
+            }
+        }
         
         app.listen(PORT, () => {
             console.log('');
