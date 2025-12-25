@@ -23,7 +23,10 @@
         
         <!-- Navigation -->
         <nav class="flex flex-wrap gap-3 justify-center mb-8">
-            <button onclick="switchPage('entry')" id="nav-entry" class="nav-button active">
+            <button onclick="switchPage('home')" id="nav-home" class="nav-button active">
+                🏠 בית
+            </button>
+            <button onclick="switchPage('entry')" id="nav-entry" class="nav-button">
                 💰 הכנסה
             </button>
             <button onclick="switchPage('leads')" id="nav-leads" class="nav-button">
@@ -34,8 +37,88 @@
             </button>
         </nav>
 
+        <!-- Page: Home Dashboard -->
+        <section id="page-home" class="text-center">
+            <!-- Hero Section -->
+            <div class="mb-12 mt-8">
+                <h1 class="text-5xl md:text-6xl font-bold text-purple-800 mb-4">
+                    💄 AyaMakeup
+                </h1>
+                <p class="text-xl md:text-2xl text-gray-600 font-medium">
+                    מערכת ניהול עסקי יופי מקצועית
+                </p>
+                <div class="mt-4 text-gray-500 text-sm">
+                    מעקב אחר הכנסות • ניהול לידים • דוחות וסטטיסטיקות
+                </div>
+            </div>
+
+            <!-- Quick Stats Overview -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 max-w-4xl mx-auto">
+                <div class="bg-gradient-to-br from-purple-50 to-pink-50 p-6 rounded-2xl shadow-sm border border-purple-100">
+                    <div class="text-4xl mb-2">💰</div>
+                    <div class="text-2xl font-bold text-purple-800" id="home-total-income">-</div>
+                    <div class="text-sm text-gray-600 mt-1">סה"כ הכנסות חודש זה</div>
+                </div>
+                <div class="bg-gradient-to-br from-blue-50 to-cyan-50 p-6 rounded-2xl shadow-sm border border-blue-100">
+                    <div class="text-4xl mb-2">📊</div>
+                    <div class="text-2xl font-bold text-blue-800" id="home-total-deals">-</div>
+                    <div class="text-sm text-gray-600 mt-1">עסקאות חודש זה</div>
+                </div>
+                <div class="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-2xl shadow-sm border border-green-100">
+                    <div class="text-4xl mb-2">🎯</div>
+                    <div class="text-2xl font-bold text-green-800" id="home-active-leads">-</div>
+                    <div class="text-sm text-gray-600 mt-1">לידים פעילים</div>
+                </div>
+            </div>
+
+            <!-- Main Action Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+                <!-- Income Entry Card -->
+                <button onclick="switchPage('entry')" class="group bg-white hover:bg-purple-50 p-8 rounded-3xl shadow-lg hover:shadow-xl transition-all duration-300 border-2 border-transparent hover:border-purple-300 text-right">
+                    <div class="text-5xl mb-4 group-hover:scale-110 transition-transform">💰</div>
+                    <h3 class="text-2xl font-bold text-purple-800 mb-3">הזנת הכנסה</h3>
+                    <p class="text-gray-600 text-sm leading-relaxed">
+                        הזן עסקאות חדשות, עקוב אחר הכנסות ונהל את הלקוחות שלך
+                    </p>
+                    <div class="mt-6 text-purple-600 font-medium text-sm group-hover:translate-x-2 transition-transform inline-block">
+                        ← התחל להזין
+                    </div>
+                </button>
+
+                <!-- Leads Card -->
+                <button onclick="switchPage('leads')" class="group bg-white hover:bg-blue-50 p-8 rounded-3xl shadow-lg hover:shadow-xl transition-all duration-300 border-2 border-transparent hover:border-blue-300 text-right">
+                    <div class="text-5xl mb-4 group-hover:scale-110 transition-transform">🎯</div>
+                    <h3 class="text-2xl font-bold text-blue-800 mb-3">ניהול לידים</h3>
+                    <p class="text-gray-600 text-sm leading-relaxed">
+                        עקוב אחר לידים חדשים, נהל משאים ומתנים וסגור עסקאות
+                    </p>
+                    <div class="mt-6 text-blue-600 font-medium text-sm group-hover:translate-x-2 transition-transform inline-block">
+                        ← נהל לידים
+                    </div>
+                </button>
+
+                <!-- Statistics Card -->
+                <button onclick="switchPage('stats')" class="group bg-white hover:bg-green-50 p-8 rounded-3xl shadow-lg hover:shadow-xl transition-all duration-300 border-2 border-transparent hover:border-green-300 text-right">
+                    <div class="text-5xl mb-4 group-hover:scale-110 transition-transform">📊</div>
+                    <h3 class="text-2xl font-bold text-green-800 mb-3">סטטיסטיקות ודוחות</h3>
+                    <p class="text-gray-600 text-sm leading-relaxed">
+                        צפה בביצועים, הורד דוחות ונתח את ההכנסות שלך
+                    </p>
+                    <div class="mt-6 text-green-600 font-medium text-sm group-hover:translate-x-2 transition-transform inline-block">
+                        ← צפה בנתונים
+                    </div>
+                </button>
+            </div>
+
+            <!-- Footer Info -->
+            <div class="mt-16 text-gray-400 text-sm">
+                <p>מערכת CRM מקצועית לניהול עסקי יופי</p>
+                <p class="mt-2">Version 9.0 • Database Edition</p>
+            </div>
+        </section>
+
         <!-- Page: Income Entry -->
-        <section id="page-entry" class="main-card p-8 max-w-lg mx-auto text-right">
+        <section id="page-entry" class="hidden main-card p-8 max-w-lg mx-auto text-right">
             <h2 class="text-2xl font-bold mb-6 text-purple-800 text-center">הזנת עסקה חדשה</h2>
             
             <form onsubmit="event.preventDefault(); saveIncome();">

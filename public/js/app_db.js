@@ -185,7 +185,7 @@ const API = {
 const Navigation = {
     switchPage(pageName) {
         // Hide all pages
-        ['entry', 'leads', 'stats'].forEach(id => {
+        ['home', 'entry', 'leads', 'stats'].forEach(id => {
             document.getElementById('page-' + id).classList.add('hidden');
         });
         
@@ -199,6 +199,7 @@ const Navigation = {
         document.getElementById('nav-' + pageName).classList.add('active');
         
         // Trigger page-specific initialization
+        if (pageName === 'home') HomeView.update();
         if (pageName === 'leads') LeadsView.render();
         if (pageName === 'stats') StatsView.update();
     }
@@ -490,6 +491,29 @@ const LeadsView = {
                 }
             });
         });
+    }
+};
+
+const HomeView = {
+    update() {
+        // Calculate this month's stats
+        const now = new Date();
+        const thisMonth = now.getMonth();
+        const thisMonthClients = State.clients.filter(c => {
+            const date = new Date(c.date);
+            return date.getMonth() === thisMonth && date.getFullYear() === now.getFullYear();
+        });
+        
+        // Total income this month
+        const totalIncome = thisMonthClients.reduce((sum, c) => sum + (c.price || c.amount || 0), 0);
+        document.getElementById('home-total-income').innerText = `₪${totalIncome.toLocaleString()}`;
+        
+        // Total deals this month
+        document.getElementById('home-total-deals').innerText = thisMonthClients.length;
+        
+        // Active leads (not archived or done)
+        const activeLeads = State.leads.filter(l => l.status !== 'done' && l.status !== 'archive').length;
+        document.getElementById('home-active-leads').innerText = activeLeads;
     }
 };
 
@@ -919,7 +943,7 @@ window.exportToExcel = () => ExcelExporter.export();
 // Initialize Application
 window.onload = async () => {
     // Show loading indicator
-    console.log('?ƒתא Initializing CRM...');
+    console.log('מאתחל CRM...');
     
     await State.init();
     
@@ -933,10 +957,10 @@ window.onload = async () => {
     // Set today's date
     document.getElementById('inc-date').valueAsDate = new Date();
     
-    // Initial render
-    LeadsView.render();
+    // Initial render - Show home page by default
+    switchPage('home');
     
-    console.log('?£ו CRM Ready!');
+    console.log('✅ CRM Ready!');
 };
 
 
