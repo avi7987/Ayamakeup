@@ -634,15 +634,18 @@ const HomeView = {
         });
         const currentBrides = yearlyClients.filter(c => c.isBride || c.notes?.includes('כלה')).length;
         
-        console.log(`👰 ספירה נוכחית: ${currentBrides}, ספירה קודמת: ${MotivationalMessages.previousBridesCount}`);
+        console.log(`👰 ספירה נוכחית: ${currentBrides}, ספירה קודמת: ${MotivationalMessages.previousBridesCount}, showMessages: ${showMessages}`);
         
-        // Check if brides count increased BEFORE initializing previous count
+        // Check if brides count increased BEFORE updating previous count
         const shouldShowMessage = showMessages && 
                                   MotivationalMessages.previousBridesCount > 0 && 
                                   currentBrides > MotivationalMessages.previousBridesCount;
         
-        // Initialize or update previous count
-        MotivationalMessages.previousBridesCount = currentBrides;
+        // Update previous count ONLY when navigating to home page (showMessages=true)
+        // This ensures the message shows when returning to home after adding a bride
+        if (showMessages) {
+            MotivationalMessages.previousBridesCount = currentBrides;
+        }
         
         // If no goals set, show zeros
         if (goals.income || goals.brides) {
