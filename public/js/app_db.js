@@ -233,6 +233,8 @@ const IncomeManager = {
             notes: `אמצעי תשלום: ${paymentSelect.value}${isBrideCheck.checked ? ' | כלה 👰' : ''}`
         };
         
+        // Don't send id field - let MongoDB create _id
+        
         if (!data.name || isNaN(data.price)) {
             alert('נא למלא את כל השדות');
             return;
