@@ -1,4 +1,4 @@
-require('dotenv').config();
+﻿require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
@@ -17,11 +17,11 @@ app.use(bodyParser.json());
 const MONGODB_URI = process.env.MONGODB_URI;
 
 if (!MONGODB_URI) {
-    console.error('❌ ERROR: MONGODB_URI is not defined in .env file');
+    console.error('ג ERROR: MONGODB_URI is not defined in .env file');
     process.exit(1);
 }
 
-console.log('🔄 Connecting to MongoDB Atlas...');
+console.log('נ”„ Connecting to MongoDB Atlas...');
 
 // Connect to MongoDB
 async function connectDB() {
@@ -30,9 +30,9 @@ async function connectDB() {
             useNewUrlParser: true,
             useUnifiedTopology: true,
         });
-        console.log('✅ Connected to MongoDB Atlas successfully!');
+        console.log('ג… Connected to MongoDB Atlas successfully!');
     } catch (error) {
-        console.error('❌ MongoDB connection error:', error);
+        console.error('ג MongoDB connection error:', error);
         process.exit(1);
     }
 }
@@ -46,13 +46,13 @@ const clientSchema = new mongoose.Schema({
     date: { type: Date, required: true },
     notes: { type: String, default: '' },
     createdAt: { type: Date, default: Date.now }
-}, { strict: false }); // Allow additional fields
+});
 
 const leadSchema = new mongoose.Schema({
     name: { type: String, required: true },
     phone: { type: String, required: true },
     service: { type: String, required: true },
-    status: { type: String, default: 'ממתין' },
+    status: { type: String, default: '׳׳׳×׳™׳' },
     contactDate: { type: Date, default: Date.now },
     notes: { type: String, default: '' },
     createdAt: { type: Date, default: Date.now }
@@ -330,11 +330,11 @@ async function startServer() {
         app.listen(PORT, () => {
             console.log('');
             console.log('========================================');
-            console.log('✨  CRM Server Started Successfully!  ✨');
+            console.log('ג¨  CRM Server Started Successfully!  ג¨');
             console.log('========================================');
-            console.log(`🌐  Server: http://localhost:${PORT}`);
-            console.log(`📊  API: http://localhost:${PORT}/api`);
-            console.log(`💚  Health Check: http://localhost:${PORT}/api/health`);
+            console.log(`נ  Server: http://localhost:${PORT}`);
+            console.log(`נ“  API: http://localhost:${PORT}/api`);
+            console.log(`נ’  Health Check: http://localhost:${PORT}/api/health`);
             console.log('========================================');
             console.log('');
         });
@@ -352,7 +352,7 @@ startServer().catch(err => {
 
 // Graceful shutdown
 process.on('SIGINT', async () => {
-    console.log('\n👋 Shutting down server...');
+    console.log('\nנ‘‹ Shutting down server...');
     await mongoose.connection.close();
     process.exit(0);
 });
