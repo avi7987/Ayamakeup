@@ -1,0 +1,446 @@
+﻿<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRM ╫ש╫ץ╫ñ╫ש ╫ק╫¢╫¥ - V8.3 ╫פ╫₧╫£╫נ ╫ס╫ש╫ץ╫¬╫¿</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700&display=swap');
+        body { font-family: 'Heebo', sans-serif; background: #fdf2f8; margin: 0; padding-bottom: 60px; overflow-x: hidden; }
+        .main-card { background: white; border-radius: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
+        .nav-button { padding: 12px 20px; font-weight: bold; border-radius: 14px; transition: 0.3s; border: 2px solid #f3e8ff; background: white; color: #9333ea; }
+        .nav-button.active { background: linear-gradient(135deg, #9333ea 0%, #db2777 100%); color: white; border: none; }
+        
+        /* ╫₧╫ץ╫ף╫נ╫£╫ש╫¥ */
+        .modal { background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); display: none; z-index: 100; position: fixed; inset: 0; align-items: center; justify-content: center; padding: 20px; }
+        
+        /* ╫º╫á╫ס╫ƒ */
+        .kanban-container { display: flex; gap: 15px; overflow-x: auto; padding: 10px; min-height: 70vh; align-items: flex-start; }
+        .kanban-col { background: #f3e8ff80; border-radius: 20px; padding: 15px; min-width: 280px; flex-shrink: 0; display: flex; flex-direction: column; max-height: 80vh; }
+        .kanban-list { flex: 1; min-height: 200px; overflow-y: auto; }
+        
+        .lead-card { background: white; border-radius: 15px; padding: 15px; margin-bottom: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border-right: 5px solid #9333ea; cursor: grab; user-select: none; }
+        .lead-card:active { cursor: grabbing; }
+        .sortable-ghost { opacity: 0.3; background: #9333ea !important; }
+        
+        .source-tag { font-size: 10px; padding: 2px 8px; border-radius: 20px; background: #f3e8ff; color: #9333ea; font-weight: bold; }
+        input, select { border: 2px solid #f3e8ff !important; border-radius: 12px !important; padding: 12px !important; width: 100%; outline: none; margin-bottom: 10px; font-family: inherit; }
+        input:focus { border-color: #9333ea !important; }
+        
+        table { width: 100%; border-collapse: separate; border-spacing: 0 8px; }
+        .sticky-thead { position: sticky; top: 0; background: #f9fafb; z-index: 10; }
+        .hidden { display: none; }
+        
+        #version-tag { position: fixed; bottom: 10px; left: 10px; background: #333; color: #fff; padding: 3px 10px; border-radius: 20px; font-size: 10px; opacity: 0.7; z-index: 1000; }
+    </style>
+</head>
+<body>
+
+    <div id="version-tag">Build: 21.12.2025-V8.3 (Full Source)</div>
+
+    <div class="max-w-6xl mx-auto p-4 md:p-8">
+        <div class="flex flex-wrap gap-3 justify-center mb-8">
+            <button onclick="switchPage('entry')" id="nav-entry" class="nav-button active">≡ƒע░ ╫פ╫¢╫á╫í╫פ</button>
+            <button onclick="switchPage('leads')" id="nav-leads" class="nav-button">≡ƒמ» ╫£╫ש╫ף╫ש╫¥</button>
+            <button onclick="switchPage('stats')" id="nav-stats" class="nav-button">≡ƒףך ╫í╫ר╫ר╫ש╫í╫ר╫ש╫º╫פ</button>
+        </div>
+
+        <div id="page-entry" class="main-card p-8 max-w-lg mx-auto text-right">
+            <h2 class="text-2xl font-bold mb-6 text-purple-800 text-center">╫פ╫צ╫á╫¬ ╫ó╫í╫º╫פ ╫ק╫ף╫⌐╫פ</h2>
+            <input type="text" id="inc-name" placeholder="╫⌐╫¥ ╫פ╫£╫º╫ץ╫ק╫פ *">
+            <input type="number" id="inc-amount" placeholder="╫í╫¢╫ץ╫¥ (Γג¬) *">
+            <input type="text" id="inc-service" placeholder="╫í╫ץ╫ע ╫פ╫⌐╫ש╫¿╫ץ╫¬ (╫פ╫º╫£╫ף╫פ ╫ק╫ץ╫ñ╫⌐╫ש╫¬)">
+            <input type="date" id="inc-date">
+            <select id="inc-payment">
+                <option value="╫₧╫צ╫ץ╫₧╫ƒ">╫₧╫צ╫ץ╫₧╫ƒ</option>
+                <option value="╫ס╫ש╫ר">╫ס╫ש╫ר / ╫ñ╫ש╫ש╫ס╫ץ╫º╫í</option>
+                <option value="╫פ╫ó╫ס╫¿╫פ">╫פ╫ó╫ס╫¿╫פ ╫ס╫á╫º╫נ╫ש╫¬</option>
+            </select>
+            <label class="flex items-center gap-2 p-3 bg-purple-50 rounded-xl mb-4 cursor-pointer">
+                <input type="checkbox" id="inc-isbride" class="w-5 h-5">
+                <span class="font-bold text-purple-900">╫ó╫í╫º╫¬ ╫¢╫£╫פ ≡ƒס░</span>
+            </label>
+            <button onclick="saveIncome()" id="btn-save" class="w-full bg-purple-600 text-white py-4 rounded-xl font-bold text-lg shadow-lg">╫⌐╫₧╫ץ╫¿ ╫ס╫⌐╫ש╫ר╫í</button>
+        </div>
+
+        <div id="page-leads" class="hidden">
+            <div class="flex justify-between items-center mb-6 px-2 text-right">
+                <h2 class="text-2xl font-bold text-purple-900">╫á╫ש╫פ╫ץ╫£ ╫£╫ש╫ף╫ש╫¥</h2>
+                <button onclick="openModal('modal-new-lead')" class="bg-purple-600 text-white px-6 py-2 rounded-xl font-bold">+ ╫£╫ש╫ף ╫ק╫ף╫⌐</button>
+            </div>
+            <div id="kanban-board" class="kanban-container text-right"></div>
+        </div>
+
+        <div id="page-stats" class="hidden text-right">
+            <div class="main-card p-6">
+                <div class="flex flex-wrap justify-between items-center mb-6 gap-4 border-b pb-4">
+                    <h2 class="text-2xl font-bold text-purple-800">╫ס╫ש╫ª╫ץ╫ó╫ש╫¥ ╫ץ╫á╫ש╫פ╫ץ╫£</h2>
+                    <div class="flex gap-2">
+                        <button onclick="openManageModal()" class="bg-purple-100 text-purple-700 px-4 py-2 rounded-xl font-bold">Γתש∩╕ן ╫á╫ש╫פ╫ץ╫£ ╫⌐╫ץ╫¿╫ץ╫¬</button>
+                        <select id="stats-month-filter" onchange="updateStats()" class="!w-44 !mb-0 font-bold"></select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
+                    <div class="bg-purple-50 p-6 rounded-2xl text-center"><div class="text-gray-500 text-xs">╫פ╫¢╫á╫í╫ץ╫¬</div><div id="sum-total" class="text-2xl font-bold text-purple-700">0</div></div>
+                    <div class="bg-pink-50 p-6 rounded-2xl text-center"><div class="text-gray-500 text-xs">╫¢╫£╫ץ╫¬</div><div id="sum-brides" class="text-2xl font-bold text-pink-600">0</div></div>
+                    <div class="bg-blue-50 p-6 rounded-2xl text-center hidden md:block"><div class="text-gray-500 text-xs">╫ó╫í╫º╫נ╫ץ╫¬</div><div id="sum-count" class="text-2xl font-bold text-blue-600">0</div></div>
+                </div>
+                <div class="h-80"><canvas id="incomeChart"></canvas></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-new-lead" class="modal">
+        <div class="bg-white p-6 rounded-3xl w-full max-w-md shadow-2xl text-right overflow-y-auto max-h-[90vh]">
+            <h3 class="text-xl font-bold mb-4 text-purple-800 text-center">╫פ╫ץ╫í╫ñ╫¬ ╫£╫ש╫ף ╫ק╫ף╫⌐</h3>
+            <input type="text" id="lead-name" placeholder="╫⌐╫¥ ╫פ╫£╫º╫ץ╫ק╫פ *">
+            <input type="tel" id="lead-phone" placeholder="╫₧╫í╫ñ╫¿ ╫ר╫£╫ñ╫ץ╫ƒ *">
+            <input type="text" id="lead-source" placeholder="╫₧╫º╫ץ╫¿ ╫פ╫ע╫ó╫פ (╫£╫₧╫⌐╫£: ╫נ╫ש╫á╫í╫ר╫ע╫¿╫¥)">
+            <input type="text" id="lead-service" placeholder="╫⌐╫ש╫¿╫ץ╫¬ ╫₧╫ס╫ץ╫º╫⌐">
+            <input type="date" id="lead-event-date">
+            <input type="text" id="lead-location" placeholder="╫₧╫ש╫º╫ץ╫¥ / ╫נ╫ץ╫£╫¥">
+            <label class="flex items-center gap-2 p-3 bg-pink-50 rounded-xl mb-4 cursor-pointer">
+                <input type="checkbox" id="lead-is-bride" class="w-5 h-5">
+                <span class="font-bold">╫צ╫ץ ╫¢╫£╫פ ≡ƒס░</span>
+            </label>
+            <div class="flex gap-2">
+                <button onclick="addLead()" id="btn-save-lead" class="flex-1 bg-purple-600 text-white py-3 rounded-xl font-bold">╫⌐╫₧╫ץ╫¿ ╫£╫ש╫ף</button>
+                <button onclick="closeModal('modal-new-lead')" class="flex-1 bg-gray-100 text-gray-400 py-3 rounded-xl font-bold">╫ס╫ש╫ר╫ץ╫£</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-view-lead" class="modal">
+        <div class="bg-white p-8 rounded-3xl w-full max-w-sm shadow-2xl text-right">
+            <div class="mb-4">
+                <h3 id="view-name" class="text-2xl font-bold text-purple-800"></h3>
+                <span id="view-tag-bride" class="hidden text-pink-500 font-bold text-sm">≡ƒס░ ╫£╫º╫ץ╫ק╫¬ ╫¢╫£╫פ</span>
+            </div>
+            <div class="space-y-3 text-sm border-t pt-4">
+                <p><b>╫ר╫£╫ñ╫ץ╫ƒ:</b> <span id="view-phone"></span></p>
+                <p><b>╫₧╫º╫ץ╫¿ ╫פ╫ע╫ó╫פ:</b> <span id="view-source"></span></p>
+                <p><b>╫⌐╫ש╫¿╫ץ╫¬:</b> <span id="view-service"></span></p>
+                <p><b>╫¬╫נ╫¿╫ש╫ת ╫נ╫ש╫¿╫ץ╫ó:</b> <span id="view-date"></span></p>
+                <p><b>╫₧╫ש╫º╫ץ╫¥:</b> <span id="view-location"></span></p>
+            </div>
+            <div class="mt-8 flex flex-col gap-2">
+                <a id="view-wa-link" target="_blank" class="w-full bg-green-500 text-white py-3 rounded-xl font-bold text-center">╫⌐╫£╫ק WhatsApp</a>
+                <button onclick="closeModal('modal-view-lead')" class="text-gray-400 font-bold py-2">╫í╫ע╫ץ╫¿</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-manage" class="modal">
+        <div class="bg-white rounded-3xl w-full max-w-5xl max-h-[85vh] overflow-hidden flex flex-col p-6 shadow-2xl">
+            <div class="flex justify-between items-center mb-4">
+                <button id="bulk-del-btn" onclick="bulkDelete()" class="hidden bg-red-500 text-white px-4 py-1 rounded-lg text-sm font-bold">╫₧╫ק╫º ╫₧╫í╫ץ╫₧╫á╫ש╫¥</button>
+                <h3 class="text-xl font-bold">╫á╫ש╫פ╫ץ╫£ ╫á╫¬╫ץ╫á╫ש ╫פ╫¢╫á╫í╫ץ╫¬</h3>
+                <button onclick="closeModal('modal-manage')" class="text-2xl">&times;</button>
+            </div>
+            <div class="overflow-x-auto overflow-y-auto flex-1">
+                <table>
+                    <thead class="sticky-thead">
+                        <tr class="text-right border-b">
+                            <th class="p-3"><input type="checkbox" id="master-check" onclick="toggleSelectAll(this)"></th>
+                            <th class="p-3">╫¬╫נ╫¿╫ש╫ת</th>
+                            <th class="p-3">╫⌐╫¥</th>
+                            <th class="p-3">╫⌐╫ש╫¿╫ץ╫¬</th>
+                            <th class="p-3">╫í╫¢╫ץ╫¥</th>
+                            <th class="p-3">╫ñ╫ó╫ץ╫£╫ץ╫¬</th>
+                        </tr>
+                    </thead>
+                    <tbody id="manage-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-edit-row" class="modal">
+        <div class="bg-white p-6 rounded-3xl w-full max-w-sm shadow-2xl text-right">
+            <h3 class="text-xl font-bold mb-4">╫ó╫¿╫ש╫¢╫¬ ╫ó╫í╫º╫פ</h3>
+            <input type="hidden" id="edit-id">
+            <input type="text" id="edit-name" placeholder="╫⌐╫¥ ╫פ╫£╫º╫ץ╫ק╫פ">
+            <input type="number" id="edit-amount" placeholder="╫í╫¢╫ץ╫¥">
+            <input type="text" id="edit-service" placeholder="╫í╫ץ╫ע ╫⌐╫ש╫¿╫ץ╫¬">
+            <input type="date" id="edit-date">
+            <label class="flex items-center gap-2 p-3 bg-pink-50 rounded-xl mb-4">
+                <input type="checkbox" id="edit-isbride"> <span class="font-bold">╫ó╫í╫º╫¬ ╫¢╫£╫פ</span>
+            </label>
+            <button onclick="submitEdit()" id="btn-edit-save" class="w-full bg-purple-600 text-white py-3 rounded-xl font-bold">╫⌐╫₧╫ץ╫¿ ╫⌐╫ש╫á╫ץ╫ש╫ש╫¥</button>
+            <button onclick="closeModal('modal-edit-row')" class="w-full text-gray-400 mt-2">╫ס╫ש╫ר╫ץ╫£</button>
+        </div>
+    </div>
+
+    <script>
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbydwcb9Elv-S-xFhySVkioiaJrLPwx7I9LxzSLY6ep_aR22ErmKBEuAUG_ZPp0u1JghHw/exec';
+        
+        let clients = JSON.parse(localStorage.getItem('crm_clients_v3')) || [];
+        let leads = JSON.parse(localStorage.getItem('crm_leads_v3')) || [];
+        let myChart = null;
+        const MONTHS = ["╫ש╫á╫ץ╫נ╫¿", "╫ñ╫ס╫¿╫ץ╫נ╫¿", "╫₧╫¿╫Ñ", "╫נ╫ñ╫¿╫ש╫£", "╫₧╫נ╫ש", "╫ש╫ץ╫á╫ש", "╫ש╫ץ╫£╫ש", "╫נ╫ץ╫ע╫ץ╫í╫ר", "╫í╫ñ╫ר╫₧╫ס╫¿", "╫נ╫ץ╫º╫ר╫ץ╫ס╫¿", "╫á╫ץ╫ס╫₧╫ס╫¿", "╫ף╫ª╫₧╫ס╫¿"];
+
+        window.onload = () => {
+            const filter = document.getElementById('stats-month-filter');
+            filter.innerHTML = MONTHS.map(m => `<option value="${m}" ${m === MONTHS[new Date().getMonth()] ? 'selected' : ''}>${m}</option>`).join('') + `<option value="ALL">≡ƒףט ╫⌐╫á╫¬╫ש</option>`;
+            document.getElementById('inc-date').valueAsDate = new Date();
+            renderLeads();
+        };
+
+        function switchPage(p) {
+            ['entry', 'leads', 'stats'].forEach(id => document.getElementById('page-'+id).classList.add('hidden'));
+            document.getElementById('page-'+p).classList.remove('hidden');
+            document.querySelectorAll('.nav-button').forEach(b => b.classList.remove('active'));
+            document.getElementById('nav-'+p).classList.add('active');
+            if(p === 'leads') renderLeads();
+            if(p === 'stats') updateStats();
+        }
+
+        // --- ╫á╫ש╫פ╫ץ╫£ ╫£╫ש╫ף╫ש╫¥ ╫ץ╫ע╫¿╫ש╫¿╫פ ---
+        function renderLeads() {
+            const board = document.getElementById('kanban-board');
+            const stages = [
+                {id:'new', t:'≡ƒזץ ╫ק╫ף╫⌐'}, {id:'contact', t:'≡ƒף₧ ╫º╫⌐╫¿'}, {id:'negotiation', t:'≡ƒñ¥ ╫₧╫ץ"╫₧'},
+                {id:'offer', t:'≡ƒף£ ╫פ╫ª╫ó╫פ'}, {id:'done', t:'Γ£ו ╫á╫í╫ע╫¿'}, {id:'archive', t:'≡ƒףב ╫נ╫¿╫¢╫ש╫ץ╫ƒ'}
+            ];
+
+            board.innerHTML = stages.map(s => `
+                <div class="kanban-col">
+                    <h3 class="font-bold mb-4 text-purple-900 border-b pb-2 text-center text-sm">${s.t}</h3>
+                    <div class="kanban-list space-y-3" data-status="${s.id}">
+                        ${leads.filter(l => (l.status || 'new') === s.id).map(l => `
+                            <div class="lead-card text-right" data-id="${l.id}">
+                                <div class="flex justify-between mb-1">
+                                    <span class="font-bold text-gray-800 text-sm">${l.name}</span>
+                                    <span class="source-tag">${l.source || '╫¢╫£╫£╫ש'}</span>
+                                </div>
+                                <div class="text-[10px] text-gray-400 mb-2">${l.service || ''}</div>
+                                <div class="flex gap-2 border-t pt-2 mt-1">
+                                    <button onclick="viewLead(${l.id})" class="text-[10px] bg-purple-50 text-purple-600 px-2 py-1 rounded font-bold">≡ƒסב∩╕ן ╫ñ╫¿╫ר╫ש╫¥</button>
+                                    <button onclick="deleteLead(${l.id})" class="text-[10px] text-red-300 mr-auto">╫₧╫ק╫º</button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+
+            // ╫פ╫ñ╫ó╫£╫¬ ╫ע╫¿╫ש╫¿╫פ
+            document.querySelectorAll('.kanban-list').forEach(el => {
+                new Sortable(el, {
+                    group: 'leads',
+                    animation: 150,
+                    ghostClass: 'sortable-ghost',
+                    delay: 200,
+                    delayOnTouchOnly: true,
+                    onEnd: async function(evt) {
+                        const leadId = parseInt(evt.item.getAttribute('data-id'));
+                        const newStatus = evt.to.getAttribute('data-status');
+                        const idx = leads.findIndex(x => x.id === leadId);
+                        if(idx !== -1) {
+                            leads[idx].status = newStatus;
+                            localStorage.setItem('crm_leads_v3', JSON.stringify(leads));
+                            // ╫í╫á╫¢╫¿╫ץ╫ƒ ╫⌐╫º╫ר
+                            fetch(SCRIPT_URL, {method:'POST', mode:'no-cors', body: JSON.stringify({type:'LEAD_UPDATE', id: leadId, status: newStatus, name: leads[idx].name})});
+                        }
+                    }
+                });
+            });
+        }
+
+        async function addLead() {
+            const btn = document.getElementById('btn-save-lead');
+            const data = {
+                type: 'LEAD', id: Date.now(), status: 'new',
+                name: document.getElementById('lead-name').value,
+                phone: document.getElementById('lead-phone').value,
+                source: document.getElementById('lead-source').value,
+                service: document.getElementById('lead-service').value,
+                eventDate: document.getElementById('lead-event-date').value,
+                location: document.getElementById('lead-location').value,
+                isBride: document.getElementById('lead-is-bride').checked
+            };
+            if(!data.name || !data.phone) return alert('╫⌐╫¥ ╫ץ╫ר╫£╫ñ╫ץ╫ƒ ╫ק╫ץ╫ס╫פ');
+            btn.innerText = "╫⌐╫ץ╫₧╫¿..."; btn.disabled = true;
+            try {
+                await fetch(SCRIPT_URL, {method:'POST', mode:'no-cors', body: JSON.stringify(data)});
+                leads.push(data);
+                localStorage.setItem('crm_leads_v3', JSON.stringify(leads));
+                closeModal('modal-new-lead'); renderLeads();
+                alert('╫£╫ש╫ף ╫á╫ץ╫í╫ú ╫ס╫פ╫ª╫£╫ק╫פ');
+            } catch(e) { alert("╫⌐╫ע╫ש╫נ╫פ ╫ס╫í╫á╫¢╫¿╫ץ╫ƒ"); }
+            finally { btn.innerText = "╫⌐╫₧╫ץ╫¿ ╫£╫ש╫ף"; btn.disabled = false; }
+        }
+
+        function viewLead(id) {
+            const l = leads.find(x => x.id === id);
+            if(!l) return;
+            document.getElementById('view-name').innerText = l.name;
+            document.getElementById('view-phone').innerText = l.phone;
+            document.getElementById('view-source').innerText = l.source || '-';
+            document.getElementById('view-service').innerText = l.service || '-';
+            document.getElementById('view-date').innerText = l.eventDate || '╫£╫נ ╫á╫º╫ס╫ó';
+            document.getElementById('view-location').innerText = l.location || '-';
+            document.getElementById('view-tag-bride').classList.toggle('hidden', !l.isBride);
+            document.getElementById('view-wa-link').href = `https://wa.me/972${l.phone.replace(/[^0-9]/g, '').replace(/^0/, '')}`;
+            openModal('modal-view-lead');
+        }
+
+        async function deleteLead(id) {
+            if(!confirm('╫£╫₧╫ק╫ץ╫º ╫£╫ª╫₧╫ש╫¬╫ץ╫¬ ╫₧╫פ╫⌐╫ש╫ר╫í?')) return;
+            fetch(SCRIPT_URL, {method:'POST', mode:'no-cors', body: JSON.stringify({type:'DELETE_LEAD', id})});
+            leads = leads.filter(x => x.id !== id);
+            localStorage.setItem('crm_leads_v3', JSON.stringify(leads));
+            renderLeads();
+        }
+
+        // --- ╫פ╫¢╫á╫í╫ץ╫¬ (╫ó╫ץ╫ע╫ƒ) ---
+        async function saveIncome() {
+            const btn = document.getElementById('btn-save');
+            const data = {
+                type: 'INCOME', id: Date.now(),
+                name: document.getElementById('inc-name').value,
+                amount: parseFloat(document.getElementById('inc-amount').value),
+                date: document.getElementById('inc-date').value,
+                service: document.getElementById('inc-service').value,
+                paymentMethod: document.getElementById('inc-payment').value,
+                isBride: document.getElementById('inc-isbride').checked,
+                month: MONTHS[new Date(document.getElementById('inc-date').value).getMonth()]
+            };
+            if(!data.name || isNaN(data.amount)) return alert('╫₧╫£╫נ ╫⌐╫¥ ╫ץ╫í╫¢╫ץ╫¥');
+            btn.innerText = "╫⌐╫ץ╫₧╫¿... Γן│"; btn.disabled = true;
+            try {
+                await fetch(SCRIPT_URL, {method:'POST', mode:'no-cors', body: JSON.stringify(data)});
+                clients.push(data);
+                localStorage.setItem('crm_clients_v3', JSON.stringify(clients));
+                alert('╫פ╫ó╫í╫º╫פ ╫á╫⌐╫₧╫¿╫פ ╫ס╫⌐╫ש╫ר╫í!');
+                document.getElementById('inc-name').value = ''; 
+                document.getElementById('inc-amount').value = '';
+            } catch(e) { alert("╫⌐╫ע╫ש╫נ╫פ ╫ס╫⌐╫₧╫ש╫¿╫פ"); }
+            finally { btn.innerText = "╫⌐╫₧╫ץ╫¿ ╫ס╫⌐╫ש╫ר╫í"; btn.disabled = false; }
+        }
+
+        // --- ╫á╫ש╫פ╫ץ╫£ ╫⌐╫ץ╫¿╫ץ╫¬ ╫ץ╫ó╫¿╫ש╫¢╫פ (╫ó╫ץ╫ע╫ƒ ╫₧╫£╫נ) ---
+        function openManageModal() {
+            const filterVal = document.getElementById('stats-month-filter').value;
+            const filtered = filterVal === 'ALL' ? clients : clients.filter(c => c.month === filterVal);
+            const tbody = document.getElementById('manage-tbody');
+            tbody.innerHTML = filtered.sort((a,b) => new Date(b.date) - new Date(a.date)).map(c => `
+                <tr class="border-b hover:bg-gray-50 text-right">
+                    <td class="p-3"><input type="checkbox" class="row-sel" data-id="${c.id}" onchange="checkBulkVisibility()"></td>
+                    <td class="p-3 text-xs text-gray-500">${c.date}</td>
+                    <td class="p-3 font-bold">${c.name}</td>
+                    <td class="p-3 text-sm text-gray-600">${c.service || '-'}</td>
+                    <td class="p-3 text-purple-600 font-bold">${c.amount} Γג¬</td>
+                    <td class="p-3 flex gap-2">
+                        <button onclick="startEdit(${c.id})" class="text-blue-500 font-bold text-xs bg-blue-50 px-2 py-1 rounded">╫ó╫¿╫ץ╫ת</button>
+                        <button onclick="deleteRow(${c.id})" class="text-red-500 font-bold text-xs bg-red-50 px-2 py-1 rounded">╫₧╫ק╫º</button>
+                    </td>
+                </tr>
+            `).join('');
+            checkBulkVisibility();
+            openModal('modal-manage');
+        }
+
+        function startEdit(id) {
+            const c = clients.find(x => x.id === id);
+            if(!c) return;
+            document.getElementById('edit-id').value = c.id;
+            document.getElementById('edit-name').value = c.name;
+            document.getElementById('edit-amount').value = c.amount;
+            document.getElementById('edit-service').value = c.service || '';
+            document.getElementById('edit-date').value = c.date;
+            document.getElementById('edit-isbride').checked = c.isBride || false;
+            openModal('modal-edit-row');
+        }
+
+        async function submitEdit() {
+            const btn = document.getElementById('btn-edit-save');
+            const id = parseInt(document.getElementById('edit-id').value);
+            const idx = clients.findIndex(x => x.id === id);
+            const updated = {
+                ...clients[idx], 
+                type: 'UPDATE_ROW',
+                name: document.getElementById('edit-name').value,
+                amount: parseFloat(document.getElementById('edit-amount').value),
+                service: document.getElementById('edit-service').value,
+                date: document.getElementById('edit-date').value,
+                isBride: document.getElementById('edit-isbride').checked,
+                month: MONTHS[new Date(document.getElementById('edit-date').value).getMonth()]
+            };
+            btn.innerText = "╫₧╫ó╫ף╫¢╫ƒ... Γן│"; btn.disabled = true;
+            try {
+                await fetch(SCRIPT_URL, {method:'POST', mode:'no-cors', body: JSON.stringify(updated)});
+                clients[idx] = updated;
+                localStorage.setItem('crm_clients_v3', JSON.stringify(clients));
+                closeModal('modal-edit-row');
+                openManageModal();
+                updateStats();
+            } catch(e) { alert("╫⌐╫ע╫ש╫נ╫פ ╫ס╫ó╫ף╫¢╫ץ╫ƒ"); }
+            finally { btn.innerText = "╫⌐╫₧╫ץ╫¿ ╫⌐╫ש╫á╫ץ╫ש╫ש╫¥"; btn.disabled = false; }
+        }
+
+        async function deleteRow(id) {
+            if(!confirm('╫£╫₧╫ק╫ץ╫º ╫₧╫פ╫⌐╫ש╫ר╫í?')) return;
+            await fetch(SCRIPT_URL, {method:'POST', mode:'no-cors', body: JSON.stringify({type:'DELETE_ROW', id})});
+            clients = clients.filter(x => x.id !== id);
+            localStorage.setItem('crm_clients_v3', JSON.stringify(clients));
+            openManageModal(); updateStats();
+        }
+
+        function toggleSelectAll(master) {
+            document.querySelectorAll('.row-sel').forEach(cb => cb.checked = master.checked);
+            checkBulkVisibility();
+        }
+
+        function checkBulkVisibility() {
+            const checked = document.querySelectorAll('.row-sel:checked');
+            const btn = document.getElementById('bulk-del-btn');
+            btn.classList.toggle('hidden', checked.length === 0);
+            btn.innerText = `╫₧╫ק╫º ${checked.length} ╫⌐╫ץ╫¿╫ץ╫¬`;
+        }
+
+        async function bulkDelete() {
+            if(!confirm('╫£╫₧╫ק╫ץ╫º ╫נ╫¬ ╫¢╫£ ╫פ╫⌐╫ץ╫¿╫ץ╫¬ ╫⌐╫á╫ס╫ק╫¿╫ץ ╫₧╫פ╫⌐╫ש╫ר╫í?')) return;
+            const ids = Array.from(document.querySelectorAll('.row-sel:checked')).map(cb => parseInt(cb.dataset.id));
+            for(let id of ids) {
+                await fetch(SCRIPT_URL, {method:'POST', mode:'no-cors', body: JSON.stringify({type:'DELETE_ROW', id})});
+                clients = clients.filter(x => x.id !== id);
+            }
+            localStorage.setItem('crm_clients_v3', JSON.stringify(clients));
+            openManageModal(); updateStats();
+        }
+
+        // --- ╫í╫ר╫ר╫ש╫í╫ר╫ש╫º╫פ ---
+        function updateStats() {
+            const filterVal = document.getElementById('stats-month-filter').value;
+            const filtered = filterVal === 'ALL' ? clients : clients.filter(c => c.month === filterVal);
+            
+            document.getElementById('sum-total').innerText = filtered.reduce((a,b) => a + b.amount, 0).toLocaleString() + ' Γג¬';
+            document.getElementById('sum-brides').innerText = filtered.filter(c => c.isBride).length;
+            document.getElementById('sum-count').innerText = filtered.length;
+
+            const labels = filterVal === 'ALL' ? MONTHS : [filterVal];
+            const data = filterVal === 'ALL' ? MONTHS.map(m => clients.filter(c => c.month === m).reduce((a,b) => a + b.amount, 0)) : [filtered.reduce((a,b) => a + b.amount, 0)];
+
+            if(myChart) myChart.destroy();
+            myChart = new Chart(document.getElementById('incomeChart'), {
+                data: {
+                    labels,
+                    datasets: [
+                        { type: 'bar', label: '╫פ╫¢╫á╫í╫ץ╫¬ Γג¬', data, backgroundColor: '#9333ea', borderRadius: 8 },
+                        { type: 'line', label: '╫₧╫ע╫₧╫פ', data, borderColor: '#db2777', tension: 0.3 }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
+
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+    </script>
+</body>
+</html>
+
