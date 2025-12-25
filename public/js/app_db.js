@@ -209,6 +209,11 @@ const ModalManager = {
         const modal = document.getElementById(modalId);
         if (modal) {
             modal.style.display = 'flex';
+            
+            // Load goals when opening settings modal
+            if (modalId === 'modal-settings') {
+                window.loadGoalsToModal();
+            }
         }
     },
     
@@ -495,24 +500,56 @@ const LeadsView = {
 
 const HomeView = {
     update() {
-        // Calculate this month's stats
-        const now = new Date();
-        const thisMonth = now.getMonth();
-        const thisMonthClients = State.clients.filter(c => {
-            const date = new Date(c.date);
-            return date.getMonth() === thisMonth && date.getFullYear() === now.getFullYear();
-        });
+        // Load goals
+        const goals = JSON.parse(localStorage.getItem('stride_goals') || '{}');
         
-        // Total income this month
-        const totalIncome = thisMonthClients.reduce((sum, c) => sum + (c.price || c.amount || 0), 0);
-        document.getElementById('home-total-income').innerText = `₪${totalIncome.toLocaleString()}`;
-        
-        // Total deals this month
-        document.getElementById('home-total-deals').innerText = thisMonthClients.length;
-        
-        // Active leads (not archived or done)
-        const activeLeads = State.leads.filter(l => l.status !== 'done' && l.status !== 'archive').length;
-        document.getElementById('home-active-leads').innerText = activeLeads;
+        if (goals.income || goals.brides) {
+            document.getElementById('goals-section').classList.remove('hidden');
+            
+            // Calculate yearly totals
+            const now = new Date();
+            const thisYear = now.getFullYear();
+            const yearlyClients = State.clients.filter(c => {
+                const date = new Date(c.date);
+                return date.getFullYear() === thisYear;
+            });
+            
+            // Income progress
+            const totalIncome = yearlyClients.reduce((sum, c) => sum + (c.price || c.amount || 0), 0);
+            const incomeGoal = goals.income || 0;
+            const incomePercent = incomeGoal > 0 ? Math.min(100, Math.round((totalIncome / incomeGoal) * 100)) : 0;
+            const incomeRemaining = Math.max(0, incomeGoal - totalIncome);
+            
+            document.getElementById('income-current').innerText = `₪${totalIncome.toLocaleString()}`;
+            document.getElementById('income-goal').innerText = `₪${incomeGoal.toLocaleString()}`;
+            document.getElementById('income-percentage').innerText = `${incomePercent}%`;
+            document.getElementById('income-progress').style.width = `${incomePercent}%`;
+            
+            if (incomePercent >= 100) {
+                document.getElementById('income-remaining').innerHTML = '🎉 <strong>יעד הושג!</strong> מזל טוב!';
+            } else {
+                document.getElementById('income-remaining').innerHTML = `נותרו <strong>₪${incomeRemaining.toLocaleString()}</strong> להשגת היעד`;
+            }
+            
+            // Brides progress
+            const totalBrides = yearlyClients.filter(c => c.isBride).length;
+            const bridesGoal = goals.brides || 0;
+            const bridesPercent = bridesGoal > 0 ? Math.min(100, Math.round((totalBrides / bridesGoal) * 100)) : 0;
+            const bridesRemaining = Math.max(0, bridesGoal - totalBrides);
+            
+            document.getElementById('brides-current').innerText = totalBrides;
+            document.getElementById('brides-goal').innerText = bridesGoal;
+            document.getElementById('brides-percentage').innerText = `${bridesPercent}%`;
+            document.getElementById('brides-progress').style.width = `${bridesPercent}%`;
+            
+            if (bridesPercent >= 100) {
+                document.getElementById('brides-remaining').innerHTML = '🎉 <strong>יעד הושג!</strong> מזל טוב!';
+            } else {
+                document.getElementById('brides-remaining').innerHTML = `נותרו <strong>${bridesRemaining} כלות</strong> להשגת היעד`;
+            }
+        } else {
+            document.getElementById('goals-section').classList.add('hidden');
+        }
     }
 };
 
@@ -938,6 +975,28 @@ window.checkBulkVisibility = () => ManageView.checkBulkVisibility();
 window.bulkDelete = () => ManageView.bulkDelete();
 window.updateStats = () => StatsView.update();
 window.exportToExcel = () => ExcelExporter.export();
+window.saveGoals = () => {
+    const income = parseInt(document.getElementById('goal-income').value) || 0;
+    const brides = parseInt(document.getElementById('goal-brides').value) || 0;
+    
+    if (income <= 0 && brides <= 0) {
+        alert('נא להזין לפחות יעד אחד');
+        return;
+    }
+    
+    const goals = { income, brides };
+    localStorage.setItem('stride_goals', JSON.stringify(goals));
+    
+    ModalManager.close('modal-settings');
+    HomeView.update();
+    
+    alert('✅ היעדים נשמרו בהצלחה!');
+};
+window.loadGoalsToModal = () => {
+    const goals = JSON.parse(localStorage.getItem('stride_goals') || '{}');
+    document.getElementById('goal-income').value = goals.income || '';
+    document.getElementById('goal-brides').value = goals.brides || '';
+};
 
 // Initialize Application
 window.onload = async () => {

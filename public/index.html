@@ -24,13 +24,64 @@
         <!-- Page: Home Dashboard -->
         <section id="page-home" class="text-center">
             <!-- Hero Section -->
-            <div class="mb-16 mt-12">
-                <h1 class="text-6xl md:text-7xl font-bold text-purple-800 mb-6">
-                    Stride
-                </h1>
-                <p class="text-2xl md:text-3xl text-gray-600 font-light">
+            <div class="mb-12 mt-12 relative">
+                <!-- Settings Button -->
+                <button onclick="openModal('modal-settings')" class="absolute top-0 left-4 bg-gray-100 hover:bg-gray-200 text-gray-700 p-3 rounded-full shadow-lg transition-all duration-300 hover:scale-110">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                </button>
+                
+                <!-- Logo -->
+                <div class="inline-block mb-6">
+                    <div class="bg-gradient-to-br from-purple-600 via-purple-700 to-indigo-800 text-white px-12 py-6 rounded-3xl shadow-2xl transform hover:scale-105 transition-all duration-300">
+                        <h1 class="text-7xl md:text-8xl font-black tracking-tight">
+                            Stride
+                        </h1>
+                    </div>
+                </div>
+                <p class="text-2xl md:text-3xl text-gray-600 font-light mt-4">
                     Business Management System
                 </p>
+            </div>
+
+            <!-- Goals Progress Section -->
+            <div id="goals-section" class="max-w-4xl mx-auto mb-12 hidden">
+                <h3 class="text-2xl font-bold text-gray-800 mb-6">🎯 יעדים שנתיים</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Income Goal -->
+                    <div class="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-2xl shadow-lg border-2 border-green-200">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-lg font-bold text-green-800">💰 יעד הכנסות</span>
+                            <span class="text-2xl font-black text-green-700" id="income-percentage">0%</span>
+                        </div>
+                        <div class="bg-gray-200 h-6 rounded-full overflow-hidden mb-3">
+                            <div id="income-progress" class="bg-gradient-to-r from-green-400 to-emerald-500 h-full rounded-full transition-all duration-1000 ease-out" style="width: 0%"></div>
+                        </div>
+                        <div class="flex justify-between text-sm text-gray-700">
+                            <span id="income-current">₪0</span>
+                            <span id="income-goal">₪0</span>
+                        </div>
+                        <div class="mt-2 text-xs text-gray-600" id="income-remaining"></div>
+                    </div>
+
+                    <!-- Brides Goal -->
+                    <div class="bg-gradient-to-br from-pink-50 to-rose-50 p-6 rounded-2xl shadow-lg border-2 border-pink-200">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-lg font-bold text-pink-800">👰 יעד כלות</span>
+                            <span class="text-2xl font-black text-pink-700" id="brides-percentage">0%</span>
+                        </div>
+                        <div class="bg-gray-200 h-6 rounded-full overflow-hidden mb-3">
+                            <div id="brides-progress" class="bg-gradient-to-r from-pink-400 to-rose-500 h-full rounded-full transition-all duration-1000 ease-out" style="width: 0%"></div>
+                        </div>
+                        <div class="flex justify-between text-sm text-gray-700">
+                            <span id="brides-current">0</span>
+                            <span id="brides-goal">0</span>
+                        </div>
+                        <div class="mt-2 text-xs text-gray-600" id="brides-remaining"></div>
+                    </div>
+                </div>
             </div>
 
             <!-- Main Action Cards -->
@@ -66,8 +117,11 @@
 
         <!-- Page: Income Entry -->
         <section id="page-entry" class="hidden main-card p-8 max-w-lg mx-auto text-right">
-            <button onclick="switchPage('home')" class="mb-4 text-purple-600 hover:text-purple-800 font-medium flex items-center gap-2">
-                ← חזור לדף הבית
+            <button onclick="switchPage('home')" class="group mb-6 bg-purple-100 hover:bg-purple-200 text-purple-700 px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all duration-300 shadow-md hover:shadow-lg">
+                <svg class="w-5 h-5 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+                <span>חזור לדף הבית</span>
             </button>
             <h2 class="text-2xl font-bold mb-6 text-purple-800 text-center">הזנת עסקה חדשה</h2>
             
@@ -96,8 +150,11 @@
 
         <!-- Page: Leads Management -->
         <section id="page-leads" class="hidden">
-            <button onclick="switchPage('home')" class="mb-4 text-blue-600 hover:text-blue-800 font-medium flex items-center gap-2">
-                ← חזור לדף הבית
+            <button onclick="switchPage('home')" class="group mb-6 bg-blue-100 hover:bg-blue-200 text-blue-700 px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all duration-300 shadow-md hover:shadow-lg">
+                <svg class="w-5 h-5 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+                <span>חזור לדף הבית</span>
             </button>
             <div class="flex justify-between items-center mb-6 px-2 text-right">
                 <h2 class="text-2xl font-bold text-purple-900">ניהול לידים</h2>
@@ -110,8 +167,11 @@
 
         <!-- Page: Statistics -->
         <section id="page-stats" class="hidden text-right">
-            <button onclick="switchPage('home')" class="mb-4 text-green-600 hover:text-green-800 font-medium flex items-center gap-2">
-                ← חזור לדף הבית
+            <button onclick="switchPage('home')" class="group mb-6 bg-green-100 hover:bg-green-200 text-green-700 px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all duration-300 shadow-md hover:shadow-lg">
+                <svg class="w-5 h-5 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+                <span>חזור לדף הבית</span>
             </button>
             <div class="main-card p-6">
                 <div class="flex flex-wrap justify-between items-center mb-6 gap-4 border-b pb-4">
@@ -203,6 +263,38 @@
                     סגור
                 </button>
             </div>
+        </div>
+    </div>
+
+    <!-- Modal: Settings -->
+    <div id="modal-settings" class="modal">
+        <div class="bg-white p-8 rounded-3xl w-full max-w-md shadow-2xl text-right">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold text-purple-800">⚙️ הגדרות יעדים שנתיים</h3>
+                <button onclick="closeModal('modal-settings')" class="text-3xl text-gray-400 hover:text-gray-600">&times;</button>
+            </div>
+            
+            <div class="space-y-6">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">💰 יעד הכנסות שנתי (₪)</label>
+                    <input type="number" id="goal-income" placeholder="לדוגמה: 500000" class="w-full p-3 border-2 border-gray-300 rounded-xl focus:border-purple-500 focus:outline-none">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">👰 יעד כמות כלות שנתי</label>
+                    <input type="number" id="goal-brides" placeholder="לדוגמה: 50" class="w-full p-3 border-2 border-gray-300 rounded-xl focus:border-purple-500 focus:outline-none">
+                </div>
+                
+                <div class="bg-blue-50 p-4 rounded-xl border border-blue-200">
+                    <p class="text-sm text-blue-800">
+                        💡 <strong>טיפ:</strong> הגדירו יעדים אמביציוזיים אך ריאליים. מעקב אחר התקדמות יעזור לכם להישאר ממוקדים!
+                    </p>
+                </div>
+            </div>
+            
+            <button onclick="saveGoals()" class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all duration-300 mt-6">
+                שמור יעדים
+            </button>
         </div>
     </div>
 
