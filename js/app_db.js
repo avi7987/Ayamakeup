@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+﻿<<<<<<< HEAD
 /**
  * CRM System for Beauty Business
  * Version: 9.0 - Database Edition
@@ -12,14 +12,14 @@ const CONFIG = {
         CLIENTS: 'crm_clients_v3',
         LEADS: 'crm_leads_v3'
     },
-    MONTHS: ["ינואר", "פברואר", "מרץ", "אפריל", "מאי", "יוני", "יולי", "אוגוסט", "ספטמבר", "אוקטובר", "נובמבר", "דצמבר"],
+    MONTHS: ["╫ש╫á╫ץ╫נ╫¿", "╫ñ╫ס╫¿╫ץ╫נ╫¿", "╫₧╫¿╫Ñ", "╫נ╫ñ╫¿╫ש╫£", "╫₧╫נ╫ש", "╫ש╫ץ╫á╫ש", "╫ש╫ץ╫£╫ש", "╫נ╫ץ╫ע╫ץ╫í╫ר", "╫í╫ñ╫ר╫₧╫ס╫¿", "╫נ╫ץ╫º╫ר╫ץ╫ס╫¿", "╫á╫ץ╫ס╫₧╫ס╫¿", "╫ף╫ª╫₧╫ס╫¿"],
     LEAD_STAGES: [
-        {id: 'new', title: '🆕 חדש'},
-        {id: 'contact', title: '📞 קשר'},
-        {id: 'negotiation', title: '🤝 מו"מ'},
-        {id: 'offer', title: '📜 הצעה'},
-        {id: 'done', title: '✅ נסגר'},
-        {id: 'archive', title: '📁 ארכיון'}
+        {id: 'new', title: '≡ƒזץ ╫ק╫ף╫⌐'},
+        {id: 'contact', title: '≡ƒף₧ ╫º╫⌐╫¿'},
+        {id: 'negotiation', title: '≡ƒñ¥ ╫₧╫ץ"╫₧'},
+        {id: 'offer', title: '≡ƒף£ ╫פ╫ª╫ó╫פ'},
+        {id: 'done', title: 'Γ£ו ╫á╫í╫ע╫¿'},
+        {id: 'archive', title: '≡ƒףב ╫נ╫¿╫¢╫ש╫ץ╫ƒ'}
     ]
 };
 
@@ -49,11 +49,11 @@ const State = {
                 this.clients = this.clients.map(c => ({...c, isBride: Boolean(c.isBride)}));
                 this.leads = this.leads.map(l => ({...l, isBride: Boolean(l.isBride)}));
                 
-                console.log('✅ Data loaded from database');
+                console.log('Γ£ו Data loaded from database');
             } else {
                 // Fallback to localStorage
                 this.loadFromStorage();
-                console.log('⚠️ Using localStorage data');
+                console.log('Γתá∩╕ן Using localStorage data');
             }
         } catch (error) {
             console.error('Failed to connect to database, using localStorage:', error);
@@ -228,11 +228,11 @@ const IncomeManager = {
         };
         
         if (!data.name || isNaN(data.amount)) {
-            alert('מלא שם וסכום');
+            alert('╫₧╫£╫נ ╫⌐╫¥ ╫ץ╫í╫¢╫ץ╫¥');
             return;
         }
         
-        btn.innerText = "שומר... ⏳";
+        btn.innerText = "╫⌐╫ץ╫₧╫¿... Γן│";
         btn.disabled = true;
         
         try {
@@ -240,16 +240,16 @@ const IncomeManager = {
             State.clients.push(data);
             State.saveToStorage();
             
-            alert('העסקה נשמרה בהצלחה!');
+            alert('╫פ╫ó╫í╫º╫פ ╫á╫⌐╫₧╫¿╫פ ╫ס╫פ╫ª╫£╫ק╫פ!');
             nameInput.value = '';
             amountInput.value = '';
             serviceInput.value = '';
             isBrideCheck.checked = false;
         } catch (error) {
-            alert("שגיאה בשמירה: " + error.message);
+            alert("╫⌐╫ע╫ש╫נ╫פ ╫ס╫⌐╫₧╫ש╫¿╫פ: " + error.message);
         }
         
-        btn.innerText = "שמור בDB";
+        btn.innerText = "╫⌐╫₧╫ץ╫¿ ╫סDB";
         btn.disabled = false;
     },
     
@@ -264,7 +264,7 @@ const IncomeManager = {
             month: CONFIG.MONTHS[new Date(document.getElementById('edit-date').value).getMonth()]
         };
         
-        btn.innerText = "מעדכן... ⏳";
+        btn.innerText = "╫₧╫ó╫ף╫¢╫ƒ... Γן│";
         btn.disabled = true;
         
         try {
@@ -280,15 +280,15 @@ const IncomeManager = {
             ManageView.open();
             StatsView.update();
         } catch (error) {
-            alert("שגיאה בעדכון: " + error.message);
+            alert("╫⌐╫ע╫ש╫נ╫פ ╫ס╫ó╫ף╫¢╫ץ╫ƒ: " + error.message);
         }
         
-        btn.innerText = "שמור שינויים";
+        btn.innerText = "╫⌐╫₧╫ץ╫¿ ╫⌐╫ש╫á╫ץ╫ש╫ש╫¥";
         btn.disabled = false;
     },
     
     async delete(id) {
-        if (!confirm('למחוק את העסקה?')) return;
+        if (!confirm('╫£╫₧╫ק╫ץ╫º ╫נ╫¬ ╫פ╫ó╫í╫º╫פ?')) return;
         
         try {
             await API.deleteClient(id);
@@ -297,7 +297,7 @@ const IncomeManager = {
             ManageView.open();
             StatsView.update();
         } catch (error) {
-            alert("שגיאה במחיקה: " + error.message);
+            alert("╫⌐╫ע╫ש╫נ╫פ ╫ס╫₧╫ק╫ש╫º╫פ: " + error.message);
         }
     },
     
@@ -333,11 +333,11 @@ const LeadsManager = {
         };
         
         if (!data.name || !data.phone) {
-            alert('שם וטלפון חובה');
+            alert('╫⌐╫¥ ╫ץ╫ר╫£╫ñ╫ץ╫ƒ ╫ק╫ץ╫ס╫פ');
             return;
         }
         
-        btn.innerText = "שומר...";
+        btn.innerText = "╫⌐╫ץ╫₧╫¿...";
         btn.disabled = true;
         
         try {
@@ -347,7 +347,7 @@ const LeadsManager = {
             
             ModalManager.close('modal-new-lead');
             LeadsView.render();
-            alert('ליד נוסף בהצלחה');
+            alert('╫£╫ש╫ף ╫á╫ץ╫í╫ú ╫ס╫פ╫ª╫£╫ק╫פ');
             
             // Clear form
             document.getElementById('lead-name').value = '';
@@ -358,10 +358,10 @@ const LeadsManager = {
             document.getElementById('lead-location').value = '';
             document.getElementById('lead-is-bride').checked = false;
         } catch (error) {
-            alert("שגיאה בהוספת ליד: " + error.message);
+            alert("╫⌐╫ע╫ש╫נ╫פ ╫ס╫פ╫ץ╫í╫ñ╫¬ ╫£╫ש╫ף: " + error.message);
         }
         
-        btn.innerText = "שמור ליד";
+        btn.innerText = "╫⌐╫₧╫ץ╫¿ ╫£╫ש╫ף";
         btn.disabled = false;
     },
     
@@ -380,7 +380,7 @@ const LeadsManager = {
     },
     
     async delete(id) {
-        if (!confirm('למחוק את הליד?')) return;
+        if (!confirm('╫£╫₧╫ק╫ץ╫º ╫נ╫¬ ╫פ╫£╫ש╫ף?')) return;
         
         try {
             await API.deleteLead(id);
@@ -388,7 +388,7 @@ const LeadsManager = {
             State.saveToStorage();
             LeadsView.render();
         } catch (error) {
-            alert("שגיאה במחיקה: " + error.message);
+            alert("╫⌐╫ע╫ש╫נ╫פ ╫ס╫₧╫ק╫ש╫º╫פ: " + error.message);
         }
     },
     
@@ -400,7 +400,7 @@ const LeadsManager = {
         document.getElementById('view-phone').innerText = lead.phone;
         document.getElementById('view-source').innerText = lead.source || '-';
         document.getElementById('view-service').innerText = lead.service || '-';
-        document.getElementById('view-date').innerText = lead.eventDate || 'לא נקבע';
+        document.getElementById('view-date').innerText = lead.eventDate || '╫£╫נ ╫á╫º╫ס╫ó';
         document.getElementById('view-location').innerText = lead.location || '-';
         document.getElementById('view-tag-bride').classList.toggle('hidden', !lead.isBride);
         
@@ -435,12 +435,12 @@ const LeadsView = {
             <div class="lead-card text-right" data-id="${lead.id}">
                 <div class="flex justify-between mb-1">
                     <span class="font-bold text-gray-800 text-sm">${lead.name}</span>
-                    <span class="source-tag">${lead.source || 'כללי'}</span>
+                    <span class="source-tag">${lead.source || '╫¢╫£╫£╫ש'}</span>
                 </div>
                 <div class="text-[10px] text-gray-400 mb-2">${lead.service || ''}</div>
                 <div class="flex gap-2 border-t pt-2 mt-1">
-                    <button onclick="viewLead(${lead.id})" class="text-[10px] bg-purple-50 text-purple-600 px-2 py-1 rounded font-bold">👁️ פרטים</button>
-                    <button onclick="deleteLead(${lead.id})" class="text-[10px] text-red-300 mr-auto">מחק</button>
+                    <button onclick="viewLead(${lead.id})" class="text-[10px] bg-purple-50 text-purple-600 px-2 py-1 rounded font-bold">≡ƒסב∩╕ן ╫ñ╫¿╫ר╫ש╫¥</button>
+                    <button onclick="deleteLead(${lead.id})" class="text-[10px] text-red-300 mr-auto">╫₧╫ק╫º</button>
                 </div>
             </div>
         `).join('');
@@ -478,7 +478,7 @@ const StatsView = {
         const bridesCount = filtered.filter(c => c.isBride).length;
         const totalCount = filtered.length;
         
-        document.getElementById('sum-total').innerText = totalIncome.toLocaleString() + ' ₪';
+        document.getElementById('sum-total').innerText = totalIncome.toLocaleString() + ' Γג¬';
         document.getElementById('sum-brides').innerText = bridesCount;
         document.getElementById('sum-count').innerText = totalCount;
     },
@@ -503,14 +503,14 @@ const StatsView = {
                 datasets: [
                     { 
                         type: 'bar', 
-                        label: 'הכנסות ₪', 
+                        label: '╫פ╫¢╫á╫í╫ץ╫¬ Γג¬', 
                         data, 
                         backgroundColor: '#9333ea', 
                         borderRadius: 8 
                     },
                     { 
                         type: 'line', 
-                        label: 'מגמה', 
+                        label: '╫₧╫ע╫₧╫פ', 
                         data, 
                         borderColor: '#db2777', 
                         tension: 0.3 
@@ -541,10 +541,10 @@ const ManageView = {
                     <td class="p-3 text-xs text-gray-500">${client.date}</td>
                     <td class="p-3 font-bold">${client.name}</td>
                     <td class="p-3 text-sm text-gray-600">${client.service || '-'}</td>
-                    <td class="p-3 text-purple-600 font-bold">${client.amount} ₪</td>
+                    <td class="p-3 text-purple-600 font-bold">${client.amount} Γג¬</td>
                     <td class="p-3 flex gap-2">
-                        <button onclick="startEdit(${client.id})" class="text-blue-500 font-bold text-xs bg-blue-50 px-2 py-1 rounded">ערוך</button>
-                        <button onclick="deleteRow(${client.id})" class="text-red-500 font-bold text-xs bg-red-50 px-2 py-1 rounded">מחק</button>
+                        <button onclick="startEdit(${client.id})" class="text-blue-500 font-bold text-xs bg-blue-50 px-2 py-1 rounded">╫ó╫¿╫ץ╫ת</button>
+                        <button onclick="deleteRow(${client.id})" class="text-red-500 font-bold text-xs bg-red-50 px-2 py-1 rounded">╫₧╫ק╫º</button>
                     </td>
                 </tr>
             `).join('');
@@ -564,11 +564,11 @@ const ManageView = {
         const checked = document.querySelectorAll('.row-sel:checked');
         const btn = document.getElementById('bulk-del-btn');
         btn.classList.toggle('hidden', checked.length === 0);
-        btn.innerText = `מחק ${checked.length} שורות`;
+        btn.innerText = `╫₧╫ק╫º ${checked.length} ╫⌐╫ץ╫¿╫ץ╫¬`;
     },
     
     async bulkDelete() {
-        if (!confirm('למחוק את כל השורות שנבחרו?')) return;
+        if (!confirm('╫£╫₧╫ק╫ץ╫º ╫נ╫¬ ╫¢╫£ ╫פ╫⌐╫ץ╫¿╫ץ╫¬ ╫⌐╫á╫ס╫ק╫¿╫ץ?')) return;
         
         const ids = Array.from(document.querySelectorAll('.row-sel:checked'))
             .map(cb => parseInt(cb.dataset.id));
@@ -580,7 +580,7 @@ const ManageView = {
             this.open();
             StatsView.update();
         } catch (error) {
-            alert("שגיאה במחיקה: " + error.message);
+            alert("╫⌐╫ע╫ש╫נ╫פ ╫ס╫₧╫ק╫ש╫º╫פ: " + error.message);
         }
     }
 };
@@ -588,13 +588,13 @@ const ManageView = {
 // Migration Tool
 const MigrationTool = {
     async migrateFromLocalStorage() {
-        if (!confirm('להעביר את כל הנתונים מ-localStorage למסד הנתונים?')) return;
+        if (!confirm('╫£╫פ╫ó╫ס╫ש╫¿ ╫נ╫¬ ╫¢╫£ ╫פ╫á╫¬╫ץ╫á╫ש╫¥ ╫₧-localStorage ╫£╫₧╫í╫ף ╫פ╫á╫¬╫ץ╫á╫ש╫¥?')) return;
         
         const clients = JSON.parse(localStorage.getItem(CONFIG.STORAGE_KEYS.CLIENTS)) || [];
         const leads = JSON.parse(localStorage.getItem(CONFIG.STORAGE_KEYS.LEADS)) || [];
         
         if (clients.length === 0 && leads.length === 0) {
-            alert('אין נתונים ב-localStorage להעברה');
+            alert('╫נ╫ש╫ƒ ╫á╫¬╫ץ╫á╫ש╫¥ ╫ס-localStorage ╫£╫פ╫ó╫ס╫¿╫פ');
             return;
         }
         
@@ -605,7 +605,7 @@ const MigrationTool = {
             LeadsView.render();
             StatsView.update();
         } catch (error) {
-            alert('שגיאה בהעברת נתונים: ' + error.message);
+            alert('╫⌐╫ע╫ש╫נ╫פ ╫ס╫פ╫ó╫ס╫¿╫¬ ╫á╫¬╫ץ╫á╫ש╫¥: ' + error.message);
         }
     }
 };
@@ -634,7 +634,7 @@ window.migrateData = () => MigrationTool.migrateFromLocalStorage();
 // Initialize Application
 window.onload = async () => {
     // Show loading indicator
-    console.log('🚀 Initializing CRM...');
+    console.log('≡ƒתא Initializing CRM...');
     
     await State.init();
     
@@ -643,7 +643,7 @@ window.onload = async () => {
     const currentMonth = CONFIG.MONTHS[new Date().getMonth()];
     filter.innerHTML = CONFIG.MONTHS
         .map(month => `<option value="${month}" ${month === currentMonth ? 'selected' : ''}>${month}</option>`)
-        .join('') + `<option value="ALL">📈 שנתי</option>`;
+        .join('') + `<option value="ALL">≡ƒףט ╫⌐╫á╫¬╫ש</option>`;
     
     // Set today's date
     document.getElementById('inc-date').valueAsDate = new Date();
@@ -651,7 +651,7 @@ window.onload = async () => {
     // Initial render
     LeadsView.render();
     
-    console.log('✅ CRM Ready!');
+    console.log('Γ£ו CRM Ready!');
 };
 =======
 /**
@@ -667,14 +667,14 @@ const CONFIG = {
         CLIENTS: 'crm_clients_v3',
         LEADS: 'crm_leads_v3'
     },
-    MONTHS: ["ינואר", "פברואר", "מרץ", "אפריל", "מאי", "יוני", "יולי", "אוגוסט", "ספטמבר", "אוקטובר", "נובמבר", "דצמבר"],
+    MONTHS: ["╫ש╫á╫ץ╫נ╫¿", "╫ñ╫ס╫¿╫ץ╫נ╫¿", "╫₧╫¿╫Ñ", "╫נ╫ñ╫¿╫ש╫£", "╫₧╫נ╫ש", "╫ש╫ץ╫á╫ש", "╫ש╫ץ╫£╫ש", "╫נ╫ץ╫ע╫ץ╫í╫ר", "╫í╫ñ╫ר╫₧╫ס╫¿", "╫נ╫ץ╫º╫ר╫ץ╫ס╫¿", "╫á╫ץ╫ס╫₧╫ס╫¿", "╫ף╫ª╫₧╫ס╫¿"],
     LEAD_STAGES: [
-        {id: 'new', title: '🆕 חדש'},
-        {id: 'contact', title: '📞 קשר'},
-        {id: 'negotiation', title: '🤝 מו"מ'},
-        {id: 'offer', title: '📜 הצעה'},
-        {id: 'done', title: '✅ נסגר'},
-        {id: 'archive', title: '📁 ארכיון'}
+        {id: 'new', title: '≡ƒזץ ╫ק╫ף╫⌐'},
+        {id: 'contact', title: '≡ƒף₧ ╫º╫⌐╫¿'},
+        {id: 'negotiation', title: '≡ƒñ¥ ╫₧╫ץ"╫₧'},
+        {id: 'offer', title: '≡ƒף£ ╫פ╫ª╫ó╫פ'},
+        {id: 'done', title: 'Γ£ו ╫á╫í╫ע╫¿'},
+        {id: 'archive', title: '≡ƒףב ╫נ╫¿╫¢╫ש╫ץ╫ƒ'}
     ]
 };
 
@@ -704,11 +704,11 @@ const State = {
                 this.clients = this.clients.map(c => ({...c, isBride: Boolean(c.isBride)}));
                 this.leads = this.leads.map(l => ({...l, isBride: Boolean(l.isBride)}));
                 
-                console.log('✅ Data loaded from database');
+                console.log('Γ£ו Data loaded from database');
             } else {
                 // Fallback to localStorage
                 this.loadFromStorage();
-                console.log('⚠️ Using localStorage data');
+                console.log('Γתá∩╕ן Using localStorage data');
             }
         } catch (error) {
             console.error('Failed to connect to database, using localStorage:', error);
@@ -883,11 +883,11 @@ const IncomeManager = {
         };
         
         if (!data.name || isNaN(data.amount)) {
-            alert('מלא שם וסכום');
+            alert('╫₧╫£╫נ ╫⌐╫¥ ╫ץ╫í╫¢╫ץ╫¥');
             return;
         }
         
-        btn.innerText = "שומר... ⏳";
+        btn.innerText = "╫⌐╫ץ╫₧╫¿... Γן│";
         btn.disabled = true;
         
         try {
@@ -895,16 +895,16 @@ const IncomeManager = {
             State.clients.push(data);
             State.saveToStorage();
             
-            alert('העסקה נשמרה בהצלחה!');
+            alert('╫פ╫ó╫í╫º╫פ ╫á╫⌐╫₧╫¿╫פ ╫ס╫פ╫ª╫£╫ק╫פ!');
             nameInput.value = '';
             amountInput.value = '';
             serviceInput.value = '';
             isBrideCheck.checked = false;
         } catch (error) {
-            alert("שגיאה בשמירה: " + error.message);
+            alert("╫⌐╫ע╫ש╫נ╫פ ╫ס╫⌐╫₧╫ש╫¿╫פ: " + error.message);
         }
         
-        btn.innerText = "שמור בDB";
+        btn.innerText = "╫⌐╫₧╫ץ╫¿ ╫סDB";
         btn.disabled = false;
     },
     
@@ -919,7 +919,7 @@ const IncomeManager = {
             month: CONFIG.MONTHS[new Date(document.getElementById('edit-date').value).getMonth()]
         };
         
-        btn.innerText = "מעדכן... ⏳";
+        btn.innerText = "╫₧╫ó╫ף╫¢╫ƒ... Γן│";
         btn.disabled = true;
         
         try {
@@ -935,15 +935,15 @@ const IncomeManager = {
             ManageView.open();
             StatsView.update();
         } catch (error) {
-            alert("שגיאה בעדכון: " + error.message);
+            alert("╫⌐╫ע╫ש╫נ╫פ ╫ס╫ó╫ף╫¢╫ץ╫ƒ: " + error.message);
         }
         
-        btn.innerText = "שמור שינויים";
+        btn.innerText = "╫⌐╫₧╫ץ╫¿ ╫⌐╫ש╫á╫ץ╫ש╫ש╫¥";
         btn.disabled = false;
     },
     
     async delete(id) {
-        if (!confirm('למחוק את העסקה?')) return;
+        if (!confirm('╫£╫₧╫ק╫ץ╫º ╫נ╫¬ ╫פ╫ó╫í╫º╫פ?')) return;
         
         try {
             await API.deleteClient(id);
@@ -952,7 +952,7 @@ const IncomeManager = {
             ManageView.open();
             StatsView.update();
         } catch (error) {
-            alert("שגיאה במחיקה: " + error.message);
+            alert("╫⌐╫ע╫ש╫נ╫פ ╫ס╫₧╫ק╫ש╫º╫פ: " + error.message);
         }
     },
     
@@ -988,11 +988,11 @@ const LeadsManager = {
         };
         
         if (!data.name || !data.phone) {
-            alert('שם וטלפון חובה');
+            alert('╫⌐╫¥ ╫ץ╫ר╫£╫ñ╫ץ╫ƒ ╫ק╫ץ╫ס╫פ');
             return;
         }
         
-        btn.innerText = "שומר...";
+        btn.innerText = "╫⌐╫ץ╫₧╫¿...";
         btn.disabled = true;
         
         try {
@@ -1002,7 +1002,7 @@ const LeadsManager = {
             
             ModalManager.close('modal-new-lead');
             LeadsView.render();
-            alert('ליד נוסף בהצלחה');
+            alert('╫£╫ש╫ף ╫á╫ץ╫í╫ú ╫ס╫פ╫ª╫£╫ק╫פ');
             
             // Clear form
             document.getElementById('lead-name').value = '';
@@ -1013,10 +1013,10 @@ const LeadsManager = {
             document.getElementById('lead-location').value = '';
             document.getElementById('lead-is-bride').checked = false;
         } catch (error) {
-            alert("שגיאה בהוספת ליד: " + error.message);
+            alert("╫⌐╫ע╫ש╫נ╫פ ╫ס╫פ╫ץ╫í╫ñ╫¬ ╫£╫ש╫ף: " + error.message);
         }
         
-        btn.innerText = "שמור ליד";
+        btn.innerText = "╫⌐╫₧╫ץ╫¿ ╫£╫ש╫ף";
         btn.disabled = false;
     },
     
@@ -1035,7 +1035,7 @@ const LeadsManager = {
     },
     
     async delete(id) {
-        if (!confirm('למחוק את הליד?')) return;
+        if (!confirm('╫£╫₧╫ק╫ץ╫º ╫נ╫¬ ╫פ╫£╫ש╫ף?')) return;
         
         try {
             await API.deleteLead(id);
@@ -1043,7 +1043,7 @@ const LeadsManager = {
             State.saveToStorage();
             LeadsView.render();
         } catch (error) {
-            alert("שגיאה במחיקה: " + error.message);
+            alert("╫⌐╫ע╫ש╫נ╫פ ╫ס╫₧╫ק╫ש╫º╫פ: " + error.message);
         }
     },
     
@@ -1055,7 +1055,7 @@ const LeadsManager = {
         document.getElementById('view-phone').innerText = lead.phone;
         document.getElementById('view-source').innerText = lead.source || '-';
         document.getElementById('view-service').innerText = lead.service || '-';
-        document.getElementById('view-date').innerText = lead.eventDate || 'לא נקבע';
+        document.getElementById('view-date').innerText = lead.eventDate || '╫£╫נ ╫á╫º╫ס╫ó';
         document.getElementById('view-location').innerText = lead.location || '-';
         document.getElementById('view-tag-bride').classList.toggle('hidden', !lead.isBride);
         
@@ -1090,12 +1090,12 @@ const LeadsView = {
             <div class="lead-card text-right" data-id="${lead.id}">
                 <div class="flex justify-between mb-1">
                     <span class="font-bold text-gray-800 text-sm">${lead.name}</span>
-                    <span class="source-tag">${lead.source || 'כללי'}</span>
+                    <span class="source-tag">${lead.source || '╫¢╫£╫£╫ש'}</span>
                 </div>
                 <div class="text-[10px] text-gray-400 mb-2">${lead.service || ''}</div>
                 <div class="flex gap-2 border-t pt-2 mt-1">
-                    <button onclick="viewLead(${lead.id})" class="text-[10px] bg-purple-50 text-purple-600 px-2 py-1 rounded font-bold">👁️ פרטים</button>
-                    <button onclick="deleteLead(${lead.id})" class="text-[10px] text-red-300 mr-auto">מחק</button>
+                    <button onclick="viewLead(${lead.id})" class="text-[10px] bg-purple-50 text-purple-600 px-2 py-1 rounded font-bold">≡ƒסב∩╕ן ╫ñ╫¿╫ר╫ש╫¥</button>
+                    <button onclick="deleteLead(${lead.id})" class="text-[10px] text-red-300 mr-auto">╫₧╫ק╫º</button>
                 </div>
             </div>
         `).join('');
@@ -1133,7 +1133,7 @@ const StatsView = {
         const bridesCount = filtered.filter(c => c.isBride).length;
         const totalCount = filtered.length;
         
-        document.getElementById('sum-total').innerText = totalIncome.toLocaleString() + ' ₪';
+        document.getElementById('sum-total').innerText = totalIncome.toLocaleString() + ' Γג¬';
         document.getElementById('sum-brides').innerText = bridesCount;
         document.getElementById('sum-count').innerText = totalCount;
     },
@@ -1158,14 +1158,14 @@ const StatsView = {
                 datasets: [
                     { 
                         type: 'bar', 
-                        label: 'הכנסות ₪', 
+                        label: '╫פ╫¢╫á╫í╫ץ╫¬ Γג¬', 
                         data, 
                         backgroundColor: '#9333ea', 
                         borderRadius: 8 
                     },
                     { 
                         type: 'line', 
-                        label: 'מגמה', 
+                        label: '╫₧╫ע╫₧╫פ', 
                         data, 
                         borderColor: '#db2777', 
                         tension: 0.3 
@@ -1196,10 +1196,10 @@ const ManageView = {
                     <td class="p-3 text-xs text-gray-500">${client.date}</td>
                     <td class="p-3 font-bold">${client.name}</td>
                     <td class="p-3 text-sm text-gray-600">${client.service || '-'}</td>
-                    <td class="p-3 text-purple-600 font-bold">${client.amount} ₪</td>
+                    <td class="p-3 text-purple-600 font-bold">${client.amount} Γג¬</td>
                     <td class="p-3 flex gap-2">
-                        <button onclick="startEdit(${client.id})" class="text-blue-500 font-bold text-xs bg-blue-50 px-2 py-1 rounded">ערוך</button>
-                        <button onclick="deleteRow(${client.id})" class="text-red-500 font-bold text-xs bg-red-50 px-2 py-1 rounded">מחק</button>
+                        <button onclick="startEdit(${client.id})" class="text-blue-500 font-bold text-xs bg-blue-50 px-2 py-1 rounded">╫ó╫¿╫ץ╫ת</button>
+                        <button onclick="deleteRow(${client.id})" class="text-red-500 font-bold text-xs bg-red-50 px-2 py-1 rounded">╫₧╫ק╫º</button>
                     </td>
                 </tr>
             `).join('');
@@ -1219,11 +1219,11 @@ const ManageView = {
         const checked = document.querySelectorAll('.row-sel:checked');
         const btn = document.getElementById('bulk-del-btn');
         btn.classList.toggle('hidden', checked.length === 0);
-        btn.innerText = `מחק ${checked.length} שורות`;
+        btn.innerText = `╫₧╫ק╫º ${checked.length} ╫⌐╫ץ╫¿╫ץ╫¬`;
     },
     
     async bulkDelete() {
-        if (!confirm('למחוק את כל השורות שנבחרו?')) return;
+        if (!confirm('╫£╫₧╫ק╫ץ╫º ╫נ╫¬ ╫¢╫£ ╫פ╫⌐╫ץ╫¿╫ץ╫¬ ╫⌐╫á╫ס╫ק╫¿╫ץ?')) return;
         
         const ids = Array.from(document.querySelectorAll('.row-sel:checked'))
             .map(cb => parseInt(cb.dataset.id));
@@ -1235,7 +1235,7 @@ const ManageView = {
             this.open();
             StatsView.update();
         } catch (error) {
-            alert("שגיאה במחיקה: " + error.message);
+            alert("╫⌐╫ע╫ש╫נ╫פ ╫ס╫₧╫ק╫ש╫º╫פ: " + error.message);
         }
     }
 };
@@ -1243,13 +1243,13 @@ const ManageView = {
 // Migration Tool
 const MigrationTool = {
     async migrateFromLocalStorage() {
-        if (!confirm('להעביר את כל הנתונים מ-localStorage למסד הנתונים?')) return;
+        if (!confirm('╫£╫פ╫ó╫ס╫ש╫¿ ╫נ╫¬ ╫¢╫£ ╫פ╫á╫¬╫ץ╫á╫ש╫¥ ╫₧-localStorage ╫£╫₧╫í╫ף ╫פ╫á╫¬╫ץ╫á╫ש╫¥?')) return;
         
         const clients = JSON.parse(localStorage.getItem(CONFIG.STORAGE_KEYS.CLIENTS)) || [];
         const leads = JSON.parse(localStorage.getItem(CONFIG.STORAGE_KEYS.LEADS)) || [];
         
         if (clients.length === 0 && leads.length === 0) {
-            alert('אין נתונים ב-localStorage להעברה');
+            alert('╫נ╫ש╫ƒ ╫á╫¬╫ץ╫á╫ש╫¥ ╫ס-localStorage ╫£╫פ╫ó╫ס╫¿╫פ');
             return;
         }
         
@@ -1260,7 +1260,7 @@ const MigrationTool = {
             LeadsView.render();
             StatsView.update();
         } catch (error) {
-            alert('שגיאה בהעברת נתונים: ' + error.message);
+            alert('╫⌐╫ע╫ש╫נ╫פ ╫ס╫פ╫ó╫ס╫¿╫¬ ╫á╫¬╫ץ╫á╫ש╫¥: ' + error.message);
         }
     }
 };
@@ -1289,7 +1289,7 @@ window.migrateData = () => MigrationTool.migrateFromLocalStorage();
 // Initialize Application
 window.onload = async () => {
     // Show loading indicator
-    console.log('🚀 Initializing CRM...');
+    console.log('≡ƒתא Initializing CRM...');
     
     await State.init();
     
@@ -1298,7 +1298,7 @@ window.onload = async () => {
     const currentMonth = CONFIG.MONTHS[new Date().getMonth()];
     filter.innerHTML = CONFIG.MONTHS
         .map(month => `<option value="${month}" ${month === currentMonth ? 'selected' : ''}>${month}</option>`)
-        .join('') + `<option value="ALL">📈 שנתי</option>`;
+        .join('') + `<option value="ALL">≡ƒףט ╫⌐╫á╫¬╫ש</option>`;
     
     // Set today's date
     document.getElementById('inc-date').valueAsDate = new Date();
@@ -1306,6 +1306,6 @@ window.onload = async () => {
     // Initial render
     LeadsView.render();
     
-    console.log('✅ CRM Ready!');
+    console.log('Γ£ו CRM Ready!');
 };
 >>>>>>> 44e2edbdbede27982bb1a993c11d2726aae79e69
