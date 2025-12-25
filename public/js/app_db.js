@@ -126,13 +126,13 @@ const CONFIG = {
     MONTHS: ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'],
     LEAD_STAGES: [
         {id: 'new', title: 'ליד חדש', tooltip: 'ליד שנכנס למערכת ועדיין לא נוצר איתו קשר.'},
-        {id: 'contacted', title: 'נוצר קשר', tooltip: 'בוצעה פנייה ראשונית ואנחנו ממתינים לתגובה.'},
-        {id: 'interested', title: 'מתעניינת', tooltip: 'יש שיח פעיל והלקוחה בודקת זמינות ופרטים.'},
-        {id: 'quote-sent', title: 'נשלחה הצעת מחיר', tooltip: 'המחיר נשלח והלקוחה שוקלת אם להתקדם.'},
+        {id: 'in-process', title: 'בטיפול', tooltip: 'הליד בשיח פעיל: נוצר קשר ראשוני, משא ומתן, שליחת הצעת מחיר וטיפול בשאלות.'},
         {id: 'contract-sent', title: 'נשלח חוזה', tooltip: 'הלקוחה אישרה עקרונית והחוזה נשלח לחתימה.'},
         {id: 'closed', title: 'סגורה', tooltip: 'החוזה נחתם והאירוע נקבע ביומן.'},
-        {id: 'completed', title: 'האירוע בוצע', tooltip: 'האירוע הסתיים בהצלחה.'},
-        {id: 'lost', title: 'לא נסגר', tooltip: 'הליד לא התקדם לסגירה מסיבה כלשהי.'}
+        {id: 'completed', title: 'האירוע בוצע', tooltip: 'האירוע הסתיים בהצלחה.'}
+    ],
+    LEAD_STAGES_ARCHIVE: [
+        {id: 'lost', title: 'לא נסגר', tooltip: 'לידים שלא התקדמו לסגירה - אפשר להעביר לכאן מכל שלב.'}
     ]
 };
 
@@ -608,9 +608,7 @@ const LeadsManager = {
 // WhatsApp Integration
 const WhatsAppHelper = {
     templates: {
-        'contacted': 'היי {{firstName}}! 👋\nרציתי לעדכן לגבי השירות שביקשת.\nאשמח לשמוע ממך',
-        'interested': 'שלום {{firstName}}! 😊\nשמחתי לשמוע שאת מתעניינת.\nאשמח לענות על כל שאלה!',
-        'quote-sent': 'שלום {{firstName}},\nשלחתי לך הצעת מחיר מפורטת.\nהכל כלול בהצעה: {{service}}\nתאריך: {{date}}\nמחכה לתשובתך! 💜',
+        'in-process': 'היי {{firstName}}! 👋\nשמחתי שפנית אלינו.\nאני כאן לענות על כל שאלה ולעזור לך להתקדם.\nמה חשוב לך לדעת?',
         'contract-sent': 'היי {{firstName}}! 🎉\nשלחתי את החוזה לאישור.\nנא לאשר בהקדם כדי לשמור את התאריך.\nמצפה לעבוד איתך!',
         'closed': 'מזל טוב {{firstName}}! 🎊👰\nהזמנת אושרה לתאריך {{date}}!\nכל הפרטים שמורים במערכת.\nנתראה ביום המיוחד! 💕'
     },
@@ -965,7 +963,8 @@ const LeadsView = {
     render() {
         const board = document.getElementById('kanban-board');
         
-        board.innerHTML = CONFIG.LEAD_STAGES.map(stage => `
+        // Main stages (5 columns in a row)
+        const mainStages = CONFIG.LEAD_STAGES.map(stage => `
             <div class="kanban-col">
                 <div class="flex items-center justify-center gap-1 mb-4 border-b pb-2">
                     <h3 class="font-bold text-purple-900 text-center text-xs">${stage.title}</h3>
@@ -979,6 +978,27 @@ const LeadsView = {
                 </div>
             </div>
         `).join('');
+        
+        // Archive section (lost leads) - separate
+        const archiveStages = CONFIG.LEAD_STAGES_ARCHIVE.map(stage => `
+            <div class="kanban-col-archive">
+                <div class="flex items-center justify-center gap-1 mb-4 border-b pb-2">
+                    <h3 class="font-bold text-gray-600 text-center text-xs">${stage.title}</h3>
+                    <div class="tooltip-container relative inline-block">
+                        <span class="info-icon text-gray-400 cursor-help text-xs">ℹ️</span>
+                        <div class="tooltip-text">${stage.tooltip}</div>
+                    </div>
+                </div>
+                <div class="kanban-list space-y-2" data-status="${stage.id}">
+                    ${this.renderLeadsForStage(stage.id)}
+                </div>
+            </div>
+        `).join('');
+        
+        board.innerHTML = `
+            <div class="kanban-container-main">${mainStages}</div>
+            <div class="kanban-container-archive">${archiveStages}</div>
+        `;
         
         this.initDragAndDrop();
     },
@@ -1022,6 +1042,20 @@ const LeadsView = {
                     const newStatus = evt.to.getAttribute('data-status');
                     await LeadsManager.updateStatus(leadId, newStatus);
                 }
+            });
+        });
+        
+        // Position tooltips dynamically to prevent cut-off
+        document.querySelectorAll('.tooltip-container').forEach(container => {
+            const icon = container.querySelector('.info-icon');
+            const tooltip = container.querySelector('.tooltip-text');
+            
+            if (!icon || !tooltip) return;
+            
+            icon.addEventListener('mouseenter', () => {
+                const rect = icon.getBoundingClientRect();
+                tooltip.style.top = (rect.bottom + 10) + 'px';
+                tooltip.style.left = Math.max(10, rect.left - 100) + 'px';
             });
         });
     }
