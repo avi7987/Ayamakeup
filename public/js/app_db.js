@@ -532,7 +532,6 @@ const LeadsManager = {
         const btn = document.getElementById('btn-save-lead');
         const now = new Date().toISOString();
         const data = {
-            id: Date.now(),
             status: 'new',
             name: document.getElementById('lead-name').value.trim(),
             phone: document.getElementById('lead-phone').value.trim(),
@@ -552,6 +551,7 @@ const LeadsManager = {
                 timestamp: now,
                 note: 'ליד חדש נוצר'
             }],
+            messageHistory: [], // Initialize empty message history
             createdAt: now,
             updatedAt: now,
             calendarEventId: null
@@ -566,8 +566,8 @@ const LeadsManager = {
         btn.disabled = true;
         
         try {
-            await API.addLead(data);
-            State.leads.push(data);
+            const savedLead = await API.addLead(data);
+            State.leads.push(savedLead); // Use the lead returned from server with _id
             
             ModalManager.close('modal-new-lead');
             LeadsView.render();
