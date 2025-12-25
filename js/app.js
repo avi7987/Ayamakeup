@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 /**
  * CRM System for Beauty Business
  * Version: 8.3
@@ -565,3 +566,572 @@ window.onload = () => {
     // Initial render
     LeadsView.render();
 };
+=======
+/**
+ * CRM System for Beauty Business
+ * Version: 8.3
+ * Date: 21.12.2025
+ */
+
+// Configuration
+const CONFIG = {
+    SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbydwcb9Elv-S-xFhySVkioiaJrLPwx7I9LxzSLY6ep_aR22ErmKBEuAUG_ZPp0u1JghHw/exec',
+    STORAGE_KEYS: {
+        CLIENTS: 'crm_clients_v3',
+        LEADS: 'crm_leads_v3'
+    },
+    MONTHS: ["ינואר", "פברואר", "מרץ", "אפריל", "מאי", "יוני", "יולי", "אוגוסט", "ספטמבר", "אוקטובר", "נובמבר", "דצמבר"],
+    LEAD_STAGES: [
+        {id: 'new', title: '🆕 חדש'},
+        {id: 'contact', title: '📞 קשר'},
+        {id: 'negotiation', title: '🤝 מו"מ'},
+        {id: 'offer', title: '📜 הצעה'},
+        {id: 'done', title: '✅ נסגר'},
+        {id: 'archive', title: '📁 ארכיון'}
+    ]
+};
+
+// State Management
+const State = {
+    clients: [],
+    leads: [],
+    chart: null,
+    
+    init() {
+        this.loadFromStorage();
+    },
+    
+    loadFromStorage() {
+        this.clients = JSON.parse(localStorage.getItem(CONFIG.STORAGE_KEYS.CLIENTS)) || [];
+        this.leads = JSON.parse(localStorage.getItem(CONFIG.STORAGE_KEYS.LEADS)) || [];
+    },
+    
+    saveClients() {
+        localStorage.setItem(CONFIG.STORAGE_KEYS.CLIENTS, JSON.stringify(this.clients));
+    },
+    
+    saveLeads() {
+        localStorage.setItem(CONFIG.STORAGE_KEYS.LEADS, JSON.stringify(this.leads));
+    },
+    
+    addClient(client) {
+        this.clients.push(client);
+        this.saveClients();
+    },
+    
+    updateClient(id, updates) {
+        const index = this.clients.findIndex(c => c.id === id);
+        if (index !== -1) {
+            this.clients[index] = { ...this.clients[index], ...updates };
+            this.saveClients();
+        }
+    },
+    
+    deleteClient(id) {
+        this.clients = this.clients.filter(c => c.id !== id);
+        this.saveClients();
+    },
+    
+    addLead(lead) {
+        this.leads.push(lead);
+        this.saveLeads();
+    },
+    
+    updateLead(id, updates) {
+        const index = this.leads.findIndex(l => l.id === id);
+        if (index !== -1) {
+            this.leads[index] = { ...this.leads[index], ...updates };
+            this.saveLeads();
+        }
+    },
+    
+    deleteLead(id) {
+        this.leads = this.leads.filter(l => l.id !== id);
+        this.saveLeads();
+    },
+    
+    getFilteredClients(month) {
+        if (month === 'ALL') return this.clients;
+        return this.clients.filter(c => c.month === month);
+    }
+};
+
+// API Service
+const API = {
+    async send(data) {
+        try {
+            await fetch(CONFIG.SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                body: JSON.stringify(data)
+            });
+            return { success: true };
+        } catch (error) {
+            console.error('API Error:', error);
+            return { success: false, error };
+        }
+    },
+    
+    async saveIncome(data) {
+        return await this.send({ type: 'INCOME', ...data });
+    },
+    
+    async updateIncome(data) {
+        return await this.send({ type: 'UPDATE_ROW', ...data });
+    },
+    
+    async deleteIncome(id) {
+        return await this.send({ type: 'DELETE_ROW', id });
+    },
+    
+    async saveLead(data) {
+        return await this.send({ type: 'LEAD', ...data });
+    },
+    
+    async updateLead(data) {
+        return await this.send({ type: 'LEAD_UPDATE', ...data });
+    },
+    
+    async deleteLead(id) {
+        return await this.send({ type: 'DELETE_LEAD', id });
+    }
+};
+
+// UI Controllers
+const Navigation = {
+    switchPage(pageName) {
+        // Hide all pages
+        ['entry', 'leads', 'stats'].forEach(id => {
+            document.getElementById('page-' + id).classList.add('hidden');
+        });
+        
+        // Show selected page
+        document.getElementById('page-' + pageName).classList.remove('hidden');
+        
+        // Update nav buttons
+        document.querySelectorAll('.nav-button').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        document.getElementById('nav-' + pageName).classList.add('active');
+        
+        // Trigger page-specific initialization
+        if (pageName === 'leads') LeadsView.render();
+        if (pageName === 'stats') StatsView.update();
+    }
+};
+
+const ModalManager = {
+    open(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.style.display = 'flex';
+        }
+    },
+    
+    close(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.style.display = 'none';
+        }
+    },
+    
+    closeAll() {
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.style.display = 'none';
+        });
+    }
+};
+
+// Income Management
+const IncomeManager = {
+    async save() {
+        const btn = document.getElementById('btn-save');
+        const nameInput = document.getElementById('inc-name');
+        const amountInput = document.getElementById('inc-amount');
+        const dateInput = document.getElementById('inc-date');
+        const serviceInput = document.getElementById('inc-service');
+        const paymentSelect = document.getElementById('inc-payment');
+        const isBrideCheck = document.getElementById('inc-isbride');
+        
+        const data = {
+            id: Date.now(),
+            name: nameInput.value,
+            amount: parseFloat(amountInput.value),
+            date: dateInput.value,
+            service: serviceInput.value,
+            paymentMethod: paymentSelect.value,
+            isBride: isBrideCheck.checked,
+            month: CONFIG.MONTHS[new Date(dateInput.value).getMonth()]
+        };
+        
+        if (!data.name || isNaN(data.amount)) {
+            alert('מלא שם וסכום');
+            return;
+        }
+        
+        btn.innerText = "שומר... ⏳";
+        btn.disabled = true;
+        
+        const result = await API.saveIncome(data);
+        
+        if (result.success) {
+            State.addClient(data);
+            alert('העסקה נשמרה בהצלחה!');
+            nameInput.value = '';
+            amountInput.value = '';
+            serviceInput.value = '';
+        } else {
+            alert("שגיאה בשמירה");
+        }
+        
+        btn.innerText = "שמור בשיטס";
+        btn.disabled = false;
+    },
+    
+    async update(id) {
+        const btn = document.getElementById('btn-edit-save');
+        const data = {
+            id,
+            name: document.getElementById('edit-name').value,
+            amount: parseFloat(document.getElementById('edit-amount').value),
+            service: document.getElementById('edit-service').value,
+            date: document.getElementById('edit-date').value,
+            isBride: document.getElementById('edit-isbride').checked,
+            month: CONFIG.MONTHS[new Date(document.getElementById('edit-date').value).getMonth()]
+        };
+        
+        btn.innerText = "מעדכן... ⏳";
+        btn.disabled = true;
+        
+        const result = await API.updateIncome(data);
+        
+        if (result.success) {
+            State.updateClient(id, data);
+            ModalManager.close('modal-edit-row');
+            ManageView.open();
+            StatsView.update();
+        } else {
+            alert("שגיאה בעדכון");
+        }
+        
+        btn.innerText = "שמור שינויים";
+        btn.disabled = false;
+    },
+    
+    async delete(id) {
+        if (!confirm('למחוק מהשיטס?')) return;
+        
+        await API.deleteIncome(id);
+        State.deleteClient(id);
+        ManageView.open();
+        StatsView.update();
+    },
+    
+    startEdit(id) {
+        const client = State.clients.find(c => c.id === id);
+        if (!client) return;
+        
+        document.getElementById('edit-id').value = client.id;
+        document.getElementById('edit-name').value = client.name;
+        document.getElementById('edit-amount').value = client.amount;
+        document.getElementById('edit-service').value = client.service || '';
+        document.getElementById('edit-date').value = client.date;
+        document.getElementById('edit-isbride').checked = client.isBride || false;
+        
+        ModalManager.open('modal-edit-row');
+    }
+};
+
+// Leads Management
+const LeadsManager = {
+    async add() {
+        const btn = document.getElementById('btn-save-lead');
+        const data = {
+            id: Date.now(),
+            status: 'new',
+            name: document.getElementById('lead-name').value,
+            phone: document.getElementById('lead-phone').value,
+            source: document.getElementById('lead-source').value,
+            service: document.getElementById('lead-service').value,
+            eventDate: document.getElementById('lead-event-date').value,
+            location: document.getElementById('lead-location').value,
+            isBride: document.getElementById('lead-is-bride').checked
+        };
+        
+        if (!data.name || !data.phone) {
+            alert('שם וטלפון חובה');
+            return;
+        }
+        
+        btn.innerText = "שומר...";
+        btn.disabled = true;
+        
+        const result = await API.saveLead(data);
+        
+        if (result.success) {
+            State.addLead(data);
+            ModalManager.close('modal-new-lead');
+            LeadsView.render();
+            alert('ליד נוסף בהצלחה');
+            
+            // Clear form
+            document.getElementById('lead-name').value = '';
+            document.getElementById('lead-phone').value = '';
+            document.getElementById('lead-source').value = '';
+            document.getElementById('lead-service').value = '';
+            document.getElementById('lead-event-date').value = '';
+            document.getElementById('lead-location').value = '';
+            document.getElementById('lead-is-bride').checked = false;
+        } else {
+            alert("שגיאה בסנכרון");
+        }
+        
+        btn.innerText = "שמור ליד";
+        btn.disabled = false;
+    },
+    
+    async updateStatus(leadId, newStatus) {
+        const lead = State.leads.find(l => l.id === leadId);
+        if (!lead) return;
+        
+        State.updateLead(leadId, { status: newStatus });
+        await API.updateLead({ id: leadId, status: newStatus, name: lead.name });
+    },
+    
+    async delete(id) {
+        if (!confirm('למחוק לצמיתות מהשיטס?')) return;
+        
+        await API.deleteLead(id);
+        State.deleteLead(id);
+        LeadsView.render();
+    },
+    
+    view(id) {
+        const lead = State.leads.find(l => l.id === id);
+        if (!lead) return;
+        
+        document.getElementById('view-name').innerText = lead.name;
+        document.getElementById('view-phone').innerText = lead.phone;
+        document.getElementById('view-source').innerText = lead.source || '-';
+        document.getElementById('view-service').innerText = lead.service || '-';
+        document.getElementById('view-date').innerText = lead.eventDate || 'לא נקבע';
+        document.getElementById('view-location').innerText = lead.location || '-';
+        document.getElementById('view-tag-bride').classList.toggle('hidden', !lead.isBride);
+        
+        const whatsappLink = `https://wa.me/972${lead.phone.replace(/[^0-9]/g, '').replace(/^0/, '')}`;
+        document.getElementById('view-wa-link').href = whatsappLink;
+        
+        ModalManager.open('modal-view-lead');
+    }
+};
+
+// Views
+const LeadsView = {
+    render() {
+        const board = document.getElementById('kanban-board');
+        
+        board.innerHTML = CONFIG.LEAD_STAGES.map(stage => `
+            <div class="kanban-col">
+                <h3 class="font-bold mb-4 text-purple-900 border-b pb-2 text-center text-sm">${stage.title}</h3>
+                <div class="kanban-list space-y-3" data-status="${stage.id}">
+                    ${this.renderLeadsForStage(stage.id)}
+                </div>
+            </div>
+        `).join('');
+        
+        this.initDragAndDrop();
+    },
+    
+    renderLeadsForStage(stageId) {
+        const leads = State.leads.filter(l => (l.status || 'new') === stageId);
+        
+        return leads.map(lead => `
+            <div class="lead-card text-right" data-id="${lead.id}">
+                <div class="flex justify-between mb-1">
+                    <span class="font-bold text-gray-800 text-sm">${lead.name}</span>
+                    <span class="source-tag">${lead.source || 'כללי'}</span>
+                </div>
+                <div class="text-[10px] text-gray-400 mb-2">${lead.service || ''}</div>
+                <div class="flex gap-2 border-t pt-2 mt-1">
+                    <button onclick="viewLead(${lead.id})" class="text-[10px] bg-purple-50 text-purple-600 px-2 py-1 rounded font-bold">👁️ פרטים</button>
+                    <button onclick="deleteLead(${lead.id})" class="text-[10px] text-red-300 mr-auto">מחק</button>
+                </div>
+            </div>
+        `).join('');
+    },
+    
+    initDragAndDrop() {
+        document.querySelectorAll('.kanban-list').forEach(el => {
+            new Sortable(el, {
+                group: 'leads',
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                delay: 200,
+                delayOnTouchOnly: true,
+                onEnd: async function(evt) {
+                    const leadId = parseInt(evt.item.getAttribute('data-id'));
+                    const newStatus = evt.to.getAttribute('data-status');
+                    await LeadsManager.updateStatus(leadId, newStatus);
+                }
+            });
+        });
+    }
+};
+
+const StatsView = {
+    update() {
+        const filterVal = document.getElementById('stats-month-filter').value;
+        const filtered = State.getFilteredClients(filterVal);
+        
+        this.updateSummary(filtered);
+        this.updateChart(filterVal, filtered);
+    },
+    
+    updateSummary(filtered) {
+        const totalIncome = filtered.reduce((sum, client) => sum + client.amount, 0);
+        const bridesCount = filtered.filter(c => c.isBride).length;
+        const totalCount = filtered.length;
+        
+        document.getElementById('sum-total').innerText = totalIncome.toLocaleString() + ' ₪';
+        document.getElementById('sum-brides').innerText = bridesCount;
+        document.getElementById('sum-count').innerText = totalCount;
+    },
+    
+    updateChart(filterVal, filtered) {
+        const labels = filterVal === 'ALL' ? CONFIG.MONTHS : [filterVal];
+        const data = filterVal === 'ALL' 
+            ? CONFIG.MONTHS.map(month => 
+                State.clients
+                    .filter(c => c.month === month)
+                    .reduce((sum, c) => sum + c.amount, 0)
+              )
+            : [filtered.reduce((sum, c) => sum + c.amount, 0)];
+        
+        if (State.chart) {
+            State.chart.destroy();
+        }
+        
+        State.chart = new Chart(document.getElementById('incomeChart'), {
+            data: {
+                labels,
+                datasets: [
+                    { 
+                        type: 'bar', 
+                        label: 'הכנסות ₪', 
+                        data, 
+                        backgroundColor: '#9333ea', 
+                        borderRadius: 8 
+                    },
+                    { 
+                        type: 'line', 
+                        label: 'מגמה', 
+                        data, 
+                        borderColor: '#db2777', 
+                        tension: 0.3 
+                    }
+                ]
+            },
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false 
+            }
+        });
+    }
+};
+
+const ManageView = {
+    open() {
+        const filterVal = document.getElementById('stats-month-filter').value;
+        const filtered = State.getFilteredClients(filterVal);
+        const tbody = document.getElementById('manage-tbody');
+        
+        tbody.innerHTML = filtered
+            .sort((a, b) => new Date(b.date) - new Date(a.date))
+            .map(client => `
+                <tr class="border-b hover:bg-gray-50 text-right">
+                    <td class="p-3">
+                        <input type="checkbox" class="row-sel" data-id="${client.id}" onchange="checkBulkVisibility()">
+                    </td>
+                    <td class="p-3 text-xs text-gray-500">${client.date}</td>
+                    <td class="p-3 font-bold">${client.name}</td>
+                    <td class="p-3 text-sm text-gray-600">${client.service || '-'}</td>
+                    <td class="p-3 text-purple-600 font-bold">${client.amount} ₪</td>
+                    <td class="p-3 flex gap-2">
+                        <button onclick="startEdit(${client.id})" class="text-blue-500 font-bold text-xs bg-blue-50 px-2 py-1 rounded">ערוך</button>
+                        <button onclick="deleteRow(${client.id})" class="text-red-500 font-bold text-xs bg-red-50 px-2 py-1 rounded">מחק</button>
+                    </td>
+                </tr>
+            `).join('');
+        
+        this.checkBulkVisibility();
+        ModalManager.open('modal-manage');
+    },
+    
+    toggleSelectAll(masterCheckbox) {
+        document.querySelectorAll('.row-sel').forEach(cb => {
+            cb.checked = masterCheckbox.checked;
+        });
+        this.checkBulkVisibility();
+    },
+    
+    checkBulkVisibility() {
+        const checked = document.querySelectorAll('.row-sel:checked');
+        const btn = document.getElementById('bulk-del-btn');
+        btn.classList.toggle('hidden', checked.length === 0);
+        btn.innerText = `מחק ${checked.length} שורות`;
+    },
+    
+    async bulkDelete() {
+        if (!confirm('למחוק את כל השורות שנבחרו מהשיטס?')) return;
+        
+        const ids = Array.from(document.querySelectorAll('.row-sel:checked'))
+            .map(cb => parseInt(cb.dataset.id));
+        
+        for (let id of ids) {
+            await API.deleteIncome(id);
+            State.deleteClient(id);
+        }
+        
+        this.open();
+        StatsView.update();
+    }
+};
+
+// Global Functions (for onclick handlers in HTML)
+window.switchPage = (page) => Navigation.switchPage(page);
+window.openModal = (id) => ModalManager.open(id);
+window.closeModal = (id) => ModalManager.close(id);
+window.saveIncome = () => IncomeManager.save();
+window.addLead = () => LeadsManager.add();
+window.viewLead = (id) => LeadsManager.view(id);
+window.deleteLead = (id) => LeadsManager.delete(id);
+window.openManageModal = () => ManageView.open();
+window.startEdit = (id) => IncomeManager.startEdit(id);
+window.submitEdit = () => {
+    const id = parseInt(document.getElementById('edit-id').value);
+    IncomeManager.update(id);
+};
+window.deleteRow = (id) => IncomeManager.delete(id);
+window.toggleSelectAll = (checkbox) => ManageView.toggleSelectAll(checkbox);
+window.checkBulkVisibility = () => ManageView.checkBulkVisibility();
+window.bulkDelete = () => ManageView.bulkDelete();
+window.updateStats = () => StatsView.update();
+
+// Initialize Application
+window.onload = () => {
+    State.init();
+    
+    // Initialize month filter
+    const filter = document.getElementById('stats-month-filter');
+    const currentMonth = CONFIG.MONTHS[new Date().getMonth()];
+    filter.innerHTML = CONFIG.MONTHS
+        .map(month => `<option value="${month}" ${month === currentMonth ? 'selected' : ''}>${month}</option>`)
+        .join('') + `<option value="ALL">📈 שנתי</option>`;
+    
+    // Set today's date
+    document.getElementById('inc-date').valueAsDate = new Date();
+    
+    // Initial render
+    LeadsView.render();
+};
+>>>>>>> 44e2edbdbede27982bb1a993c11d2726aae79e69
