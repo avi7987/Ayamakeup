@@ -189,6 +189,8 @@
                             <th class="p-3">שם</th>
                             <th class="p-3">שירות</th>
                             <th class="p-3">סכום</th>
+                            <th class="p-3">תשלום</th>
+                            <th class="p-3">כלה</th>
                             <th class="p-3">פעולות</th>
                         </tr>
                     </thead>
@@ -208,6 +210,14 @@
             <input type="number" id="edit-amount" placeholder="סכום">
             <input type="text" id="edit-service" placeholder="סוג שירות">
             <input type="date" id="edit-date">
+            
+            <select id="edit-payment" class="mb-4">
+                <option value="מזומן">מזומן</option>
+                <option value="ביט">ביט / פייבוקס</option>
+                <option value="העברה">העברה בנקאית</option>
+                <option value="כרטיס אשראי">כרטיס אשראי</option>
+                <option value="המחאה">המחאה</option>
+            </select>
             
             <label class="flex items-center gap-2 p-3 bg-pink-50 rounded-xl mb-4">
                 <input type="checkbox" id="edit-isbride">

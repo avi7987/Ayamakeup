@@ -279,6 +279,7 @@ const IncomeManager = {
             price: parseFloat(document.getElementById('edit-amount').value),
             service: document.getElementById('edit-service').value,
             date: document.getElementById('edit-date').value,
+            payment: document.getElementById('edit-payment').value,
             isBride: document.getElementById('edit-isbride').checked,
             month: CONFIG.MONTHS[new Date(document.getElementById('edit-date').value).getMonth()]
         };
@@ -327,11 +328,14 @@ const IncomeManager = {
             return;
         }
         
+        const dateOnly = client.date ? client.date.split('T')[0] : client.date;
+        
         document.getElementById('edit-id').value = client._id || client.id;
         document.getElementById('edit-name').value = client.name;
         document.getElementById('edit-amount').value = client.price || client.amount;
         document.getElementById('edit-service').value = client.service || '';
-        document.getElementById('edit-date').value = client.date;
+        document.getElementById('edit-date').value = dateOnly;
+        document.getElementById('edit-payment').value = client.payment || 'מזומן';
         document.getElementById('edit-isbride').checked = client.isBride || false;
         
         ModalManager.close('modal-manage');
@@ -644,15 +648,19 @@ const ManageView = {
             .sort((a, b) => new Date(b.date) - new Date(a.date))
             .map(client => {
                 const clientId = client._id || client.id;
+                const dateOnly = client.date ? client.date.split('T')[0] : client.date;
+                const brideIcon = client.isBride ? '👰' : '-';
                 return `
                 <tr class="border-b hover:bg-gray-50 text-right">
                     <td class="p-3">
                         <input type="checkbox" class="row-sel" data-id="${clientId}" onchange="checkBulkVisibility()">
                     </td>
-                    <td class="p-3 text-xs text-gray-500">${client.date}</td>
+                    <td class="p-3 text-xs text-gray-500">${dateOnly}</td>
                     <td class="p-3 font-bold">${client.name}</td>
                     <td class="p-3 text-sm text-gray-600">${client.service || '-'}</td>
                     <td class="p-3 text-purple-600 font-bold">${client.price || client.amount} ₪</td>
+                    <td class="p-3 text-xs text-gray-600">${client.payment || 'מזומן'}</td>
+                    <td class="p-3 text-center">${brideIcon}</td>
                     <td class="p-3 flex gap-2">
                         <button onclick="startEdit('${clientId}')" class="text-blue-500 font-bold text-xs bg-blue-50 px-2 py-1 rounded">ערוך</button>
                         <button onclick="deleteRow('${clientId}')" class="text-red-500 font-bold text-xs bg-red-50 px-2 py-1 rounded">מחק</button>
