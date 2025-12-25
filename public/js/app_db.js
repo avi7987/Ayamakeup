@@ -375,6 +375,11 @@ const ModalManager = {
             if (modalId === 'modal-settings') {
                 window.loadGoalsToModal();
             }
+            
+            // Render message settings when opening that modal
+            if (modalId === 'modal-message-settings') {
+                MessageSettings.render();
+            }
         }
     },
     
@@ -1626,6 +1631,159 @@ const ExcelExporter = {
     }
 };
 
+// ==================== MESSAGE SETTINGS MANAGEMENT ====================
+const MessageSettings = {
+    settings: {},
+    
+    async init() {
+        // Try to load from localStorage first
+        const saved = localStorage.getItem(CONFIG.STORAGE_KEYS.MESSAGE_SETTINGS);
+        if (saved) {
+            this.settings = JSON.parse(saved);
+        } else {
+            // Use defaults
+            this.settings = JSON.parse(JSON.stringify(CONFIG.DEFAULT_MESSAGE_SETTINGS));
+        }
+    },
+    
+    render() {
+        const content = document.getElementById('message-settings-content');
+        if (!content) return;
+        
+        const allStages = [...CONFIG.LEAD_STAGES, ...CONFIG.LEAD_STAGES_ARCHIVE];
+        
+        content.innerHTML = allStages.map(stage => {
+            const stageSettings = this.settings[stage.id] || CONFIG.DEFAULT_MESSAGE_SETTINGS[stage.id];
+            
+            return `
+                <div class="border-2 border-purple-100 rounded-2xl p-6 bg-gradient-to-br from-purple-50 to-white">
+                    <h4 class="text-xl font-bold text-purple-900 mb-4 flex items-center gap-2">
+                        <span class="text-2xl">${this.getStageEmoji(stage.id)}</span>
+                        ${stage.title}
+                    </h4>
+                    
+                    <!-- Immediate Message -->
+                    <div class="bg-white rounded-xl p-4 mb-4 border border-gray-200">
+                        <div class="flex items-center justify-between mb-3">
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input 
+                                    type="checkbox" 
+                                    id="immediate-${stage.id}"
+                                    ${stageSettings.immediate.enabled ? 'checked' : ''}
+                                    class="w-5 h-5 text-purple-600 rounded"
+                                    onchange="MessageSettings.updateToggle('${stage.id}', 'immediate', this.checked)"
+                                >
+                                <span class="font-bold text-gray-800">📩 הודעה מיידית בכניסה לשלב</span>
+                            </label>
+                        </div>
+                        <textarea 
+                            id="immediate-template-${stage.id}"
+                            rows="3"
+                            class="w-full border-2 border-gray-200 rounded-xl p-3 text-sm font-mono resize-none focus:border-purple-400 focus:outline-none"
+                            placeholder="תבנית הודעה... השתמש ב-{{firstName}}, {{service}}, {{date}}"
+                            onchange="MessageSettings.updateTemplate('${stage.id}', 'immediate', this.value)"
+                        >${stageSettings.immediate.template || ''}</textarea>
+                        <div class="text-xs text-gray-500 mt-2">
+                            💡 משתנים זמינים: {{firstName}}, {{service}}, {{date}}
+                        </div>
+                    </div>
+                    
+                    <!-- Follow-up Message -->
+                    <div class="bg-green-50 rounded-xl p-4 border border-green-200">
+                        <div class="flex items-center justify-between mb-3">
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input 
+                                    type="checkbox" 
+                                    id="followup-${stage.id}"
+                                    ${stageSettings.followUp.enabled ? 'checked' : ''}
+                                    class="w-5 h-5 text-green-600 rounded"
+                                    onchange="MessageSettings.updateToggle('${stage.id}', 'followUp', this.checked)"
+                                >
+                                <span class="font-bold text-gray-800">⏰ הודעת Follow-up (טיימר)</span>
+                            </label>
+                        </div>
+                        
+                        <div class="flex gap-2 mb-3">
+                            <input 
+                                type="number" 
+                                id="followup-delay-${stage.id}"
+                                value="${stageSettings.followUp.delay || 1}"
+                                min="1"
+                                class="w-20 border-2 border-gray-200 rounded-lg p-2 text-center font-bold"
+                                onchange="MessageSettings.updateDelay('${stage.id}', this.value, document.getElementById('followup-unit-${stage.id}').value)"
+                            >
+                            <select 
+                                id="followup-unit-${stage.id}"
+                                class="flex-1 border-2 border-gray-200 rounded-lg p-2 font-bold"
+                                onchange="MessageSettings.updateDelay('${stage.id}', document.getElementById('followup-delay-${stage.id}').value, this.value)"
+                            >
+                                <option value="hours" ${stageSettings.followUp.unit === 'hours' ? 'selected' : ''}>שעות</option>
+                                <option value="days" ${stageSettings.followUp.unit === 'days' ? 'selected' : ''}>ימים</option>
+                                <option value="weeks" ${stageSettings.followUp.unit === 'weeks' ? 'selected' : ''}>שבועות</option>
+                            </select>
+                        </div>
+                        
+                        <textarea 
+                            id="followup-template-${stage.id}"
+                            rows="3"
+                            class="w-full border-2 border-gray-200 rounded-xl p-3 text-sm font-mono resize-none focus:border-green-400 focus:outline-none"
+                            placeholder="תבנית הודעת follow-up..."
+                            onchange="MessageSettings.updateTemplate('${stage.id}', 'followUp', this.value)"
+                        >${stageSettings.followUp.template || ''}</textarea>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    },
+    
+    getStageEmoji(stageId) {
+        const emojis = {
+            'new': '🆕',
+            'in-process': '💬',
+            'contract-sent': '📄',
+            'closed': '✅',
+            'completed': '🎉',
+            'lost': '📥'
+        };
+        return emojis[stageId] || '📌';
+    },
+    
+    updateToggle(stageId, type, enabled) {
+        if (!this.settings[stageId]) {
+            this.settings[stageId] = JSON.parse(JSON.stringify(CONFIG.DEFAULT_MESSAGE_SETTINGS[stageId]));
+        }
+        this.settings[stageId][type].enabled = enabled;
+    },
+    
+    updateTemplate(stageId, type, template) {
+        if (!this.settings[stageId]) {
+            this.settings[stageId] = JSON.parse(JSON.stringify(CONFIG.DEFAULT_MESSAGE_SETTINGS[stageId]));
+        }
+        this.settings[stageId][type].template = template;
+    },
+    
+    updateDelay(stageId, delay, unit) {
+        if (!this.settings[stageId]) {
+            this.settings[stageId] = JSON.parse(JSON.stringify(CONFIG.DEFAULT_MESSAGE_SETTINGS[stageId]));
+        }
+        this.settings[stageId].followUp.delay = parseInt(delay);
+        this.settings[stageId].followUp.unit = unit;
+    },
+    
+    save() {
+        // Save to localStorage
+        localStorage.setItem(CONFIG.STORAGE_KEYS.MESSAGE_SETTINGS, JSON.stringify(this.settings));
+        
+        // Show success message
+        alert('✅ ההגדרות נשמרו בהצלחה!');
+        closeModal('modal-message-settings');
+    },
+    
+    getSettings(stageId) {
+        return this.settings[stageId] || CONFIG.DEFAULT_MESSAGE_SETTINGS[stageId];
+    }
+};
+
 // Global Functions (for onclick handlers in HTML)
 window.switchPage = async (page) => await Navigation.switchPage(page);
 window.openModal = (id) => ModalManager.open(id);
@@ -1755,8 +1913,9 @@ window.closeModal = (id) => document.getElementById(id).style.display = 'none';
 
 // Initialize app
 async function init() {
-    console.log(' Initializing CRM...');
+    console.log('🚀 Initializing CRM...');
     await State.init();
+    await MessageSettings.init();
     
     const filter = document.getElementById('stats-month-filter');
     const currentMonth = CONFIG.MONTHS[new Date().getMonth()];
