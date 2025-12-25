@@ -24,91 +24,91 @@
         <!-- Page: Home Dashboard -->
         <section id="page-home" class="text-center">
             <!-- Hero Section -->
-            <div class="mb-3 mt-1 relative">
+            <div class="mb-2 mt-0 relative">
                 <!-- Settings Button -->
-                <button onclick="openModal('modal-settings')" class="absolute top-0 left-4 bg-gray-100 hover:bg-gray-200 text-gray-700 p-1.5 rounded-full shadow-md transition-all duration-300 hover:scale-110">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <button onclick="openModal('modal-settings')" class="absolute top-0 left-2 md:left-4 bg-gray-100 hover:bg-gray-200 text-gray-700 p-1.5 rounded-full shadow-md transition-all duration-300 hover:scale-110 z-10">
+                    <svg class="w-3.5 h-3.5 md:w-4 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                     </svg>
                 </button>
                 
                 <!-- Logo -->
-                <div class="inline-block mb-1">
-                    <div class="bg-gradient-to-br from-purple-600 via-purple-700 to-indigo-800 text-white px-6 py-2 rounded-lg shadow-lg transform hover:scale-105 transition-all duration-300">
-                        <h1 class="text-3xl md:text-4xl font-black tracking-tight">
+                <div class="inline-block mb-0">
+                    <div class="bg-gradient-to-br from-purple-600 via-purple-700 to-indigo-800 text-white px-4 py-1.5 md:px-6 md:py-2 rounded-lg shadow-lg transform hover:scale-105 transition-all duration-300">
+                        <h1 class="text-2xl md:text-4xl font-black tracking-tight">
                             Stride
                         </h1>
                     </div>
                 </div>
-                <p class="text-sm md:text-base text-gray-600 font-light">
+                <p class="text-xs md:text-base text-gray-600 font-light">
                     Business Management System
                 </p>
             </div>
 
-            <!-- Goals Progress Section -->
-            <div id="goals-section" class="max-w-4xl mx-auto mb-3 hidden">
-                <h3 class="text-base font-bold text-gray-800 mb-2">🎯 יעדים שנתיים</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-                    <!-- Income Goal -->
-                    <div class="bg-gradient-to-br from-green-50 to-emerald-50 p-2 rounded-lg shadow-sm border border-green-200">
-                        <div class="flex justify-between items-center mb-1">
-                            <span class="text-xs font-bold text-green-800">💰 יעד הכנסות</span>
-                            <span class="text-base font-black text-green-700" id="income-percentage">0%</span>
+            <!-- Goals Progress Section - Compact for mobile -->
+            <div id="goals-section" class="max-w-4xl mx-auto mb-2 px-2">
+                <h3 class="text-xs md:text-base font-bold text-gray-800 mb-1.5">🎯 יעדים שנתיים</h3>
+                <div class="grid grid-cols-2 md:grid-cols-2 gap-1.5 md:gap-2">
+                    <!-- Income Goal - Compact for mobile -->
+                    <div class="bg-gradient-to-br from-green-50 to-emerald-50 p-1.5 md:p-2 rounded-md md:rounded-lg shadow-sm border border-green-200">
+                        <div class="flex justify-between items-center mb-0.5 md:mb-1">
+                            <span class="text-[9px] md:text-xs font-bold text-green-800">💰 הכנסות</span>
+                            <span class="text-xs md:text-base font-black text-green-700" id="income-percentage">0%</span>
                         </div>
-                        <div class="bg-gray-200 h-2 rounded-full overflow-hidden mb-1">
+                        <div class="bg-gray-200 h-1.5 md:h-2 rounded-full overflow-hidden mb-0.5 md:mb-1">
                             <div id="income-progress" class="bg-gradient-to-r from-green-400 to-emerald-500 h-full rounded-full transition-all duration-1000 ease-out" style="width: 0%"></div>
                         </div>
-                        <div class="flex justify-between text-[9px] text-gray-700">
+                        <div class="flex justify-between text-[7px] md:text-[9px] text-gray-700">
                             <span id="income-current">₪0</span>
                             <span id="income-goal">₪0</span>
                         </div>
-                        <div class="mt-0.5 text-[8px] text-gray-600" id="income-remaining"></div>
+                        <div class="mt-0.5 text-[6px] md:text-[8px] text-gray-600" id="income-remaining"></div>
                     </div>
 
-                    <!-- Brides Goal -->
-                    <div class="bg-gradient-to-br from-pink-50 to-rose-50 p-2 rounded-lg shadow-sm border border-pink-200">
-                        <div class="flex justify-between items-center mb-1">
-                            <span class="text-xs font-bold text-pink-800">👰 יעד כלות</span>
-                            <span class="text-base font-black text-pink-700" id="brides-percentage">0%</span>
+                    <!-- Brides Goal - Compact for mobile -->
+                    <div class="bg-gradient-to-br from-pink-50 to-rose-50 p-1.5 md:p-2 rounded-md md:rounded-lg shadow-sm border border-pink-200">
+                        <div class="flex justify-between items-center mb-0.5 md:mb-1">
+                            <span class="text-[9px] md:text-xs font-bold text-pink-800">👰 כלות</span>
+                            <span class="text-xs md:text-base font-black text-pink-700" id="brides-percentage">0%</span>
                         </div>
-                        <div class="bg-gray-200 h-2 rounded-full overflow-hidden mb-1">
+                        <div class="bg-gray-200 h-1.5 md:h-2 rounded-full overflow-hidden mb-0.5 md:mb-1">
                             <div id="brides-progress" class="bg-gradient-to-r from-pink-400 to-rose-500 h-full rounded-full transition-all duration-1000 ease-out" style="width: 0%"></div>
                         </div>
-                        <div class="flex justify-between text-[9px] text-gray-700">
+                        <div class="flex justify-between text-[7px] md:text-[9px] text-gray-700">
                             <span id="brides-current">0</span>
                             <span id="brides-goal">0</span>
                         </div>
-                        <div class="mt-0.5 text-[8px] text-gray-600" id="brides-remaining"></div>
+                        <div class="mt-0.5 text-[6px] md:text-[8px] text-gray-600" id="brides-remaining"></div>
                     </div>
                 </div>
             </div>
 
-            <!-- Main Action Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 max-w-5xl mx-auto px-4">
+            <!-- Main Action Cards - Compact for mobile -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-3 max-w-5xl mx-auto px-2 md:px-4">
                 <!-- Income Entry Card -->
-                <button onclick="switchPage('entry')" class="group bg-white hover:bg-purple-50 p-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 border-2 border-transparent hover:border-purple-400 text-center transform hover:-translate-y-1">
-                    <div class="text-3xl mb-2 group-hover:scale-125 transition-transform duration-300">💰</div>
-                    <h3 class="text-lg font-bold text-purple-800 mb-1">הכנסה</h3>
-                    <p class="text-gray-600 text-[10px] leading-relaxed">
+                <button onclick="switchPage('entry')" class="group bg-white hover:bg-purple-50 p-3 md:p-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 border-2 border-transparent hover:border-purple-400 text-center transform hover:-translate-y-1">
+                    <div class="text-2xl md:text-3xl mb-1.5 md:mb-2 group-hover:scale-125 transition-transform duration-300">💰</div>
+                    <h3 class="text-base md:text-lg font-bold text-purple-800 mb-0.5 md:mb-1">הכנסה</h3>
+                    <p class="text-gray-600 text-[9px] md:text-[10px] leading-relaxed">
                         הזן עסקאות חדשות ונהל הכנסות
                     </p>
                 </button>
 
                 <!-- Leads Card -->
-                <button onclick="switchPage('leads')" class="group bg-white hover:bg-blue-50 p-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 border-2 border-transparent hover:border-blue-400 text-center transform hover:-translate-y-1">
-                    <div class="text-3xl mb-2 group-hover:scale-125 transition-transform duration-300">🎯</div>
-                    <h3 class="text-lg font-bold text-blue-800 mb-1">לידים</h3>
-                    <p class="text-gray-600 text-[10px] leading-relaxed">
+                <button onclick="switchPage('leads')" class="group bg-white hover:bg-blue-50 p-3 md:p-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 border-2 border-transparent hover:border-blue-400 text-center transform hover:-translate-y-1">
+                    <div class="text-2xl md:text-3xl mb-1.5 md:mb-2 group-hover:scale-125 transition-transform duration-300">🎯</div>
+                    <h3 class="text-base md:text-lg font-bold text-blue-800 mb-0.5 md:mb-1">לידים</h3>
+                    <p class="text-gray-600 text-[9px] md:text-[10px] leading-relaxed">
                         נהל לידים וסגור עסקאות
                     </p>
                 </button>
 
                 <!-- Statistics Card -->
-                <button onclick="switchPage('stats')" class="group bg-white hover:bg-green-50 p-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 border-2 border-transparent hover:border-green-400 text-center transform hover:-translate-y-1">
-                    <div class="text-3xl mb-2 group-hover:scale-125 transition-transform duration-300">📊</div>
-                    <h3 class="text-lg font-bold text-green-800 mb-1">סטטיסטיקות</h3>
-                    <p class="text-gray-600 text-[10px] leading-relaxed">
+                <button onclick="switchPage('stats')" class="group bg-white hover:bg-green-50 p-3 md:p-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 border-2 border-transparent hover:border-green-400 text-center transform hover:-translate-y-1">
+                    <div class="text-2xl md:text-3xl mb-1.5 md:mb-2 group-hover:scale-125 transition-transform duration-300">📊</div>
+                    <h3 class="text-base md:text-lg font-bold text-green-800 mb-0.5 md:mb-1">סטטיסטיקות</h3>
+                    <p class="text-gray-600 text-[9px] md:text-[10px] leading-relaxed">
                         דוחות וניתוח הכנסות
                     </p>
                 </button>
