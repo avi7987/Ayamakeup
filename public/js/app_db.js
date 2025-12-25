@@ -7,11 +7,11 @@
 // ==================== SOUND EFFECTS ====================
 const SoundEffects = {
     playCashRegister() {
-        // Create realistic coin drop sound
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const now = audioContext.currentTime;
         
-        // Coin drop sounds - multiple metallic impacts
-        const playMetallicImpact = (frequency, startTime, duration, volume) => {
+        // Simple "cha-ching" sound - two quick tones
+        const playTone = (frequency, startTime, duration) => {
             const oscillator = audioContext.createOscillator();
             const gainNode = audioContext.createGain();
             
@@ -19,33 +19,21 @@ const SoundEffects = {
             gainNode.connect(audioContext.destination);
             
             oscillator.frequency.value = frequency;
-            oscillator.type = 'square'; // More metallic sound
+            oscillator.type = 'sine';
             
-            gainNode.gain.setValueAtTime(volume, startTime);
+            gainNode.gain.setValueAtTime(0.3, startTime);
             gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
             
             oscillator.start(startTime);
             oscillator.stop(startTime + duration);
         };
         
-        const now = audioContext.currentTime;
+        // "Cha" (lower)
+        playTone(523, now, 0.1);
+        // "Ching" (higher)
+        playTone(784, now + 0.08, 0.2);
         
-        // First coin drop (higher pitch)
-        playMetallicImpact(1200, now, 0.08, 0.4);
-        playMetallicImpact(900, now + 0.02, 0.06, 0.3);
-        
-        // Second coin drop (medium pitch)
-        playMetallicImpact(1000, now + 0.15, 0.1, 0.35);
-        playMetallicImpact(800, now + 0.18, 0.08, 0.25);
-        
-        // Third coin drop (lower pitch) 
-        playMetallicImpact(850, now + 0.28, 0.12, 0.3);
-        playMetallicImpact(650, now + 0.32, 0.1, 0.2);
-        
-        // Final resonance
-        playMetallicImpact(400, now + 0.4, 0.15, 0.15);
-        
-        console.log('💰 צליל מטבעות!');
+        console.log('💰 צ\'ה-צ\'ינג!');
     }
 };
 
@@ -117,6 +105,10 @@ if (!document.getElementById('motivational-styles')) {
             50% {
                 transform: translateX(-50%) translateY(0) scale(1.05);
             }
+        }
+        /* Smooth progress bar animation */
+        .progress-bar {
+            transition: width 0.8s ease-out !important;
         }
     `;
     document.head.appendChild(style);
@@ -382,9 +374,9 @@ const IncomeManager = {
             
             // Add to local state
             State.clients.push(savedClient);
-            // Update home view to reflect new data
+            // Update home view to reflect new data (with messages if bride count increased)
             console.log('🔄 מעדכן תצוגת דף הבית...');
-            await HomeView.update();
+            await HomeView.update(true);
             
             alert('הלקוח נשמר בהצלחה במסד הנתונים!');
             nameInput.value = '';
@@ -640,10 +632,15 @@ const HomeView = {
         });
         const currentBrides = yearlyClients.filter(c => c.isBride || c.notes?.includes('כלה')).length;
         
-        // Initialize previous count if not set
-        if (MotivationalMessages.previousBridesCount === 0) {
-            MotivationalMessages.previousBridesCount = currentBrides;
-        }
+        console.log(`👰 ספירה נוכחית: ${currentBrides}, ספירה קודמת: ${MotivationalMessages.previousBridesCount}`);
+        
+        // Check if brides count increased BEFORE initializing previous count
+        const shouldShowMessage = showMessages && 
+                                  MotivationalMessages.previousBridesCount > 0 && 
+                                  currentBrides > MotivationalMessages.previousBridesCount;
+        
+        // Initialize or update previous count
+        MotivationalMessages.previousBridesCount = currentBrides;
         
         // If no goals set, show zeros
         if (goals.income || goals.brides) {
@@ -678,13 +675,12 @@ const HomeView = {
             const totalBrides = yearlyClients.filter(c => c.isBride || c.notes?.includes('כלה')).length;
             console.log(`👰 כלות השנה: ${totalBrides} (מתוך ${yearlyClients.length} לקוחות)`);
             
-            // Check if brides count increased and show motivational message (only when returning to home page)
-            if (showMessages && totalBrides > MotivationalMessages.previousBridesCount && MotivationalMessages.previousBridesCount > 0) {
+            // Show motivational message if count increased (checked earlier in function)
+            if (shouldShowMessage) {
                 const message = MotivationalMessages.getRandomMessage();
                 MotivationalMessages.showMessage(message);
                 console.log('🎊 הצגת הודעת עידוד:', message);
             }
-            MotivationalMessages.previousBridesCount = totalBrides;
             
             const bridesGoal = goals.brides || 0;
             const bridesPercent = bridesGoal > 0 ? Math.min(100, Math.round((totalBrides / bridesGoal) * 100)) : 0;
