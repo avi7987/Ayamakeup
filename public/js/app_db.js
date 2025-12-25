@@ -125,12 +125,14 @@ const CONFIG = {
     },
     MONTHS: ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'],
     LEAD_STAGES: [
-        {id: 'new', title: 'ליד חדש'},
-        {id: 'contact', title: 'במגע'},
-        {id: 'negotiation', title: 'במשא ומתן'},
-        {id: 'offer', title: 'בהצעה'},
-        {id: 'done', title: 'נסגר'},
-        {id: 'archive', title: 'בארכיון'}
+        {id: 'new', title: 'ליד חדש', tooltip: 'ליד שנכנס למערכת ועדיין לא נוצר איתו קשר.'},
+        {id: 'contacted', title: 'נוצר קשר', tooltip: 'בוצעה פנייה ראשונית ואנחנו ממתינים לתגובה.'},
+        {id: 'interested', title: 'מתעניינת', tooltip: 'יש שיח פעיל והלקוחה בודקת זמינות ופרטים.'},
+        {id: 'quote-sent', title: 'נשלחה הצעת מחיר', tooltip: 'המחיר נשלח והלקוחה שוקלת אם להתקדם.'},
+        {id: 'contract-sent', title: 'נשלח חוזה', tooltip: 'הלקוחה אישרה עקרונית והחוזה נשלח לחתימה.'},
+        {id: 'closed', title: 'סגורה', tooltip: 'החוזה נחתם והאירוע נקבע ביומן.'},
+        {id: 'completed', title: 'האירוע בוצע', tooltip: 'האירוע הסתיים בהצלחה.'},
+        {id: 'lost', title: 'לא נסגר', tooltip: 'הליד לא התקדם לסגירה מסיבה כלשהי.'}
     ]
 };
 
@@ -576,8 +578,8 @@ const LeadsManager = {
             // Save full lead data to database (not just status)
             await API.updateLead(leadId, lead);
             
-            // Handle Google Calendar for "done" (Booked) stage
-            if (newStatus === 'done' && lead.eventDate && !lead.calendarEventId) {
+            // Handle Google Calendar for "closed" (סגורה) stage
+            if (newStatus === 'closed' && lead.eventDate && !lead.calendarEventId) {
                 // Trigger calendar integration
                 GoogleCalendar.createEvent(lead);
             }
@@ -606,10 +608,11 @@ const LeadsManager = {
 // WhatsApp Integration
 const WhatsAppHelper = {
     templates: {
-        'contact': 'היי {{firstName}}! 👋\nרציתי לעדכן לגבי השירות שביקשת.\nאשמח לשמוע ממך',
-        'negotiation': 'שלום {{firstName}},\nשלחתי לך הצעת מחיר מפורטת.\nהכל כלול בהצעה: {{service}}\nתאריך: {{date}}\nמחכה לתשובתך! 💜',
-        'offer': 'היי {{firstName}}! 🎉\nשלחתי את החוזה לאישור.\nנא לאשר בהקדם כדי לשמור את התאריך.\nמצפה לעבוד איתך!',
-        'done': 'מזל טוב {{firstName}}! 🎊👰\nהזמנת אושרה לתאריך {{date}}!\nכל הפרטים שמורים במערכת.\nנתראה ביום המיוחד! 💕'
+        'contacted': 'היי {{firstName}}! 👋\nרציתי לעדכן לגבי השירות שביקשת.\nאשמח לשמוע ממך',
+        'interested': 'שלום {{firstName}}! 😊\nשמחתי לשמוע שאת מתעניינת.\nאשמח לענות על כל שאלה!',
+        'quote-sent': 'שלום {{firstName}},\nשלחתי לך הצעת מחיר מפורטת.\nהכל כלול בהצעה: {{service}}\nתאריך: {{date}}\nמחכה לתשובתך! 💜',
+        'contract-sent': 'היי {{firstName}}! 🎉\nשלחתי את החוזה לאישור.\nנא לאשר בהקדם כדי לשמור את התאריך.\nמצפה לעבוד איתך!',
+        'closed': 'מזל טוב {{firstName}}! 🎊👰\nהזמנת אושרה לתאריך {{date}}!\nכל הפרטים שמורים במערכת.\nנתראה ביום המיוחד! 💕'
     },
     
     extractFirstName(fullName) {
@@ -964,8 +967,14 @@ const LeadsView = {
         
         board.innerHTML = CONFIG.LEAD_STAGES.map(stage => `
             <div class="kanban-col">
-                <h3 class="font-bold mb-4 text-purple-900 border-b pb-2 text-center text-sm">${stage.title}</h3>
-                <div class="kanban-list space-y-3" data-status="${stage.id}">
+                <div class="flex items-center justify-center gap-1 mb-4 border-b pb-2">
+                    <h3 class="font-bold text-purple-900 text-center text-xs">${stage.title}</h3>
+                    <div class="tooltip-container relative inline-block">
+                        <span class="info-icon text-purple-400 cursor-help text-xs">ℹ️</span>
+                        <div class="tooltip-text">${stage.tooltip}</div>
+                    </div>
+                </div>
+                <div class="kanban-list space-y-2" data-status="${stage.id}">
                     ${this.renderLeadsForStage(stage.id)}
                 </div>
             </div>
