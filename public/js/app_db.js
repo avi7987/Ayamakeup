@@ -271,8 +271,9 @@ const IncomeManager = {
         btn.disabled = false;
     },
     
-    async update(id) {
+    async update() {
         const btn = document.getElementById('btn-edit-save');
+        const id = document.getElementById('edit-id').value;
         const data = {
             name: document.getElementById('edit-name').value,
             price: parseFloat(document.getElementById('edit-amount').value),
@@ -288,7 +289,7 @@ const IncomeManager = {
         try {
             await API.updateClient(id, data);
             
-            const index = State.clients.findIndex(c => c.id === id);
+            const index = State.clients.findIndex(c => (c._id || c.id) === id);
             if (index !== -1) {
                 State.clients[index] = { ...State.clients[index], ...data };
                 State.saveToStorage();
@@ -310,20 +311,23 @@ const IncomeManager = {
         
         try {
             await API.deleteClient(id);
-            State.clients = State.clients.filter(c => c.id !== id);
+            State.clients = State.clients.filter(c => (c._id || c.id) !== id);
             State.saveToStorage();
             ManageView.open();
             StatsView.update();
         } catch (error) {
-            alert("העידכון נכשל: " + error.message);
+            alert("המחיקה נכשלה: " + error.message);
         }
     },
     
     startEdit(id) {
-        const client = State.clients.find(c => c.id === id);
-        if (!client) return;
+        const client = State.clients.find(c => (c._id || c.id) === id);
+        if (!client) {
+            console.error('Client not found:', id, State.clients);
+            return;
+        }
         
-        document.getElementById('edit-id').value = client.id;
+        document.getElementById('edit-id').value = client._id || client.id;
         document.getElementById('edit-name').value = client.name;
         document.getElementById('edit-amount').value = client.price || client.amount;
         document.getElementById('edit-service').value = client.service || '';
@@ -332,7 +336,6 @@ const IncomeManager = {
         
         ModalManager.close('modal-manage');
         ModalManager.open('modal-edit-row');
-        document.getElementById('edit-isbride').checked = client.isBride || false;
         
         ModalManager.open('modal-edit-row');
     }
@@ -639,21 +642,23 @@ const ManageView = {
         
         tbody.innerHTML = filtered
             .sort((a, b) => new Date(b.date) - new Date(a.date))
-            .map(client => `
+            .map(client => {
+                const clientId = client._id || client.id;
+                return `
                 <tr class="border-b hover:bg-gray-50 text-right">
                     <td class="p-3">
-                        <input type="checkbox" class="row-sel" data-id="${client.id}" onchange="checkBulkVisibility()">
+                        <input type="checkbox" class="row-sel" data-id="${clientId}" onchange="checkBulkVisibility()">
                     </td>
                     <td class="p-3 text-xs text-gray-500">${client.date}</td>
                     <td class="p-3 font-bold">${client.name}</td>
                     <td class="p-3 text-sm text-gray-600">${client.service || '-'}</td>
                     <td class="p-3 text-purple-600 font-bold">${client.price || client.amount} ₪</td>
                     <td class="p-3 flex gap-2">
-                        <button onclick="startEdit(${client.id})" class="text-blue-500 font-bold text-xs bg-blue-50 px-2 py-1 rounded">ערוך</button>
-                        <button onclick="deleteRow(${client.id})" class="text-red-500 font-bold text-xs bg-red-50 px-2 py-1 rounded">מחק</button>
+                        <button onclick="startEdit('${clientId}')" class="text-blue-500 font-bold text-xs bg-blue-50 px-2 py-1 rounded">ערוך</button>
+                        <button onclick="deleteRow('${clientId}')" class="text-red-500 font-bold text-xs bg-red-50 px-2 py-1 rounded">מחק</button>
                     </td>
                 </tr>
-            `).join('');
+            `}).join('');
         
         this.checkBulkVisibility();
         ModalManager.open('modal-manage');
@@ -726,10 +731,7 @@ window.viewLead = (id) => LeadsManager.view(id);
 window.deleteLead = (id) => LeadsManager.delete(id);
 window.openManageModal = () => ManageView.open();
 window.startEdit = (id) => IncomeManager.startEdit(id);
-window.submitEdit = () => {
-    const id = parseInt(document.getElementById('edit-id').value);
-    IncomeManager.update(id);
-};
+window.submitEdit = () => IncomeManager.update();
 window.deleteRow = (id) => IncomeManager.delete(id);
 window.toggleSelectAll = (checkbox) => ManageView.toggleSelectAll(checkbox);
 window.checkBulkVisibility = () => ManageView.checkBulkVisibility();
