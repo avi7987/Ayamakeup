@@ -11,7 +11,7 @@ const CONFIG = {
         CLIENTS: 'crm_clients_v3',
         LEADS: 'crm_leads_v3'
     },
-    MONTHS: ["?ש???ץ?נ?¿", "???ס?¿?ץ?נ?¿", "???¿??", "?נ???¿?ש?£", "???נ?ש", "?ש?ץ???ש", "?ש?ץ?£?ש", "?נ?ץ?ע?ץ???ר", "?????ר???ס?¿", "?נ?ץ???ר?ץ?ס?¿", "???ץ?ס???ס?¿", "?ף?????ס?¿"],
+    MONTHS: ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'],
     LEAD_STAGES: [
         {id: 'new', title: '?ƒזץ ?ק?ף??'},
         {id: 'contact', title: '?ƒף? ?????¿'},
@@ -70,9 +70,16 @@ const State = {
         localStorage.setItem(CONFIG.STORAGE_KEYS.LEADS, JSON.stringify(this.leads));
     },
     
-    getFilteredClients(month) {
-        if (month === 'ALL') return this.clients;
-        return this.clients.filter(c => c.month === month);
+    getFilteredClients(monthName) {
+        if (monthName === 'ALL') return this.clients;
+        const months = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
+        const monthIndex = months.indexOf(monthName);
+        if (monthIndex === -1) return this.clients;
+        
+        return this.clients.filter(c => {
+            const date = new Date(c.date);
+            return date.getMonth() === monthIndex;
+        });
     }
 };
 
@@ -476,61 +483,145 @@ const LeadsView = {
 };
 
 const StatsView = {
+    render() {
+        this.update();
+    },
+    
     update() {
         const filterVal = document.getElementById('stats-month-filter').value;
         const filtered = State.getFilteredClients(filterVal);
         
-        this.updateSummary(filtered);
+        this.updateSummary(filtered, filterVal);
         this.updateChart(filterVal, filtered);
     },
     
-    updateSummary(filtered) {
-        const totalIncome = filtered.reduce((sum, client) => sum + client.amount, 0);
-        const bridesCount = filtered.filter(c => c.isBride).length;
+    updateSummary(filtered, filterVal) {
+        const totalIncome = filtered.reduce((sum, client) => sum + (client.price || client.amount || 0), 0);
+        const bridesCount = filtered.filter(c => c.isBride || c.notes?.includes('כלה')).length;
         const totalCount = filtered.length;
         
-        document.getElementById('sum-total').innerText = totalIncome.toLocaleString() + ' ?ג¬';
-        document.getElementById('sum-brides').innerText = bridesCount;
-        document.getElementById('sum-count').innerText = totalCount;
+        const periodText = filterVal === 'ALL' ? 'סה"כ שנתי' : `חודש ${filterVal}`;
+        document.getElementById('sum-total').innerHTML = `<div class="text-3xl font-bold text-purple-700">${totalIncome.toLocaleString()} ₪</div><div class="text-xs text-gray-500 mt-1">${periodText}</div>`;
+        document.getElementById('sum-brides').innerHTML = `<div class="text-3xl font-bold text-pink-600">${bridesCount}</div><div class="text-xs text-gray-500 mt-1">כלות ${filterVal === 'ALL' ? 'בשנה' : 'בחודש'}</div>`;
+        document.getElementById('sum-count').innerHTML = `<div class="text-3xl font-bold text-blue-600">${totalCount}</div><div class="text-xs text-gray-500 mt-1">עסקאות ${filterVal === 'ALL' ? 'בשנה' : 'בחודש'}</div>`;
     },
     
     updateChart(filterVal, filtered) {
-        const labels = filterVal === 'ALL' ? CONFIG.MONTHS : [filterVal];
-        const data = filterVal === 'ALL' 
-            ? CONFIG.MONTHS.map(month => 
-                State.clients
-                    .filter(c => c.month === month)
-                    .reduce((sum, c) => sum + c.amount, 0)
-              )
-            : [filtered.reduce((sum, c) => sum + c.amount, 0)];
+        const isYearView = filterVal === 'ALL';
+        const months = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
+        
+        let labels, incomeData, bridesData;
+        
+        if (isYearView) {
+            labels = months;
+            incomeData = months.map((_, idx) => {
+                return State.clients
+                    .filter(c => {
+                        const date = new Date(c.date);
+                        return date.getMonth() === idx;
+                    })
+                    .reduce((sum, c) => sum + (c.price || c.amount || 0), 0);
+            });
+            bridesData = months.map((_, idx) => {
+                return State.clients
+                    .filter(c => {
+                        const date = new Date(c.date);
+                        return date.getMonth() === idx && (c.isBride || c.notes?.includes('כלה'));
+                    })
+                    .length;
+            });
+        } else {
+            labels = [filterVal];
+            incomeData = [filtered.reduce((sum, c) => sum + (c.price || c.amount || 0), 0)];
+            bridesData = [filtered.filter(c => c.isBride || c.notes?.includes('כלה')).length];
+        }
         
         if (State.chart) {
             State.chart.destroy();
         }
         
+        const datasets = [
+            { 
+                type: 'bar',
+                label: 'הכנסות (₪)', 
+                data: incomeData,
+                backgroundColor: 'rgba(147, 51, 234, 0.7)',
+                borderColor: '#9333ea',
+                borderWidth: 2,
+                borderRadius: 8,
+                yAxisID: 'y'
+            }
+        ];
+        
+        // Add trend line only for year view
+        if (isYearView) {
+            datasets.push({
+                type: 'line',
+                label: 'מגמה',
+                data: incomeData,
+                borderColor: '#db2777',
+                backgroundColor: 'rgba(219, 39, 119, 0.1)',
+                borderWidth: 3,
+                tension: 0.4,
+                pointRadius: 0,
+                pointHoverRadius: 6,
+                yAxisID: 'y'
+            });
+        }
+        
         State.chart = new Chart(document.getElementById('incomeChart'), {
             data: {
                 labels,
-                datasets: [
-                    { 
-                        type: 'bar', 
-                        label: '?פ?¢?????ץ?¬ ?ג¬', 
-                        data, 
-                        backgroundColor: '#9333ea', 
-                        borderRadius: 8 
-                    },
-                    { 
-                        type: 'line', 
-                        label: '???ע???פ', 
-                        data, 
-                        borderColor: '#db2777', 
-                        tension: 0.3 
-                    }
-                ]
+                datasets
             },
             options: { 
-                responsive: true, 
-                maintainAspectRatio: false 
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: isYearView ? 'סטטיסטיקות שנתיות - הכנסות ומגמה' : `סטטיסטיקות חודש ${filterVal}`,
+                        font: { size: 16, weight: 'bold' }
+                    },
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            afterLabel: function(context) {
+                                if (context.datasetIndex === 0) {
+                                    const monthIdx = months.indexOf(context.label);
+                                    if (monthIdx !== -1) {
+                                        const brides = bridesData[monthIdx];
+                                        return `כלות: ${brides}`;
+                                    }
+                                }
+                                return '';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        title: {
+                            display: true,
+                            text: 'הכנסות (₪)'
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return value.toLocaleString() + ' ₪';
+                            }
+                        }
+                    }
+                }
             }
         });
     }
