@@ -89,7 +89,16 @@ const API = {
             });
             
             if (!response.ok) {
-                throw new Error(`API error: ${response.statusText}`);
+                let errorMsg = `API error: ${response.statusText}`;
+                try {
+                    const errorData = await response.json();
+                    if (errorData.error) {
+                        errorMsg = errorData.error;
+                    }
+                } catch (e) {
+                    // Can't parse error as JSON
+                }
+                throw new Error(errorMsg);
             }
             
             return await response.json();
@@ -233,7 +242,9 @@ const IncomeManager = {
         btn.disabled = true;
         
         try {
+            console.log('Sending data:', data);
             const savedClient = await API.addClient(data);
+            console.log('Saved successfully:', savedClient);
             State.clients.push(savedClient);
             State.saveToStorage();
             
@@ -243,6 +254,7 @@ const IncomeManager = {
             serviceInput.value = '';
             isBrideCheck.checked = false;
         } catch (error) {
+            console.error('Save error:', error);
             alert("שגיאה בשמירה: " + error.message);
         }
         
