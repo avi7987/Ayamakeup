@@ -77,6 +77,10 @@ const leadSchema = new mongoose.Schema({
         price: Number
     }],
     contractFileUrl: { type: String, default: '' },
+    // Digital signature fields
+    customerSignature: { type: String, default: '' }, // Base64 image of signature
+    customerSignedAt: { type: Date, default: null },
+    signedContractUrl: { type: String, default: '' }, // Final signed PDF
     reminders: [{ 
         id: Number,
         date: String,
@@ -160,6 +164,11 @@ app.get('/', (req, res) => {
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Serve contract signing page
+app.get('/contract-sign/:leadId', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'contract-sign.html'));
 });
 
 // ==================== API ROUTES ====================
@@ -850,6 +859,167 @@ app.get('/api/preview-contract/:leadId', async (req, res) => {
     } catch (error) {
         console.error('❌ Error previewing contract:', error);
         res.status(500).send(`<h1 style="color:red;text-align:center;margin-top:50px;">שגיאה בתצוגה מקדימה</h1><pre style="direction:ltr;text-align:left;padding:20px;background:#f5f5f5;">${error.stack}</pre>`);
+    }
+});
+
+// ==================== CONTRACT SIGNING ====================
+// Get contract for signing (returns HTML)
+app.get('/api/contract-view/:leadId', async (req, res) => {
+    try {
+        console.log('👁️ Loading contract for signing:', req.params.leadId);
+        
+        const lead = await Lead.findById(req.params.leadId);
+        if (!lead) {
+            return res.status(404).json({ error: 'ליד לא נמצא' });
+        }
+
+        // Load custom template
+        const customTemplate = await ContractTemplate.findOne({ userId: 'default' });
+        if (!customTemplate) {
+            return res.status(404).json({ error: 'לא נמצאה תבנית חוזה' });
+        }
+
+        // Prepare contract data (same as preview)
+        const fullName = `${lead.name} ${lead.lastName || ''}`.trim();
+        const price = lead.price || 0;
+        const deposit = lead.deposit || 0;
+        
+        let totalPrice = price;
+        if (lead.escortType && lead.escortType !== 'none' && lead.escortPrice) {
+            totalPrice += lead.escortPrice;
+        }
+        if (lead.bridesmaids && lead.bridesmaids.length > 0) {
+            const bridesmaidsTotal = lead.bridesmaids.reduce((sum, b) => sum + (b.price || 0), 0);
+            totalPrice += bridesmaidsTotal;
+        }
+        
+        const balance = totalPrice - deposit;
+        
+        const escortTypeHebrew = {
+            'none': 'ללא ליווי',
+            'short': 'ליווי קצר',
+            'long': 'ליווי ארוך'
+        };
+
+        // Build services table
+        let bridesmaidsRowsHtml = '';
+        if (lead.bridesmaids && lead.bridesmaids.length > 0) {
+            bridesmaidsRowsHtml = lead.bridesmaids.map((bridesmaid, i) => `
+                <tr>
+                    <td style="border: 1px solid #333; padding: 10px; text-align: right;">מלווה ${i + 1}</td>
+                    <td style="border: 1px solid #333; padding: 10px; text-align: center;">${bridesmaid.service || 'שירות מלווה'}</td>
+                    <td style="border: 1px solid #333; padding: 10px; text-align: center;">${(bridesmaid.price || 0).toLocaleString('he-IL')}</td>
+                </tr>`).join('');
+        }
+
+        const servicesTableHTML = `
+            <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+                <thead>
+                    <tr style="background-color: #f5f5f5;">
+                        <th style="border: 1px solid #333; padding: 12px; text-align: center; font-weight: bold;">תיאור השירות</th>
+                        <th style="border: 1px solid #333; padding: 12px; text-align: center; font-weight: bold;">פרטים</th>
+                        <th style="border: 1px solid #333; padding: 12px; text-align: center; font-weight: bold;">מחיר (₪)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="border: 1px solid #333; padding: 10px; text-align: right;">${lead.service || 'שירות עיקרי'}</td>
+                        <td style="border: 1px solid #333; padding: 10px; text-align: center;">שירות עיקרי</td>
+                        <td style="border: 1px solid #333; padding: 10px; text-align: center;">${price.toLocaleString('he-IL')}</td>
+                    </tr>
+                    ${lead.escortType && lead.escortType !== 'none' ? `
+                    <tr>
+                        <td style="border: 1px solid #333; padding: 10px; text-align: right;">ליווי לאירוע</td>
+                        <td style="border: 1px solid #333; padding: 10px; text-align: center;">${escortTypeHebrew[lead.escortType]}</td>
+                        <td style="border: 1px solid #333; padding: 10px; text-align: center;">${(lead.escortPrice || 0).toLocaleString('he-IL')}</td>
+                    </tr>
+                    ` : ''}
+                    ${bridesmaidsRowsHtml}
+                </tbody>
+            </table>
+        `;
+
+        // Replace variables in template
+        let htmlContent = customTemplate.templateHTML || '';
+        
+        const replacements = {
+            '{{fullName}}': fullName,
+            '{{phone}}': lead.phone || 'לא הוזן',
+            '{{service}}': lead.service || 'לא הוזן',
+            '{{eventDate}}': lead.eventDate || 'לא הוזן',
+            '{{location}}': lead.location || 'לא הוזן',
+            '{{proposedPrice}}': (lead.proposedPrice || 0).toLocaleString('he-IL'),
+            '{{totalPrice}}': totalPrice.toLocaleString('he-IL'),
+            '{{price}}': price.toLocaleString('he-IL'),
+            '{{deposit}}': deposit.toLocaleString('he-IL'),
+            '{{balance}}': balance.toLocaleString('he-IL'),
+            '{{date}}': new Date().toLocaleDateString('he-IL'),
+            '{{servicesTable}}': servicesTableHTML,
+            '{{logoUrl}}': customTemplate?.logoUrl || ''
+        };
+        
+        for (const [key, value] of Object.entries(replacements)) {
+            const regex = new RegExp(key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+            htmlContent = htmlContent.replace(regex, value || '');
+        }
+        
+        // Handle conditional logo
+        if (customTemplate?.logoUrl) {
+            htmlContent = htmlContent.replace(/\{\{#if logoUrl\}\}/g, '');
+            htmlContent = htmlContent.replace(/\{\{\/if\}\}/g, '');
+        } else {
+            htmlContent = htmlContent.replace(/\{\{#if logoUrl\}\}[\s\S]*?\{\{\/if\}\}/g, '');
+        }
+
+        res.json({
+            success: true,
+            htmlContent: htmlContent,
+            lead: {
+                name: fullName,
+                phone: lead.phone
+            }
+        });
+    } catch (error) {
+        console.error('❌ Error loading contract for signing:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Save signature and generate signed PDF
+app.post('/api/sign-contract/:leadId', async (req, res) => {
+    try {
+        console.log('✍️ Saving signature for lead:', req.params.leadId);
+        
+        const { signature } = req.body;
+        
+        if (!signature) {
+            return res.status(400).json({ error: 'חתימה לא התקבלה' });
+        }
+
+        const lead = await Lead.findById(req.params.leadId);
+        if (!lead) {
+            return res.status(404).json({ error: 'ליד לא נמצא' });
+        }
+
+        // Save signature to lead
+        lead.customerSignature = signature;
+        lead.customerSignedAt = new Date();
+        lead.contractStatus = 'signed';
+        await lead.save();
+
+        console.log('✅ Signature saved successfully');
+
+        // TODO: Generate signed PDF with signature embedded
+        // This will be implemented in the next step
+
+        res.json({
+            success: true,
+            message: 'החתימה נשמרה בהצלחה',
+            signedAt: lead.customerSignedAt
+        });
+    } catch (error) {
+        console.error('❌ Error saving signature:', error);
+        res.status(500).json({ error: error.message });
     }
 });
 

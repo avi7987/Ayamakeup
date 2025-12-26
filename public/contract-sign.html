@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>חתימה על חוזה - Ayamakeup</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .contract-content {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            line-height: 1.8;
+            font-size: 14px;
+        }
+        .signature-canvas {
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            background: white;
+            cursor: crosshair;
+            touch-action: none;
+        }
+        .signature-section {
+            background: #f9fafb;
+            padding: 30px;
+            border-radius: 12px;
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body class="p-4">
+    <div class="max-w-4xl mx-auto">
+        <!-- Header -->
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-6 text-center">
+            <h1 class="text-3xl font-bold text-purple-800">✍️ חתימה על חוזה</h1>
+            <p class="text-gray-600 mt-2">אנא קראי את החוזה בעיון וחתמי למטה</p>
+        </div>
+
+        <!-- Contract Content -->
+        <div id="contractContent" class="contract-content">
+            <div class="text-center text-gray-500 py-20">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+                <p>טוען את החוזה...</p>
+            </div>
+        </div>
+
+        <!-- Signature Section -->
+        <div class="signature-section">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">✍️ חתימה דיגיטלית</h2>
+            <p class="text-gray-600 mb-4">אנא חתמי באזור המסומן למטה (באצבע או בעכבר)</p>
+            
+            <div class="bg-white p-4 rounded-lg mb-4">
+                <canvas id="signatureCanvas" class="signature-canvas" width="700" height="200"></canvas>
+            </div>
+            
+            <div class="flex gap-3 mb-6">
+                <button onclick="clearSignature()" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-3 rounded-xl font-bold transition-all">
+                    🗑️ נקה חתימה
+                </button>
+            </div>
+
+            <label class="flex items-center gap-3 p-4 bg-blue-50 rounded-xl mb-6 cursor-pointer">
+                <input type="checkbox" id="agreeCheckbox" class="w-6 h-6 rounded">
+                <span class="font-bold text-gray-800">אני מאשר/ת את תנאי החוזה וחותם/ת עליו</span>
+            </label>
+
+            <button onclick="submitSignature()" id="submitBtn" disabled class="w-full bg-purple-600 hover:bg-purple-700 text-white py-4 rounded-xl font-bold text-lg transition-all disabled:bg-gray-300 disabled:cursor-not-allowed">
+                ✓ שלח חתימה
+            </button>
+        </div>
+
+        <!-- Success Message (Hidden) -->
+        <div id="successMessage" class="hidden bg-green-50 border-2 border-green-500 rounded-xl p-8 text-center">
+            <div class="text-6xl mb-4">✅</div>
+            <h2 class="text-2xl font-bold text-green-800 mb-2">החוזה נחתם בהצלחה!</h2>
+            <p class="text-gray-600">תודה! החוזה החתום נשלח אלייך</p>
+        </div>
+    </div>
+
+    <script>
+        const leadId = window.location.pathname.split('/').pop();
+        let signaturePad;
+        let contractData = null;
+
+        // Initialize Signature Pad
+        window.addEventListener('DOMContentLoaded', () => {
+            const canvas = document.getElementById('signatureCanvas');
+            signaturePad = new SignaturePad(canvas, {
+                backgroundColor: 'rgb(255, 255, 255)',
+                penColor: 'rgb(0, 0, 0)'
+            });
+
+            // Enable submit button when checkbox is checked and signature exists
+            document.getElementById('agreeCheckbox').addEventListener('change', updateSubmitButton);
+            signaturePad.addEventListener('endStroke', updateSubmitButton);
+
+            // Load contract
+            loadContract();
+        });
+
+        function updateSubmitButton() {
+            const checkbox = document.getElementById('agreeCheckbox');
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = !(checkbox.checked && !signaturePad.isEmpty());
+        }
+
+        function clearSignature() {
+            signaturePad.clear();
+            updateSubmitButton();
+        }
+
+        async function loadContract() {
+            try {
+                const response = await fetch(`/api/contract-view/${leadId}`);
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'שגיאה בטעינת החוזה');
+                }
+
+                contractData = data;
+                document.getElementById('contractContent').innerHTML = data.htmlContent;
+            } catch (error) {
+                console.error('Error loading contract:', error);
+                document.getElementById('contractContent').innerHTML = `
+                    <div class="text-center text-red-600 py-20">
+                        <p class="text-xl font-bold mb-2">❌ שגיאה בטעינת החוזה</p>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function submitSignature() {
+            if (signaturePad.isEmpty()) {
+                alert('אנא חתמי לפני השליחה');
+                return;
+            }
+
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '⏳ שולח...';
+
+            try {
+                const signatureData = signaturePad.toDataURL('image/png');
+                
+                const response = await fetch(`/api/sign-contract/${leadId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        signature: signatureData
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'שגיאה בשמירת החתימה');
+                }
+
+                // Show success message
+                document.querySelector('.signature-section').classList.add('hidden');
+                document.querySelector('.contract-content').classList.add('hidden');
+                document.getElementById('successMessage').classList.remove('hidden');
+                
+                // Scroll to top
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } catch (error) {
+                console.error('Error submitting signature:', error);
+                alert('❌ שגיאה בשמירת החתימה: ' + error.message);
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '✓ שלח חתימה';
+            }
+        }
+    </script>
+</body>
+</html>

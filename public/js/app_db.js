@@ -2179,17 +2179,15 @@ const WhatsAppAutomation = {
     },
     
     async confirmContractSend() {
-        // Contract already generated in preview, just send the message
+        // Contract already generated, send signing link
         const stageSettings = MessageSettings.getSettings(this.pendingStage);
         let message = this.fillTemplate(stageSettings.immediate.template, this.pendingLead);
         
-        // Create full URL for WhatsApp sharing
-        const fullPdfUrl = `${window.location.protocol}//${window.location.host}${this.pendingLead.contractFileUrl}`;
-        console.log('📤 PDF URL for WhatsApp (existing contract):', fullPdfUrl);
-        console.log('🌐 Protocol:', window.location.protocol);
-        console.log('🌐 Host:', window.location.host);
-        console.log('📄 Contract File URL:', this.pendingLead.contractFileUrl);
-        message += `\n\nקישור לחוזה: ${fullPdfUrl}`;
+        // Create signing page URL (not PDF!)
+        const signingUrl = `${window.location.protocol}//${window.location.host}/contract-sign/${this.pendingLead._id || this.pendingLead.id}`;
+        console.log('📤 Signing URL for WhatsApp:', signingUrl);
+        
+        message += `\n\n👉 לחצי כאן לצפייה וחתימה:\n${signingUrl}`;
         
         console.log('💬 Full message:', message);
         
