@@ -44,6 +44,12 @@ backup/
 *.backup
 *_backup_*
 
+# Contract files (generated dynamically)
+uploads/
+contracts/
+*.docx
+*.pdf
+
 # OS files
 Thumbs.db
 desktop.ini
