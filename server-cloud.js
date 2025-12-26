@@ -698,6 +698,14 @@ app.get('/api/preview-contract/:leadId', async (req, res) => {
         const price = lead.proposedPrice || 0;
         const deposit = lead.proposedDeposit || 0;
         
+        console.log('💵 Contract View - Lead data:', {
+            leadId: lead._id,
+            proposedPrice: lead.proposedPrice,
+            proposedDeposit: lead.proposedDeposit,
+            price: price,
+            deposit: deposit
+        });
+        
         let totalPrice = price;
         
         if (lead.escortType && lead.escortType !== 'none' && lead.escortPrice) {
@@ -710,6 +718,12 @@ app.get('/api/preview-contract/:leadId', async (req, res) => {
         }
         
         const balance = totalPrice - deposit;
+        
+        console.log('💰 Contract View - Calculated values:', {
+            totalPrice: totalPrice,
+            deposit: deposit,
+            balance: balance
+        });
         
         const escortTypeHebrew = {
             'none': 'ללא ליווי',

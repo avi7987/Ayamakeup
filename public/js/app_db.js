@@ -2002,6 +2002,7 @@ const WhatsAppAutomation = {
             
             // Update proposed deposit (for contract display)
             this.pendingLead.proposedDeposit = parseInt(document.getElementById('contract-proposedDeposit').value) || 0;
+            console.log('💰 Proposed Deposit saved:', this.pendingLead.proposedDeposit);
             
             // Update escort type and price
             this.pendingLead.escortType = document.getElementById('contract-escortType').value;
