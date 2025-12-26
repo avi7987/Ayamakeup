@@ -4,7 +4,11 @@
     "builder": "NIXPACKS",
     "watchPatterns": ["**/*.js", "**/*.json"],
     "nixPacks": {
-      "packages": ["chromium"]
+      "packages": ["chromium"],
+      "env": {
+        "PUPPETEER_SKIP_CHROMIUM_DOWNLOAD": "true",
+        "PUPPETEER_EXECUTABLE_PATH": "/nix/store/$(ls /nix/store | grep chromium | head -n 1)/bin/chromium-browser"
+      }
     }
   },
   "deploy": {

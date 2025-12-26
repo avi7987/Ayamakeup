@@ -873,6 +873,18 @@ ${servicesText}
 
         // Launch puppeteer and generate PDF
         console.log('🚀 Launching Puppeteer...');
+        
+        // Find Chromium executable
+        let chromiumPath = process.env.PUPPETEER_EXECUTABLE_PATH;
+        
+        // If not found in env, try to find it
+        if (!chromiumPath || !require('fs').existsSync(chromiumPath)) {
+            console.log('⚠️ Custom chromium path not found, using puppeteer default');
+            chromiumPath = undefined; // Let puppeteer use its default
+        } else {
+            console.log('✅ Using chromium from:', chromiumPath);
+        }
+        
         const browser = await puppeteer.launch({
             headless: true,
             args: [
@@ -880,9 +892,11 @@ ${servicesText}
                 '--disable-setuid-sandbox',
                 '--disable-dev-shm-usage',
                 '--disable-accelerated-2d-canvas',
-                '--disable-gpu'
+                '--disable-gpu',
+                '--disable-software-rasterizer',
+                '--disable-extensions'
             ],
-            executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || puppeteer.executablePath()
+            executablePath: chromiumPath
         });
         console.log('✅ Browser launched');
         
