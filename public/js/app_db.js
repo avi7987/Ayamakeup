@@ -2018,7 +2018,13 @@ const WhatsAppAutomation = {
                 
                 // Create full URL for WhatsApp sharing
                 const fullPdfUrl = `${window.location.protocol}//${window.location.host}${result.pdfUrl}`;
+                console.log('📤 PDF URL for WhatsApp:', fullPdfUrl);
+                console.log('🌐 Protocol:', window.location.protocol);
+                console.log('🌐 Host:', window.location.host);
+                console.log('📄 Result PDF URL:', result.pdfUrl);
                 message += `\n\nקישור לחוזה: ${fullPdfUrl}`;
+                
+                console.log('💬 Full message:', message);
                 
                 // Send via WhatsApp with contract link
                 const phone = this.pendingLead.phone.replace(/[^0-9]/g, '').replace(/^0/, '');
@@ -2175,7 +2181,13 @@ const WhatsAppAutomation = {
         
         // Create full URL for WhatsApp sharing
         const fullPdfUrl = `${window.location.protocol}//${window.location.host}${this.pendingLead.contractFileUrl}`;
+        console.log('📤 PDF URL for WhatsApp (existing contract):', fullPdfUrl);
+        console.log('🌐 Protocol:', window.location.protocol);
+        console.log('🌐 Host:', window.location.host);
+        console.log('📄 Contract File URL:', this.pendingLead.contractFileUrl);
         message += `\n\nקישור לחוזה: ${fullPdfUrl}`;
+        
+        console.log('💬 Full message:', message);
         
         // Send via WhatsApp
         const phone = this.pendingLead.phone.replace(/[^0-9]/g, '').replace(/^0/, '');
