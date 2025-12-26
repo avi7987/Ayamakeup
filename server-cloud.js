@@ -72,7 +72,10 @@ const leadSchema = new mongoose.Schema({
     price: { type: Number, default: 0 },
     deposit: { type: Number, default: 0 }, // Old field - keeping for backwards compatibility
     actualDeposit: { type: Number, default: 0 }, // Actual deposit paid when deal is closed
-    income: { type: Number, default: 0 }, // Calculated income from event (totalPrice - actualDeposit)
+    depositPaymentMethod: { type: String, default: 'מזומן' }, // Payment method for deposit
+    additionalPayment: { type: Number, default: 0 }, // Additional payment at event completion
+    additionalPaymentMethod: { type: String, default: 'מזומן' }, // Payment method for additional payment
+    income: { type: Number, default: 0 }, // Calculated income from event (totalPrice - actualDeposit - additionalPayment)
     completedAt: { type: Date, default: null }, // When event was marked as completed
     contractStatus: { type: String, default: 'pending' }, // pending, sent, signed
     // Contract-related fields

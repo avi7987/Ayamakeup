@@ -2705,10 +2705,12 @@ const StageManager = {
             const totalPrice = (lead.proposedPrice || 0) + (lead.escortPrice || 0) + 
                               (lead.bridesmaids || []).reduce((sum, b) => sum + (b.price || 0), 0);
             const actualDeposit = lead.actualDeposit || 0;
-            const income = totalPrice - actualDeposit;
+            const additionalPayment = lead.additionalPayment || 0;
+            const income = totalPrice - (actualDeposit + additionalPayment);
             
             document.getElementById('completed-totalPrice').textContent = totalPrice.toLocaleString('he-IL');
-            document.getElementById('completed-depositPaid').value = actualDeposit || 0;
+            document.getElementById('completed-depositPaid').textContent = actualDeposit.toLocaleString('he-IL') + ' ₪';
+            document.getElementById('completed-additionalPayment').value = additionalPayment || '';
             document.getElementById('completed-income').textContent = income.toLocaleString('he-IL');
             
             openModal('modal-event-completed');
@@ -2749,9 +2751,11 @@ const StageManager = {
         if (!this.pendingLead) return;
         
         const actualDeposit = parseInt(document.getElementById('closed-actualDeposit').value) || 0;
+        const paymentMethod = document.getElementById('closed-paymentMethod').value;
         
         // Save actual deposit
         this.pendingLead.actualDeposit = actualDeposit;
+        this.pendingLead.depositPaymentMethod = paymentMethod;
         this.pendingLead.status = 'closed';
         
         // Update stage history
@@ -2759,10 +2763,28 @@ const StageManager = {
         this.pendingLead.stageHistory.push({
             stage: 'closed',
             timestamp: new Date().toISOString(),
-            note: `עסקה נסגרה - מקדמה: ${actualDeposit.toLocaleString('he-IL')} ₪`
+            note: `עסקה נסגרה - מקדמה: ${actualDeposit.toLocaleString('he-IL')} ₪ (תשלום: ${paymentMethod})`
         });
         
         await API.updateLead(this.pendingLead._id || this.pendingLead.id, this.pendingLead);
+        
+        // Create income record for deposit if amount > 0
+        if (actualDeposit > 0) {
+            const incomeRecord = {
+                name: this.pendingLead.fullName || this.pendingLead.name,
+                amount: actualDeposit,
+                price: actualDeposit,
+                service: `מקדמה - ${this.pendingLead.fullName || this.pendingLead.name}`,
+                date: new Date().toISOString().split('T')[0],
+                payment: paymentMethod,
+                isBride: true,
+                notes: `מקדמה לחתונה - אירוע: ${this.pendingLead.eventDate || ''} | אמצעי תשלום: ${paymentMethod} | כלה 👰`,
+                income: actualDeposit,
+                leadId: this.pendingLead._id || this.pendingLead.id
+            };
+            
+            await API.createClient(incomeRecord);
+        }
         
         closeModal('modal-deal-closed');
         
@@ -2809,8 +2831,9 @@ const StageManager = {
         
         const totalPrice = (this.pendingLead.proposedPrice || 0) + (this.pendingLead.escortPrice || 0) + 
                           (this.pendingLead.bridesmaids || []).reduce((sum, b) => sum + (b.price || 0), 0);
-        const actualDeposit = parseFloat(document.getElementById('completed-depositPaid').value) || 0;
-        const income = totalPrice - actualDeposit;
+        const actualDeposit = this.pendingLead.actualDeposit || 0;
+        const additionalPayment = parseFloat(document.getElementById('completed-additionalPayment').value) || 0;
+        const income = totalPrice - (actualDeposit + additionalPayment);
         
         document.getElementById('completed-income').textContent = `${income.toLocaleString('he-IL')} ₪`;
     },
@@ -2820,11 +2843,14 @@ const StageManager = {
         
         const totalPrice = (this.pendingLead.proposedPrice || 0) + (this.pendingLead.escortPrice || 0) + 
                           (this.pendingLead.bridesmaids || []).reduce((sum, b) => sum + (b.price || 0), 0);
-        const actualDeposit = parseFloat(document.getElementById('completed-depositPaid').value) || 0;
-        const income = totalPrice - actualDeposit;
+        const actualDeposit = this.pendingLead.actualDeposit || 0;
+        const additionalPayment = parseFloat(document.getElementById('completed-additionalPayment').value) || 0;
+        const paymentMethod = document.getElementById('completed-paymentMethod').value;
+        const income = totalPrice - (actualDeposit + additionalPayment);
         
-        // Save calculated income and updated deposit
-        this.pendingLead.actualDeposit = actualDeposit;
+        // Save additional payment and calculated income
+        this.pendingLead.additionalPayment = additionalPayment;
+        this.pendingLead.additionalPaymentMethod = paymentMethod;
         this.pendingLead.income = income;
         this.pendingLead.completedAt = new Date().toISOString();
         this.pendingLead.status = 'completed';
@@ -2834,15 +2860,34 @@ const StageManager = {
         this.pendingLead.stageHistory.push({
             stage: 'completed',
             timestamp: new Date().toISOString(),
-            note: `האירוע הושלם - הכנסה: ${income.toLocaleString('he-IL')} ₪`
+            note: `האירוע הושלם - הכנסה: ${income.toLocaleString('he-IL')} ₪ | תשלום נוסף: ${additionalPayment.toLocaleString('he-IL')} ₪`
         });
         
         await API.updateLead(this.pendingLead._id || this.pendingLead.id, this.pendingLead);
         
+        // Create income record for additional payment if amount > 0
+        if (additionalPayment > 0) {
+            const incomeRecord = {
+                name: this.pendingLead.fullName || this.pendingLead.name,
+                amount: additionalPayment,
+                price: additionalPayment,
+                service: `יתרת תשלום - ${this.pendingLead.fullName || this.pendingLead.name}`,
+                date: new Date().toISOString().split('T')[0],
+                payment: paymentMethod,
+                isBride: true,
+                notes: `יתרת תשלום באירוע - אירוע: ${this.pendingLead.eventDate || ''} | אמצעי תשלום: ${paymentMethod} | כלה 👰`,
+                income: additionalPayment,
+                leadId: this.pendingLead._id || this.pendingLead.id
+            };
+            
+            await API.createClient(incomeRecord);
+        }
+        
         closeModal('modal-event-completed');
         
         // Show success message
-        alert(`✅ האירוע סומן כהושלם!\n💰 הכנסה: ${income.toLocaleString('he-IL')} ₪`);
+        const totalReceived = actualDeposit + additionalPayment;
+        alert(`✅ האירוע סומן כהושלם!\n💰 הכשלה כוללת: ${totalReceived.toLocaleString('he-IL')} ₪\n📈 הכנסה נטו: ${income.toLocaleString('he-IL')} ₪`);
         
         // Now continue with WhatsApp automation (if applicable)
         const leadId = this.pendingLead._id || this.pendingLead.id;
