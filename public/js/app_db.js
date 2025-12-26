@@ -2160,6 +2160,10 @@ const WhatsAppAutomation = {
             const result = await ContractManager.generateContract(this.pendingLead._id || this.pendingLead.id);
             console.log('✅ Contract generated:', result);
             
+            // CRITICAL: Save the PDF URL to the lead object
+            this.pendingLead.contractFileUrl = result.pdfUrl;
+            console.log('💾 Saved pdfUrl to lead:', this.pendingLead.contractFileUrl);
+            
             // Show preview in iframe
             const iframe = document.getElementById('contract-preview-frame');
             iframe.src = result.pdfUrl;
