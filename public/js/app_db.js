@@ -1902,18 +1902,24 @@ const WhatsAppAutomation = {
             this.pendingLead = lead;
             this.pendingStage = newStage;
             
-            // For contract-sent stage, show additional fields
+            // For in-process stage, show proposed price field
+            const inProcessFields = document.getElementById('in-process-fields');
             const additionalFields = document.getElementById('contract-additional-fields');
             const contractActions = document.getElementById('contract-actions');
             
-            if (newStage === 'contract-sent') {
+            if (newStage === 'in-process') {
+                inProcessFields.classList.remove('hidden');
+                additionalFields.classList.add('hidden');
+                contractActions.classList.add('hidden');
+                
+                // Pre-fill proposed price
+                document.getElementById('inprocess-proposedPrice').value = lead.proposedPrice || '';
+            } else if (newStage === 'contract-sent') {
+                inProcessFields.classList.add('hidden');
                 additionalFields.classList.remove('hidden');
                 contractActions.classList.remove('hidden');
                 
                 // Pre-fill existing data with NEW structure
-                // Proposed price
-                document.getElementById('contract-proposedPrice').value = lead.proposedPrice || '';
-                
                 // Escort type dropdown
                 document.getElementById('contract-escortType').value = lead.escortType || 'none';
                 document.getElementById('contract-escortPrice').value = lead.escortPrice || '';
@@ -1934,6 +1940,7 @@ const WhatsAppAutomation = {
                     });
                 }
             } else {
+                inProcessFields.classList.add('hidden');
                 additionalFields.classList.add('hidden');
                 contractActions.classList.add('hidden');
             }
@@ -1964,13 +1971,15 @@ const WhatsAppAutomation = {
     async sendConfirmed() {
         if (!this.pendingLead || !this.pendingStage) return;
         
+        // If in-process stage, update proposed price
+        if (this.pendingStage === 'in-process') {
+            const proposedPrice = parseFloat(document.getElementById('inprocess-proposedPrice').value) || 0;
+            this.pendingLead.proposedPrice = proposedPrice;
+        }
+        
         // If contract-sent stage, update lead with additional fields
         if (this.pendingStage === 'contract-sent') {
             // lastName already exists from lead creation (required field)
-            
-            // Update proposed price
-            const proposedPrice = parseFloat(document.getElementById('contract-proposedPrice').value) || 0;
-            this.pendingLead.proposedPrice = proposedPrice;
             
             // Update escort type and price
             this.pendingLead.escortType = document.getElementById('contract-escortType').value;
@@ -2189,6 +2198,13 @@ const WhatsAppAutomation = {
     
     async skipMessage() {
         if (!this.pendingLead || !this.pendingStage) return;
+        
+        // If in-process stage, update proposed price even if skipping
+        if (this.pendingStage === 'in-process') {
+            const proposedPrice = parseFloat(document.getElementById('inprocess-proposedPrice').value) || 0;
+            this.pendingLead.proposedPrice = proposedPrice;
+            await API.updateLead(this.pendingLead._id || this.pendingLead.id, this.pendingLead);
+        }
         
         // Just update stage without sending
         await this.completeStageChange(this.pendingLead._id || this.pendingLead.id, this.pendingStage);
