@@ -2513,10 +2513,16 @@ const ContractManager = {
                 return data;
             } else {
                 console.error('❌ Contract generation failed:', data);
-                throw new Error(data.error || 'שגיאה ביצירת החוזה');
+                // Extract actual error message
+                const errorMsg = data.error || data.message || JSON.stringify(data);
+                throw new Error(errorMsg);
             }
         } catch (error) {
             console.error('❌ Contract generation error:', error);
+            // If error.message is still generic, try to get more details
+            if (error.message === '[object Object]' || error.message === 'Multi error') {
+                throw new Error('שגיאה בשרת. פתחי את הקונסול (F12) לפרטים מלאים');
+            }
             throw error;
         }
     }
