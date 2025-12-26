@@ -2015,7 +2015,10 @@ const WhatsAppAutomation = {
                 // Add contract link to message
                 const stageSettings = MessageSettings.getSettings(this.pendingStage);
                 let message = this.fillTemplate(stageSettings.immediate.template, this.pendingLead);
-                message += `\n\nקישור לחוזה: ${window.location.origin}${result.pdfUrl}`;
+                
+                // Create full URL for WhatsApp sharing
+                const fullPdfUrl = `${window.location.protocol}//${window.location.host}${result.pdfUrl}`;
+                message += `\n\nקישור לחוזה: ${fullPdfUrl}`;
                 
                 // Send via WhatsApp with contract link
                 const phone = this.pendingLead.phone.replace(/[^0-9]/g, '').replace(/^0/, '');
@@ -2169,7 +2172,10 @@ const WhatsAppAutomation = {
         // Contract already generated in preview, just send the message
         const stageSettings = MessageSettings.getSettings(this.pendingStage);
         let message = this.fillTemplate(stageSettings.immediate.template, this.pendingLead);
-        message += `\n\nקישור לחוזה: ${window.location.origin}${this.pendingLead.contractFileUrl}`;
+        
+        // Create full URL for WhatsApp sharing
+        const fullPdfUrl = `${window.location.protocol}//${window.location.host}${this.pendingLead.contractFileUrl}`;
+        message += `\n\nקישור לחוזה: ${fullPdfUrl}`;
         
         // Send via WhatsApp
         const phone = this.pendingLead.phone.replace(/[^0-9]/g, '').replace(/^0/, '');
