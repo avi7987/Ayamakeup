@@ -509,6 +509,273 @@ app.post('/api/contract-template', upload.single('template'), async (req, res) =
     }
 });
 
+// Preview contract HTML (for debugging) - GET endpoint
+app.get('/api/preview-contract/:leadId', async (req, res) => {
+    try {
+        console.log('👁️ Previewing contract HTML for lead:', req.params.leadId);
+        
+        const lead = await Lead.findById(req.params.leadId);
+        if (!lead) {
+            return res.status(404).send('<h1 style="color:red;text-align:center;margin-top:50px;">ליד לא נמצא</h1>');
+        }
+
+        // Prepare data (same as PDF generation)
+        const fullName = `${lead.name} ${lead.lastName || ''}`.trim();
+        const price = lead.price || 0;
+        const deposit = lead.deposit || 0;
+        
+        let totalPrice = price;
+        
+        if (lead.escortType && lead.escortType !== 'none' && lead.escortPrice) {
+            totalPrice += lead.escortPrice;
+        }
+        
+        if (lead.bridesmaids && lead.bridesmaids.length > 0) {
+            const bridesmaidsTotal = lead.bridesmaids.reduce((sum, b) => sum + (b.price || 0), 0);
+            totalPrice += bridesmaidsTotal;
+        }
+        
+        const balance = totalPrice - deposit;
+        
+        const escortTypeHebrew = {
+            'none': 'ללא ליווי',
+            'short': 'ליווי קצר',
+            'long': 'ליווי ארוך'
+        };
+        
+        // Build bridesmaids rows HTML
+        let bridesmaidsRowsHtml = '';
+        if (lead.bridesmaids && lead.bridesmaids.length > 0) {
+            bridesmaidsRowsHtml = lead.bridesmaids.map((bridesmaid, i) => `
+                        <tr>
+                            <td>מלווה ${i + 1}</td>
+                            <td>${bridesmaid.service || 'שירות מלווה'}</td>
+                            <td>${(bridesmaid.price || 0).toLocaleString('he-IL')}</td>
+                        </tr>`).join('');
+        }
+
+        // Build HTML
+        const htmlContent = `
+        <!DOCTYPE html>
+        <html dir="rtl" lang="he">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>תצוגה מקדימה - חוזה</title>
+            <style>
+                body { 
+                    font-family: Arial, sans-serif; 
+                    direction: rtl; 
+                    padding: 40px;
+                    line-height: 1.8;
+                    font-size: 14px;
+                    max-width: 800px;
+                    margin: 0 auto;
+                }
+                .preview-notice {
+                    background: #fff3cd;
+                    border: 2px solid #ffc107;
+                    padding: 15px;
+                    margin-bottom: 30px;
+                    border-radius: 5px;
+                    text-align: center;
+                    font-weight: bold;
+                }
+                .contract-header {
+                    text-align: center;
+                    margin-bottom: 40px;
+                    border-bottom: 2px solid #333;
+                    padding-bottom: 20px;
+                }
+                .contract-title {
+                    font-size: 28px;
+                    font-weight: bold;
+                    margin-bottom: 10px;
+                }
+                .contract-section {
+                    margin-bottom: 25px;
+                }
+                .section-title {
+                    font-size: 18px;
+                    font-weight: bold;
+                    margin-bottom: 15px;
+                    color: #333;
+                    border-bottom: 1px solid #ccc;
+                    padding-bottom: 5px;
+                }
+                .field-label {
+                    font-weight: bold;
+                    display: inline-block;
+                    width: 150px;
+                }
+                .services-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin: 20px 0;
+                }
+                .services-table th {
+                    background-color: #f5f5f5;
+                    border: 1px solid #333;
+                    padding: 12px;
+                    text-align: center;
+                    font-weight: bold;
+                }
+                .services-table td {
+                    border: 1px solid #333;
+                    padding: 10px;
+                    text-align: center;
+                }
+                .services-table td:first-child {
+                    text-align: right;
+                }
+                .financial-summary {
+                    background-color: #f9f9f9;
+                    padding: 20px;
+                    border: 2px solid #333;
+                    border-radius: 5px;
+                    margin-top: 20px;
+                }
+                .financial-summary .summary-line {
+                    display: flex;
+                    justify-content: space-between;
+                    padding: 8px 0;
+                    border-bottom: 1px solid #ddd;
+                }
+                .financial-summary .summary-line:last-child {
+                    border-bottom: none;
+                    font-weight: bold;
+                    font-size: 16px;
+                    padding-top: 15px;
+                }
+                .signature-section {
+                    margin-top: 60px;
+                    display: flex;
+                    justify-content: space-between;
+                }
+                .signature-box {
+                    text-align: center;
+                    width: 40%;
+                }
+                .signature-line {
+                    margin-top: 40px;
+                    border-top: 1px solid #333;
+                    padding-top: 5px;
+                }
+                .debug-info {
+                    background: #e3f2fd;
+                    border: 1px solid #2196f3;
+                    padding: 15px;
+                    margin-top: 30px;
+                    border-radius: 5px;
+                    font-size: 12px;
+                }
+                .debug-info h3 {
+                    margin-top: 0;
+                    color: #1976d2;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="preview-notice">
+                🔍 תצוגה מקדימה - זה לא ה-PDF הסופי, רק בדיקת נתונים
+            </div>
+            
+            <div class="contract-header">
+                <div class="contract-title">חוזה מתן שירותים</div>
+                <div>תאריך: ${new Date().toLocaleDateString('he-IL')}</div>
+            </div>
+            
+            <div class="contract-section">
+                <div class="section-title">פרטי הלקוח/ה</div>
+                <div><span class="field-label">שם מלא:</span> ${fullName}</div>
+                <div><span class="field-label">טלפון:</span> ${lead.phone || 'לא הוזן'}</div>
+            </div>
+            
+            <div class="contract-section">
+                <div class="section-title">פרטי האירוע</div>
+                <div><span class="field-label">סוג האירוע:</span> ${lead.service || 'לא הוזן'}</div>
+                <div><span class="field-label">תאריך האירוע:</span> ${lead.eventDate || 'לא הוזן'}</div>
+                <div><span class="field-label">מיקום האירוע:</span> ${lead.location || 'לא הוזן'}</div>
+            </div>
+            
+            <div class="contract-section">
+                <div class="section-title">פירוט השירותים והעלויות</div>
+                <table class="services-table">
+                    <thead>
+                        <tr>
+                            <th>תיאור השירות</th>
+                            <th>פרטים</th>
+                            <th>מחיר (₪)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>${lead.service || 'שירות עיקרי'}</td>
+                            <td>שירות עיקרי</td>
+                            <td>${price.toLocaleString('he-IL')}</td>
+                        </tr>
+                        ${lead.escortType && lead.escortType !== 'none' ? `
+                        <tr>
+                            <td>ליווי לאירוע</td>
+                            <td>${escortTypeHebrew[lead.escortType]}</td>
+                            <td>${(lead.escortPrice || 0).toLocaleString('he-IL')}</td>
+                        </tr>
+                        ` : ''}
+                        ${bridesmaidsRowsHtml}
+                    </tbody>
+                </table>
+                
+                <div class="financial-summary">
+                    <div class="summary-line">
+                        <span>סה"כ עלות השירותים:</span>
+                        <span><strong>${totalPrice.toLocaleString('he-IL')} ₪</strong></span>
+                    </div>
+                    <div class="summary-line">
+                        <span>מקדמה ששולמה:</span>
+                        <span><strong>${deposit.toLocaleString('he-IL')} ₪</strong></span>
+                    </div>
+                    <div class="summary-line">
+                        <span>יתרה לתשלום ביום האירוע:</span>
+                        <span><strong>${balance.toLocaleString('he-IL')} ₪</strong></span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="signature-section">
+                <div class="signature-box">
+                    <div>חתימת הלקוח/ה</div>
+                    <div class="signature-line">תאריך: ___________</div>
+                </div>
+                <div class="signature-box">
+                    <div>חתימת נותן השירות</div>
+                    <div class="signature-line">תאריך: ___________</div>
+                </div>
+            </div>
+            
+            <div class="debug-info">
+                <h3>🔧 מידע לבדיקה (לא יופיע ב-PDF)</h3>
+                <div><strong>Lead ID:</strong> ${lead._id}</div>
+                <div><strong>שם:</strong> ${lead.name}</div>
+                <div><strong>שם משפחה:</strong> ${lead.lastName || 'לא הוזן'}</div>
+                <div><strong>סוג ליווי:</strong> ${lead.escortType || 'none'}</div>
+                <div><strong>מחיר ליווי:</strong> ${lead.escortPrice || 0} ₪</div>
+                <div><strong>מספר מלוות:</strong> ${lead.bridesmaids?.length || 0}</div>
+                <div><strong>מחיר עיקרי:</strong> ${price} ₪</div>
+                <div><strong>מקדמה:</strong> ${deposit} ₪</div>
+                <div><strong>סה"כ כולל הכל:</strong> ${totalPrice} ₪</div>
+                <div><strong>יתרה:</strong> ${balance} ₪</div>
+            </div>
+        </body>
+        </html>
+        `;
+
+        res.send(htmlContent);
+    } catch (error) {
+        console.error('❌ Error previewing contract:', error);
+        res.status(500).send(`<h1 style="color:red;text-align:center;margin-top:50px;">שגיאה בתצוגה מקדימה</h1><pre style="direction:ltr;text-align:left;padding:20px;background:#f5f5f5;">${error.stack}</pre>`);
+    }
+});
+
 // Generate contract from lead data
 app.post('/api/generate-contract/:leadId', async (req, res) => {
     try {

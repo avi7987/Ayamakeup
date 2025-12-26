@@ -2055,6 +2055,41 @@ const WhatsAppAutomation = {
         }
     },
     
+    async previewContractHTML() {
+        if (!this.pendingLead) return;
+        
+        console.log('🔍 Opening HTML preview for lead:', this.pendingLead._id || this.pendingLead.id);
+        
+        // Update lead with current form values (same as previewContract)
+        this.pendingLead.escortType = document.getElementById('contract-escortType').value;
+        if (this.pendingLead.escortType !== 'none') {
+            this.pendingLead.escortPrice = parseInt(document.getElementById('contract-escortPrice').value) || 0;
+        } else {
+            this.pendingLead.escortPrice = 0;
+        }
+        
+        const bridesmaidsCount = parseInt(document.getElementById('contract-bridesmaidsCount').value) || 0;
+        this.pendingLead.bridesmaids = [];
+        
+        for (let i = 0; i < bridesmaidsCount; i++) {
+            const service = document.getElementById(`bridesmaid-service-${i}`)?.value.trim() || '';
+            const price = parseInt(document.getElementById(`bridesmaid-price-${i}`)?.value) || 0;
+            
+            if (service) {
+                this.pendingLead.bridesmaids.push({ service, price });
+            }
+        }
+        
+        // Save lead data first
+        console.log('💾 Saving lead data...');
+        await API.updateLead(this.pendingLead._id || this.pendingLead.id, this.pendingLead);
+        console.log('✅ Lead data saved');
+        
+        // Open HTML preview in new tab
+        const previewUrl = `${CONFIG.API_BASE_URL}/api/preview-contract/${this.pendingLead._id || this.pendingLead.id}`;
+        window.open(previewUrl, '_blank');
+    },
+    
     async previewContract() {
         if (!this.pendingLead) return;
         
