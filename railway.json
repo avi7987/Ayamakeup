@@ -3,12 +3,16 @@
   "build": {
     "builder": "NIXPACKS",
     "watchPatterns": ["**/*.js", "**/*.json"],
-    "nixPacks": {
-      "packages": ["chromium"]
+    "nixpacksPlan": {
+      "phases": {
+        "install": {
+          "nixPkgs": ["nodejs", "chromium"]
+        }
+      }
     }
   },
   "deploy": {
-    "startCommand": "PUPPETEER_EXECUTABLE_PATH=$(which chromium-browser || which chromium) node server-cloud.js",
+    "startCommand": "PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true PUPPETEER_EXECUTABLE_PATH=$(which chromium) node server-cloud.js",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 10
   }

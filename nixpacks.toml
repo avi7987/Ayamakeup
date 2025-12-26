@@ -1,0 +1,8 @@
+[phases.setup]
+nixPkgs = ["nodejs", "chromium"]
+
+[phases.install]
+cmds = ["npm ci"]
+
+[start]
+cmd = "PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true PUPPETEER_EXECUTABLE_PATH=$(which chromium) node server-cloud.js"
