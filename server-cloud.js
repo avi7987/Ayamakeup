@@ -543,6 +543,8 @@ app.post('/api/generate-contract/:leadId', async (req, res) => {
             linebreaks: true,
         });
 
+        console.log('📋 Template loaded, preparing data...');
+
         // Prepare data for template
         const fullName = `${lead.name} ${lead.lastName || ''}`.trim();
         const price = lead.price || 0;
@@ -630,8 +632,27 @@ app.post('/api/generate-contract/:leadId', async (req, res) => {
             date: new Date().toLocaleDateString('he-IL'),
         };
 
+        console.log('📝 Template data prepared:', JSON.stringify(templateData, null, 2));
+
         // Render the document
-        doc.render(templateData);
+        try {
+            console.log('🔄 Rendering template...');
+            doc.render(templateData);
+            console.log('✅ Template rendered successfully');
+        } catch (renderError) {
+            console.error('❌ Template rendering failed:', renderError);
+            console.error('Error properties:', renderError.properties);
+            console.error('Error stack:', renderError.stack);
+            
+            // Extract meaningful error message
+            let errorMessage = 'שגיאה בעיבוד התבנית';
+            if (renderError.properties && renderError.properties.errors) {
+                const errors = renderError.properties.errors;
+                errorMessage += ':\n' + errors.map(e => `- ${e.message || e.toString()}`).join('\n');
+            }
+            
+            throw new Error(errorMessage);
+        }
 
         // Get the filled document as buffer
         const buf = doc.getZip().generate({ type: 'nodebuffer' });
