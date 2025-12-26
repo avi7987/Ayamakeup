@@ -2783,7 +2783,7 @@ const StageManager = {
                     leadId: this.pendingLead._id || this.pendingLead.id
                 };
                 
-                await API.createClient(incomeRecord);
+                await API.addClient(incomeRecord);
             }
             
             closeModal('modal-deal-closed');
@@ -2884,7 +2884,7 @@ const StageManager = {
                 leadId: this.pendingLead._id || this.pendingLead.id
             };
             
-            await API.createClient(incomeRecord);
+            await API.addClient(incomeRecord);
         }
         
         closeModal('modal-event-completed');
