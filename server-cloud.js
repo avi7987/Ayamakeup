@@ -715,9 +715,72 @@ app.get('/api/preview-contract/:leadId', async (req, res) => {
                             <td>${(bridesmaid.price || 0).toLocaleString('he-IL')}</td>
                         </tr>`).join('');
         }
+        
+        // Load custom template from database
+        let customTemplate = await ContractTemplate.findOne({ userId: 'default' });
+        
+        // Build services table HTML (same as in generate-contract)
+        const servicesTableHTML = `
+            <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+                <thead>
+                    <tr style="background-color: #f5f5f5;">
+                        <th style="border: 1px solid #333; padding: 12px; text-align: center; font-weight: bold;">תיאור השירות</th>
+                        <th style="border: 1px solid #333; padding: 12px; text-align: center; font-weight: bold;">פרטים</th>
+                        <th style="border: 1px solid #333; padding: 12px; text-align: center; font-weight: bold;">מחיר (₪)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="border: 1px solid #333; padding: 10px; text-align: right;">${lead.service || 'שירות עיקרי'}</td>
+                        <td style="border: 1px solid #333; padding: 10px; text-align: center;">שירות עיקרי</td>
+                        <td style="border: 1px solid #333; padding: 10px; text-align: center;">${price.toLocaleString('he-IL')}</td>
+                    </tr>
+                    ${lead.escortType && lead.escortType !== 'none' ? `
+                    <tr>
+                        <td style="border: 1px solid #333; padding: 10px; text-align: right;">ליווי לאירוע</td>
+                        <td style="border: 1px solid #333; padding: 10px; text-align: center;">${escortTypeHebrew[lead.escortType]}</td>
+                        <td style="border: 1px solid #333; padding: 10px; text-align: center;">${(lead.escortPrice || 0).toLocaleString('he-IL')}</td>
+                    </tr>
+                    ` : ''}
+                    ${bridesmaidsRowsHtml}
+                </tbody>
+            </table>
+        `;
+        
+        // Use custom template or default
+        let htmlContent = customTemplate?.templateHTML || '';
+        
+        // Apply variable replacements
+        const replacements = {
+            '{{fullName}}': fullName,
+            '{{phone}}': lead.phone || 'לא הוזן',
+            '{{service}}': lead.service || 'לא הוזן',
+            '{{eventDate}}': lead.eventDate || 'לא הוזן',
+            '{{location}}': lead.location || 'לא הוזן',
+            '{{totalPrice}}': totalPrice.toLocaleString('he-IL'),
+            '{{price}}': price.toLocaleString('he-IL'),
+            '{{deposit}}': deposit.toLocaleString('he-IL'),
+            '{{balance}}': balance.toLocaleString('he-IL'),
+            '{{date}}': new Date().toLocaleDateString('he-IL'),
+            '{{servicesTable}}': servicesTableHTML,
+            '{{logoUrl}}': customTemplate?.logoUrl || ''
+        };
+        
+        for (const [key, value] of Object.entries(replacements)) {
+            const regex = new RegExp(key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+            htmlContent = htmlContent.replace(regex, value || '');
+        }
+        
+        // Handle conditional logo
+        if (customTemplate?.logoUrl) {
+            htmlContent = htmlContent.replace(/\{\{#if logoUrl\}\}/g, '');
+            htmlContent = htmlContent.replace(/\{\{\/if\}\}/g, '');
+        } else {
+            htmlContent = htmlContent.replace(/\{\{#if logoUrl\}\}[\s\S]*?\{\{\/if\}\}/g, '');
+        }
 
-        // Build HTML
-        const htmlContent = `
+        // Build final HTML with preview notice and debug info
+        const finalHTML = `
         <!DOCTYPE html>
         <html dir="rtl" lang="he">
         <head>
@@ -743,91 +806,45 @@ app.get('/api/preview-contract/:leadId', async (req, res) => {
                     text-align: center;
                     font-weight: bold;
                 }
-                .contract-header {
-                    text-align: center;
-                    margin-bottom: 40px;
-                    border-bottom: 2px solid #333;
-                    padding-bottom: 20px;
-                }
-                .contract-title {
-                    font-size: 28px;
-                    font-weight: bold;
-                    margin-bottom: 10px;
-                }
-                .contract-section {
-                    margin-bottom: 25px;
-                }
-                .section-title {
-                    font-size: 18px;
-                    font-weight: bold;
-                    margin-bottom: 15px;
-                    color: #333;
-                    border-bottom: 1px solid #ccc;
-                    padding-bottom: 5px;
-                }
-                .field-label {
-                    font-weight: bold;
-                    display: inline-block;
-                    width: 150px;
-                }
-                .services-table {
-                    width: 100%;
-                    border-collapse: collapse;
-                    margin: 20px 0;
-                }
-                .services-table th {
-                    background-color: #f5f5f5;
-                    border: 1px solid #333;
-                    padding: 12px;
-                    text-align: center;
-                    font-weight: bold;
-                }
-                .services-table td {
-                    border: 1px solid #333;
-                    padding: 10px;
-                    text-align: center;
-                }
-                .services-table td:first-child {
-                    text-align: right;
-                }
-                .financial-summary {
-                    background-color: #f9f9f9;
-                    padding: 20px;
-                    border: 2px solid #333;
-                    border-radius: 5px;
-                    margin-top: 20px;
-                }
-                .financial-summary .summary-line {
-                    display: flex;
-                    justify-content: space-between;
-                    padding: 8px 0;
-                    border-bottom: 1px solid #ddd;
-                }
-                .financial-summary .summary-line:last-child {
-                    border-bottom: none;
-                    font-weight: bold;
-                    font-size: 16px;
-                    padding-top: 15px;
-                }
-                .signature-section {
-                    margin-top: 60px;
-                    display: flex;
-                    justify-content: space-between;
-                }
-                .signature-box {
-                    text-align: center;
-                    width: 40%;
-                }
-                .signature-line {
-                    margin-top: 40px;
-                    border-top: 1px solid #333;
-                    padding-top: 5px;
-                }
                 .debug-info {
                     background: #e3f2fd;
                     border: 1px solid #2196f3;
                     padding: 15px;
                     margin-top: 30px;
+                    border-radius: 5px;
+                    font-size: 12px;
+                }
+                .debug-info h3 {
+                    margin-top: 0;
+                    color: #1976d2;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="preview-notice">
+                🔍 תצוגה מקדימה - זה לא ה-PDF הסופי, רק בדיקת נתונים
+            </div>
+            
+            ${htmlContent}
+            
+            <div class="debug-info">
+                <h3>🔧 מידע לבדיקה (לא יופיע ב-PDF)</h3>
+                <div><strong>Lead ID:</strong> ${lead._id}</div>
+                <div><strong>שם:</strong> ${lead.name}</div>
+                <div><strong>שם משפחה:</strong> ${lead.lastName || 'לא הוזן'}</div>
+                <div><strong>סוג ליווי:</strong> ${lead.escortType || 'none'}</div>
+                <div><strong>מחיר ליווי:</strong> ${lead.escortPrice || 0} ₪</div>
+                <div><strong>מספר מלוות:</strong> ${lead.bridesmaids?.length || 0}</div>
+                <div><strong>מחיר עיקרי:</strong> ${price} ₪</div>
+                <div><strong>מקדמה:</strong> ${deposit} ₪</div>
+                <div><strong>סה"כ כולל הכל:</strong> ${totalPrice} ₪</div>
+                <div><strong>יתרה:</strong> ${balance} ₪</div>
+            </div>
+        </body>
+        </html>
+        `;
+
+        res.send(finalHTML);
                     border-radius: 5px;
                     font-size: 12px;
                 }
@@ -931,7 +948,7 @@ app.get('/api/preview-contract/:leadId', async (req, res) => {
         </html>
         `;
 
-        res.send(htmlContent);
+        res.send(finalHTML);
     } catch (error) {
         console.error('❌ Error previewing contract:', error);
         res.status(500).send(`<h1 style="color:red;text-align:center;margin-top:50px;">שגיאה בתצוגה מקדימה</h1><pre style="direction:ltr;text-align:left;padding:20px;background:#f5f5f5;">${error.stack}</pre>`);
@@ -1170,9 +1187,41 @@ ${servicesText}
         // Replace variables in custom template
         let htmlContent = customTemplate.templateHTML || '';
         
-        // If no custom template, use default
-        if (!htmlContent) {
-            console.log('Using default template structure...');
+        console.log('📝 Applying variable replacements to template...');
+        
+        // Create replacement map
+        const replacements = {
+            '{{fullName}}': fullName,
+            '{{phone}}': templateData.phone,
+            '{{service}}': templateData.service,
+            '{{eventDate}}': templateData.eventDate,
+            '{{location}}': templateData.location,
+            '{{totalPrice}}': totalPrice.toLocaleString('he-IL'),
+            '{{price}}': price.toLocaleString('he-IL'),
+            '{{deposit}}': deposit.toLocaleString('he-IL'),
+            '{{balance}}': balance.toLocaleString('he-IL'),
+            '{{date}}': templateData.date,
+            '{{servicesTable}}': servicesTableHTML,
+            '{{logoUrl}}': customTemplate.logoUrl || ''
+        };
+        
+        // Apply all replacements
+        for (const [key, value] of Object.entries(replacements)) {
+            const regex = new RegExp(key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+            htmlContent = htmlContent.replace(regex, value || '');
+        }
+        
+        // Handle conditional logo
+        if (customTemplate.logoUrl) {
+            htmlContent = htmlContent.replace(/\{\{#if logoUrl\}\}/g, '');
+            htmlContent = htmlContent.replace(/\{\{\/if\}\}/g, '');
+        } else {
+            htmlContent = htmlContent.replace(/\{\{#if logoUrl\}\}[\s\S]*?\{\{\/if\}\}/g, '');
+        }
+        
+        // Wrap in HTML document if not already wrapped
+        if (!htmlContent.includes('<!DOCTYPE html>')) {
+            console.log('Wrapping template in HTML document structure...');
             htmlContent = `
         <!DOCTYPE html>
         <html dir="rtl" lang="he">
@@ -1186,163 +1235,16 @@ ${servicesText}
                     line-height: 1.8;
                     font-size: 14px;
                 }
-                .contract-header {
-                    text-align: center;
-                    margin-bottom: 40px;
-                    border-bottom: 2px solid #333;
-                    padding-bottom: 20px;
-                }
-                .contract-title {
-                    font-size: 28px;
-                    font-weight: bold;
-                    margin-bottom: 10px;
-                }
-                .contract-section {
-                    margin-bottom: 25px;
-                }
-                .section-title {
-                    font-size: 18px;
-                    font-weight: bold;
-                    margin-bottom: 15px;
-                    color: #333;
-                    border-bottom: 1px solid #ccc;
-                    padding-bottom: 5px;
-                }
-                .field-label {
-                    font-weight: bold;
-                    display: inline-block;
-                    width: 150px;
-                }
-                .services-table {
-                    width: 100%;
-                    border-collapse: collapse;
-                    margin: 20px 0;
-                }
-                .services-table th {
-                    background-color: #f5f5f5;
-                    border: 1px solid #333;
-                    padding: 12px;
-                    text-align: center;
-                    font-weight: bold;
-                }
-                .services-table td {
-                    border: 1px solid #333;
-                    padding: 10px;
-                    text-align: center;
-                }
-                .services-table td:first-child {
-                    text-align: right;
-                }
-                .financial-summary {
-                    background-color: #f9f9f9;
-                    padding: 20px;
-                    border: 2px solid #333;
-                    border-radius: 5px;
-                    margin-top: 20px;
-                }
-                .financial-summary .summary-line {
-                    display: flex;
-                    justify-content: space-between;
-                    padding: 8px 0;
-                    border-bottom: 1px solid #ddd;
-                }
-                .financial-summary .summary-line:last-child {
-                    border-bottom: none;
-                    font-weight: bold;
-                    font-size: 16px;
-                    padding-top: 15px;
-                }
-                .signature-section {
-                    margin-top: 60px;
-                    display: flex;
-                    justify-content: space-between;
-                }
-                .signature-box {
-                    text-align: center;
-                    width: 40%;
-                }
-                .signature-line {
-                    margin-top: 40px;
-                    border-top: 1px solid #333;
-                    padding-top: 5px;
-                }
             </style>
         </head>
         <body>
-            <div class="contract-header">
-                <div class="contract-title">חוזה מתן שירותים</div>
-                <div>תאריך: ${templateData.date}</div>
-            </div>
-            
-            <div class="contract-section">
-                <div class="section-title">פרטי הלקוח/ה</div>
-                <div><span class="field-label">שם מלא:</span> ${fullName}</div>
-                <div><span class="field-label">טלפון:</span> ${templateData.phone}</div>
-            </div>
-            
-            <div class="contract-section">
-                <div class="section-title">פרטי האירוע</div>
-                <div><span class="field-label">סוג האירוע:</span> ${templateData.service}</div>
-                <div><span class="field-label">תאריך האירוע:</span> ${templateData.eventDate}</div>
-                <div><span class="field-label">מיקום האירוע:</span> ${templateData.location}</div>
-            </div>
-            
-            <div class="contract-section">
-                <div class="section-title">פירוט השירותים והעלויות</div>
-                <table class="services-table">
-                    <thead>
-                        <tr>
-                            <th>תיאור השירות</th>
-                            <th>פרטים</th>
-                            <th>מחיר (₪)</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>${templateData.service}</td>
-                            <td>שירות עיקרי</td>
-                            <td>${templateData.price.toLocaleString('he-IL')}</td>
-                        </tr>
-                        ${lead.escortType && lead.escortType !== 'none' ? `
-                        <tr>
-                            <td>ליווי לאירוע</td>
-                            <td>${templateData.escortTypeHebrew}</td>
-                            <td>${templateData.escortPrice.toLocaleString('he-IL')}</td>
-                        </tr>
-                        ` : ''}
-                        ${bridesmaidsRowsHtml}
-                    </tbody>
-                </table>
-                
-                <div class="financial-summary">
-                    <div class="summary-line">
-                        <span>סה"כ עלות השירותים:</span>
-                        <span><strong>${templateData.totalPrice.toLocaleString('he-IL')} ₪</strong></span>
-                    </div>
-                    <div class="summary-line">
-                        <span>מקדמה ששולמה:</span>
-                        <span><strong>${templateData.deposit.toLocaleString('he-IL')} ₪</strong></span>
-                    </div>
-                    <div class="summary-line">
-                        <span>יתרה לתשלום ביום האירוע:</span>
-                        <span><strong>${templateData.balance.toLocaleString('he-IL')} ₪</strong></span>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="signature-section">
-                <div class="signature-box">
-                    <div>חתימת הלקוח/ה</div>
-                    <div class="signature-line">תאריך: ___________</div>
-                </div>
-                <div class="signature-box">
-                    <div>חתימת נותן השירות</div>
-                    <div class="signature-line">תאריך: ___________</div>
-                </div>
-            </div>
+            ${htmlContent}
         </body>
         </html>
-        `;
+            `;
+        }
+        
+        console.log('✅ HTML content ready for PDF generation');
 
         // Launch puppeteer and generate PDF
         console.log('🚀 Launching Puppeteer...');

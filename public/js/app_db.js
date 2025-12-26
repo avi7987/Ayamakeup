@@ -2086,7 +2086,7 @@ const WhatsAppAutomation = {
         console.log('✅ Lead data saved');
         
         // Open HTML preview in new tab
-        const previewUrl = `${CONFIG.API_BASE_URL}/api/preview-contract/${this.pendingLead._id || this.pendingLead.id}`;
+        const previewUrl = `${CONFIG.API_BASE_URL}/preview-contract/${this.pendingLead._id || this.pendingLead.id}`;
         window.open(previewUrl, '_blank');
     },
     
