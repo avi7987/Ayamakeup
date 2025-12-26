@@ -1,4 +1,4 @@
-﻿require('dotenv').config();
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
@@ -22,19 +22,24 @@ app.use(bodyParser.json());
 const MONGODB_URI = process.env.MONGODB_URI;
 
 if (!MONGODB_URI) {
-    console.error('ג ERROR: MONGODB_URI is not defined in .env file');
+    console.error('❌ ERROR: MONGODB_URI is not defined in .env file');
     process.exit(1);
 }
 
-console.log('נ”„ Connecting to MongoDB Atlas...');
+console.log('🔄 Connecting to MongoDB Atlas...');
+
+// Helper function to get Israel date
+function getIsraelDate() {
+    return new Date().toLocaleDateString('he-IL', { timeZone: 'Asia/Jerusalem' });
+}
 
 // Connect to MongoDB
 async function connectDB() {
     try {
         await mongoose.connect(MONGODB_URI);
-        console.log('✅ Connected to MongoDB Atlas successfully!');
+        console.log('? Connected to MongoDB Atlas successfully!');
     } catch (error) {
-        console.error('❌ MongoDB connection error:', error);
+        console.error('? MongoDB connection error:', error);
         process.exit(1);
     }
 }
@@ -146,7 +151,7 @@ const upload = multer({
         if (path.extname(file.originalname).toLowerCase() === '.docx') {
             cb(null, true);
         } else {
-            cb(new Error('רק קבצי .docx מותרים'));
+            cb(new Error('�� ���� .docx ������'));
         }
     }
 });
@@ -514,77 +519,77 @@ app.get('/api/contract-template-html', async (req, res) => {
             // Create default template if doesn't exist
             const defaultTemplate = `<div style="text-align: center; margin-bottom: 30px;">
     {{#if logoUrl}}
-    <img src="{{logoUrl}}" alt="לוגו" style="max-width: 200px; margin-bottom: 20px;">
+    <img src="{{logoUrl}}" alt="����" style="max-width: 200px; margin-bottom: 20px;">
     {{/if}}
-    <h1 style="font-size: 28px; margin-bottom: 10px;">חוזה מתן שירותי איפור ושיער</h1>
-    <p>תאריך: {{date}}</p>
+    <h1 style="font-size: 28px; margin-bottom: 10px;">���� ��� ������ ����� �����</h1>
+    <p>�����: {{date}}</p>
 </div>
 
 <div style="margin-bottom: 25px;">
-    <h2 style="font-size: 18px; border-bottom: 1px solid #ccc; padding-bottom: 5px;">פרטי הצדדים</h2>
-    <p><strong>בין:</strong> איה שוסטרמן - איפור ושיער (להלן: "נותן השירות")</p>
-    <p><strong>לבין:</strong> {{fullName}} (להלן: "הלקוחה")</p>
-    <p><strong>טלפון:</strong> {{phone}}</p>
+    <h2 style="font-size: 18px; border-bottom: 1px solid #ccc; padding-bottom: 5px;">���� ������</h2>
+    <p><strong>���:</strong> ��� ������� - ����� ����� (����: "���� ������")</p>
+    <p><strong>����:</strong> {{fullName}} (����: "������")</p>
+    <p><strong>�����:</strong> {{phone}}</p>
 </div>
 
 <div style="margin-bottom: 25px;">
-    <h2 style="font-size: 18px; border-bottom: 1px solid #ccc; padding-bottom: 5px;">פרטי האירוע</h2>
-    <p><strong>סוג האירוע:</strong> {{service}}</p>
-    <p><strong>תאריך האירוע:</strong> {{eventDate}}</p>
-    <p><strong>מיקום ההתארגנות:</strong> {{location}}</p>
+    <h2 style="font-size: 18px; border-bottom: 1px solid #ccc; padding-bottom: 5px;">���� ������</h2>
+    <p><strong>��� ������:</strong> {{service}}</p>
+    <p><strong>����� ������:</strong> {{eventDate}}</p>
+    <p><strong>����� ���������:</strong> {{location}}</p>
 </div>
 
 <div style="margin-bottom: 25px;">
-    <h2 style="font-size: 18px; border-bottom: 1px solid #ccc; padding-bottom: 5px;">פירוט השירותים והעלויות</h2>
+    <h2 style="font-size: 18px; border-bottom: 1px solid #ccc; padding-bottom: 5px;">����� �������� ��������</h2>
     {{servicesTable}}
     
     <div style="background-color: #f9f9f9; padding: 20px; border: 2px solid #333; margin-top: 20px;">
         <p style="display: flex; justify-content: space-between; border-bottom: 1px solid #ddd; padding: 8px 0;">
-            <span>סה"כ עלות השירותים:</span>
-            <strong>{{totalPrice}} ₪</strong>
+            <span>��"� ���� ��������:</span>
+            <strong>{{totalPrice}} �</strong>
         </p>
         <p style="display: flex; justify-content: space-between; border-bottom: 1px solid #ddd; padding: 8px 0;">
-            <span>מקדמה ששולמה:</span>
-            <strong>{{deposit}} ₪</strong>
+            <span>����� ������:</span>
+            <strong>{{deposit}} �</strong>
         </p>
         <p style="display: flex; justify-content: space-between; padding: 15px 0 0 0; font-size: 16px;">
-            <span>יתרה לתשלום ביום האירוע:</span>
-            <strong>{{balance}} ₪</strong>
+            <span>���� ������ ���� ������:</span>
+            <strong>{{balance}} �</strong>
         </p>
     </div>
 </div>
 
 <div style="margin-bottom: 25px;">
-    <h2 style="font-size: 18px; border-bottom: 1px solid #ccc; padding-bottom: 5px;">תנאי תשלום</h2>
+    <h2 style="font-size: 18px; border-bottom: 1px solid #ccc; padding-bottom: 5px;">���� �����</h2>
     <ol>
-        <li>המקדמה שולמה במלואה ואינה ניתנת להחזר.</li>
-        <li>היתרה תשולם במזומן או בהעברה בנקאית ביום האירוע.</li>
-        <li>תשלום היתרה יבוצע לפני תחילת מתן השירותים.</li>
+        <li>������ ����� ������ ����� ����� �����.</li>
+        <li>����� ����� ������ �� ������ ������ ���� ������.</li>
+        <li>����� ����� ����� ���� ����� ��� ��������.</li>
     </ol>
 </div>
 
 <div style="margin-bottom: 25px;">
-    <h2 style="font-size: 18px; border-bottom: 1px solid #ccc; padding-bottom: 5px;">ביטול ושינויים</h2>
+    <h2 style="font-size: 18px; border-bottom: 1px solid #ccc; padding-bottom: 5px;">����� ��������</h2>
     <ol>
-        <li>ביטול עד 30 יום לפני האירוע - זיכוי מלא בניכוי המקדמה.</li>
-        <li>ביטול בין 30-14 יום לפני האירוע - זיכוי של 50% בלבד.</li>
-        <li>ביטול פחות מ-14 יום לפני האירוע - ללא זיכוי.</li>
+        <li>����� �� 30 ��� ���� ������ - ����� ��� ������ ������.</li>
+        <li>����� ��� 30-14 ��� ���� ������ - ����� �� 50% ����.</li>
+        <li>����� ���� �-14 ��� ���� ������ - ��� �����.</li>
     </ol>
 </div>
 
 <div style="margin-top: 60px; display: flex; justify-content: space-between;">
     <div style="text-align: center; width: 40%;">
-        <p>חתימת הלקוחה</p>
-        <div style="margin-top: 40px; border-top: 1px solid #333; padding-top: 5px;">תאריך: ___________</div>
+        <p>����� ������</p>
+        <div style="margin-top: 40px; border-top: 1px solid #333; padding-top: 5px;">�����: ___________</div>
     </div>
     <div style="text-align: center; width: 40%;">
-        <p>חתימת נותן השירות</p>
-        <div style="margin-top: 40px; border-top: 1px solid #333; padding-top: 5px;">תאריך: ___________</div>
+        <p>����� ���� ������</p>
+        <div style="margin-top: 40px; border-top: 1px solid #333; padding-top: 5px;">�����: ___________</div>
     </div>
 </div>
 
 <p style="margin-top: 40px; text-align: center; font-size: 12px; color: #666;">
-    הערה: חוזה זה נערך בשתי העתקים, כשכל צד קיבל את העתקו.
+    ����: ���� �� ���� ���� ������, ���� �� ���� �� �����.
 </p>`;
 
             template = await ContractTemplate.create({
@@ -660,34 +665,34 @@ app.post('/api/upload-logo', upload.single('logo'), async (req, res) => {
 // Upload contract template
 app.post('/api/contract-template', upload.single('template'), async (req, res) => {
     try {
-        console.log('📄 Contract template upload request received');
+        console.log('?? Contract template upload request received');
         console.log('File:', req.file);
         
         if (!req.file) {
-            console.error('❌ No file in request');
-            return res.status(400).json({ error: 'לא נבחר קובץ. יש לבחור קובץ .docx' });
+            console.error('? No file in request');
+            return res.status(400).json({ error: '�� ���� ����. �� ����� ���� .docx' });
         }
         
-        console.log('✅ Template uploaded successfully:', req.file.filename);
+        console.log('? Template uploaded successfully:', req.file.filename);
         res.json({ 
             success: true, 
-            message: 'תבנית החוזה הועלתה בהצלחה! ✅',
+            message: '����� ����� ������ ������! ?',
             filename: req.file.filename 
         });
     } catch (error) {
-        console.error('❌ Error uploading template:', error);
-        res.status(500).json({ error: 'שגיאה בהעלאת התבנית: ' + error.message });
+        console.error('? Error uploading template:', error);
+        res.status(500).json({ error: '����� ������ ������: ' + error.message });
     }
 });
 
 // Preview contract HTML (for debugging) - GET endpoint
 app.get('/api/preview-contract/:leadId', async (req, res) => {
     try {
-        console.log('👁️ Previewing contract HTML for lead:', req.params.leadId);
+        console.log('??? Previewing contract HTML for lead:', req.params.leadId);
         
         const lead = await Lead.findById(req.params.leadId);
         if (!lead) {
-            return res.status(404).send('<h1 style="color:red;text-align:center;margin-top:50px;">ליד לא נמצא</h1>');
+            return res.status(404).send('<h1 style="color:red;text-align:center;margin-top:50px;">��� �� ����</h1>');
         }
 
         // Prepare data (same as PDF generation)
@@ -695,7 +700,7 @@ app.get('/api/preview-contract/:leadId', async (req, res) => {
         const price = lead.proposedPrice || 0;
         const deposit = lead.proposedDeposit || 0;
         
-        console.log('💵 Contract View - Lead data:', {
+        console.log('?? Contract View - Lead data:', {
             leadId: lead._id,
             proposedPrice: lead.proposedPrice,
             proposedDeposit: lead.proposedDeposit,
@@ -716,16 +721,16 @@ app.get('/api/preview-contract/:leadId', async (req, res) => {
         
         const balance = totalPrice - deposit;
         
-        console.log('💰 Contract View - Calculated values:', {
+        console.log('?? Contract View - Calculated values:', {
             totalPrice: totalPrice,
             deposit: deposit,
             balance: balance
         });
         
         const escortTypeHebrew = {
-            'none': 'ללא ליווי',
-            'short': 'ליווי קצר',
-            'long': 'ליווי ארוך'
+            'none': '��� �����',
+            'short': '����� ���',
+            'long': '����� ����'
         };
         
         // Build bridesmaids rows HTML
@@ -733,8 +738,8 @@ app.get('/api/preview-contract/:leadId', async (req, res) => {
         if (lead.bridesmaids && lead.bridesmaids.length > 0) {
             bridesmaidsRowsHtml = lead.bridesmaids.map((bridesmaid, i) => `
                         <tr>
-                            <td>מלווה ${i + 1}</td>
-                            <td>${bridesmaid.service || 'שירות מלווה'}</td>
+                            <td>����� ${i + 1}</td>
+                            <td>${bridesmaid.service || '����� �����'}</td>
                             <td>${(bridesmaid.price || 0).toLocaleString('he-IL')}</td>
                         </tr>`).join('');
         }
@@ -747,20 +752,20 @@ app.get('/api/preview-contract/:leadId', async (req, res) => {
             <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
                 <thead>
                     <tr style="background-color: #f5f5f5;">
-                        <th style="border: 1px solid #333; padding: 12px; text-align: center; font-weight: bold;">תיאור השירות</th>
-                        <th style="border: 1px solid #333; padding: 12px; text-align: center; font-weight: bold;">פרטים</th>
-                        <th style="border: 1px solid #333; padding: 12px; text-align: center; font-weight: bold;">מחיר (₪)</th>
+                        <th style="border: 1px solid #333; padding: 12px; text-align: center; font-weight: bold;">����� ������</th>
+                        <th style="border: 1px solid #333; padding: 12px; text-align: center; font-weight: bold;">�����</th>
+                        <th style="border: 1px solid #333; padding: 12px; text-align: center; font-weight: bold;">���� (�)</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <td style="border: 1px solid #333; padding: 10px; text-align: right;">${lead.service || 'שירות עיקרי'}</td>
-                        <td style="border: 1px solid #333; padding: 10px; text-align: center;">שירות עיקרי</td>
+                        <td style="border: 1px solid #333; padding: 10px; text-align: right;">${lead.service || '����� �����'}</td>
+                        <td style="border: 1px solid #333; padding: 10px; text-align: center;">����� �����</td>
                         <td style="border: 1px solid #333; padding: 10px; text-align: center;">${price.toLocaleString('he-IL')}</td>
                     </tr>
                     ${lead.escortType && lead.escortType !== 'none' ? `
                     <tr>
-                        <td style="border: 1px solid #333; padding: 10px; text-align: right;">ליווי לאירוע</td>
+                        <td style="border: 1px solid #333; padding: 10px; text-align: right;">����� ������</td>
                         <td style="border: 1px solid #333; padding: 10px; text-align: center;">${escortTypeHebrew[lead.escortType]}</td>
                         <td style="border: 1px solid #333; padding: 10px; text-align: center;">${(lead.escortPrice || 0).toLocaleString('he-IL')}</td>
                     </tr>
@@ -776,16 +781,16 @@ app.get('/api/preview-contract/:leadId', async (req, res) => {
         // Apply variable replacements
         const replacements = {
             '{{fullName}}': fullName,
-            '{{phone}}': lead.phone || 'לא הוזן',
-            '{{service}}': lead.service || 'לא הוזן',
-            '{{eventDate}}': lead.eventDate || 'לא הוזן',
-            '{{location}}': lead.location || 'לא הוזן',
+            '{{phone}}': lead.phone || '�� ����',
+            '{{service}}': lead.service || '�� ����',
+            '{{eventDate}}': lead.eventDate || '�� ����',
+            '{{location}}': lead.location || '�� ����',
             '{{proposedPrice}}': (lead.proposedPrice || 0).toLocaleString('he-IL'),
             '{{totalPrice}}': totalPrice.toLocaleString('he-IL'),
             '{{price}}': price.toLocaleString('he-IL'),
             '{{deposit}}': deposit.toLocaleString('he-IL'),
             '{{balance}}': balance.toLocaleString('he-IL'),
-            '{{date}}': new Date().toLocaleDateString('he-IL'),
+            '{{date}}': getIsraelDate(),
             '{{servicesTable}}': servicesTableHTML,
             '{{logoUrl}}': customTemplate?.logoUrl || ''
         };
@@ -810,7 +815,7 @@ app.get('/api/preview-contract/:leadId', async (req, res) => {
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>תצוגה מקדימה - חוזה</title>
+            <title>����� ������ - ����</title>
             <style>
                 body { 
                     font-family: Arial, sans-serif; 
@@ -846,23 +851,23 @@ app.get('/api/preview-contract/:leadId', async (req, res) => {
         </head>
         <body>
             <div class="preview-notice">
-                🔍 תצוגה מקדימה - זה לא ה-PDF הסופי, רק בדיקת נתונים
+                ?? ����� ������ - �� �� �-PDF �����, �� ����� ������
             </div>
             
             ${htmlContent}
             
             <div class="debug-info">
-                <h3>🔧 מידע לבדיקה (לא יופיע ב-PDF)</h3>
+                <h3>?? ���� ������ (�� ����� �-PDF)</h3>
                 <div><strong>Lead ID:</strong> ${lead._id}</div>
-                <div><strong>שם:</strong> ${lead.name}</div>
-                <div><strong>שם משפחה:</strong> ${lead.lastName || 'לא הוזן'}</div>
-                <div><strong>סוג ליווי:</strong> ${lead.escortType || 'none'}</div>
-                <div><strong>מחיר ליווי:</strong> ${lead.escortPrice || 0} ₪</div>
-                <div><strong>מספר מלוות:</strong> ${lead.bridesmaids?.length || 0}</div>
-                <div><strong>מחיר עיקרי:</strong> ${price} ₪</div>
-                <div><strong>מקדמה:</strong> ${deposit} ₪</div>
-                <div><strong>סה"כ כולל הכל:</strong> ${totalPrice} ₪</div>
-                <div><strong>יתרה:</strong> ${balance} ₪</div>
+                <div><strong>��:</strong> ${lead.name}</div>
+                <div><strong>�� �����:</strong> ${lead.lastName || '�� ����'}</div>
+                <div><strong>��� �����:</strong> ${lead.escortType || 'none'}</div>
+                <div><strong>���� �����:</strong> ${lead.escortPrice || 0} �</div>
+                <div><strong>���� �����:</strong> ${lead.bridesmaids?.length || 0}</div>
+                <div><strong>���� �����:</strong> ${price} �</div>
+                <div><strong>�����:</strong> ${deposit} �</div>
+                <div><strong>��"� ���� ���:</strong> ${totalPrice} �</div>
+                <div><strong>����:</strong> ${balance} �</div>
             </div>
         </body>
         </html>
@@ -870,8 +875,8 @@ app.get('/api/preview-contract/:leadId', async (req, res) => {
 
         res.send(finalHTML);
     } catch (error) {
-        console.error('❌ Error previewing contract:', error);
-        res.status(500).send(`<h1 style="color:red;text-align:center;margin-top:50px;">שגיאה בתצוגה מקדימה</h1><pre style="direction:ltr;text-align:left;padding:20px;background:#f5f5f5;">${error.stack}</pre>`);
+        console.error('? Error previewing contract:', error);
+        res.status(500).send(`<h1 style="color:red;text-align:center;margin-top:50px;">����� ������ ������</h1><pre style="direction:ltr;text-align:left;padding:20px;background:#f5f5f5;">${error.stack}</pre>`);
     }
 });
 
@@ -879,17 +884,17 @@ app.get('/api/preview-contract/:leadId', async (req, res) => {
 // Get contract for signing (returns HTML)
 app.get('/api/contract-view/:leadId', async (req, res) => {
     try {
-        console.log('👁️ Loading contract for signing:', req.params.leadId);
+        console.log('??? Loading contract for signing:', req.params.leadId);
         
         const lead = await Lead.findById(req.params.leadId);
         if (!lead) {
-            return res.status(404).json({ error: 'ליד לא נמצא' });
+            return res.status(404).json({ error: '��� �� ����' });
         }
 
         // Load custom template
         const customTemplate = await ContractTemplate.findOne({ userId: 'default' });
         if (!customTemplate) {
-            return res.status(404).json({ error: 'לא נמצאה תבנית חוזה' });
+            return res.status(404).json({ error: '�� ����� ����� ����' });
         }
 
         // Prepare contract data (same as preview)
@@ -909,9 +914,9 @@ app.get('/api/contract-view/:leadId', async (req, res) => {
         const balance = totalPrice - deposit;
         
         const escortTypeHebrew = {
-            'none': 'ללא ליווי',
-            'short': 'ליווי קצר',
-            'long': 'ליווי ארוך'
+            'none': '��� �����',
+            'short': '����� ���',
+            'long': '����� ����'
         };
 
         // Build services table
@@ -919,8 +924,8 @@ app.get('/api/contract-view/:leadId', async (req, res) => {
         if (lead.bridesmaids && lead.bridesmaids.length > 0) {
             bridesmaidsRowsHtml = lead.bridesmaids.map((bridesmaid, i) => `
                 <tr>
-                    <td style="border: 1px solid #333; padding: 10px; text-align: right;">מלווה ${i + 1}</td>
-                    <td style="border: 1px solid #333; padding: 10px; text-align: center;">${bridesmaid.service || 'שירות מלווה'}</td>
+                    <td style="border: 1px solid #333; padding: 10px; text-align: right;">����� ${i + 1}</td>
+                    <td style="border: 1px solid #333; padding: 10px; text-align: center;">${bridesmaid.service || '����� �����'}</td>
                     <td style="border: 1px solid #333; padding: 10px; text-align: center;">${(bridesmaid.price || 0).toLocaleString('he-IL')}</td>
                 </tr>`).join('');
         }
@@ -929,20 +934,20 @@ app.get('/api/contract-view/:leadId', async (req, res) => {
             <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
                 <thead>
                     <tr style="background-color: #f5f5f5;">
-                        <th style="border: 1px solid #333; padding: 12px; text-align: center; font-weight: bold;">תיאור השירות</th>
-                        <th style="border: 1px solid #333; padding: 12px; text-align: center; font-weight: bold;">פרטים</th>
-                        <th style="border: 1px solid #333; padding: 12px; text-align: center; font-weight: bold;">מחיר (₪)</th>
+                        <th style="border: 1px solid #333; padding: 12px; text-align: center; font-weight: bold;">����� ������</th>
+                        <th style="border: 1px solid #333; padding: 12px; text-align: center; font-weight: bold;">�����</th>
+                        <th style="border: 1px solid #333; padding: 12px; text-align: center; font-weight: bold;">���� (�)</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <td style="border: 1px solid #333; padding: 10px; text-align: right;">${lead.service || 'שירות עיקרי'}</td>
-                        <td style="border: 1px solid #333; padding: 10px; text-align: center;">שירות עיקרי</td>
+                        <td style="border: 1px solid #333; padding: 10px; text-align: right;">${lead.service || '����� �����'}</td>
+                        <td style="border: 1px solid #333; padding: 10px; text-align: center;">����� �����</td>
                         <td style="border: 1px solid #333; padding: 10px; text-align: center;">${price.toLocaleString('he-IL')}</td>
                     </tr>
                     ${lead.escortType && lead.escortType !== 'none' ? `
                     <tr>
-                        <td style="border: 1px solid #333; padding: 10px; text-align: right;">ליווי לאירוע</td>
+                        <td style="border: 1px solid #333; padding: 10px; text-align: right;">����� ������</td>
                         <td style="border: 1px solid #333; padding: 10px; text-align: center;">${escortTypeHebrew[lead.escortType]}</td>
                         <td style="border: 1px solid #333; padding: 10px; text-align: center;">${(lead.escortPrice || 0).toLocaleString('he-IL')}</td>
                     </tr>
@@ -957,16 +962,16 @@ app.get('/api/contract-view/:leadId', async (req, res) => {
         
         const replacements = {
             '{{fullName}}': fullName,
-            '{{phone}}': lead.phone || 'לא הוזן',
-            '{{service}}': lead.service || 'לא הוזן',
-            '{{eventDate}}': lead.eventDate || 'לא הוזן',
-            '{{location}}': lead.location || 'לא הוזן',
+            '{{phone}}': lead.phone || '�� ����',
+            '{{service}}': lead.service || '�� ����',
+            '{{eventDate}}': lead.eventDate || '�� ����',
+            '{{location}}': lead.location || '�� ����',
             '{{proposedPrice}}': (lead.proposedPrice || 0).toLocaleString('he-IL'),
             '{{totalPrice}}': totalPrice.toLocaleString('he-IL'),
             '{{price}}': price.toLocaleString('he-IL'),
             '{{deposit}}': deposit.toLocaleString('he-IL'),
             '{{balance}}': balance.toLocaleString('he-IL'),
-            '{{date}}': new Date().toLocaleDateString('he-IL'),
+            '{{date}}': getIsraelDate(),
             '{{servicesTable}}': servicesTableHTML,
             '{{logoUrl}}': customTemplate?.logoUrl || ''
         };
@@ -993,7 +998,7 @@ app.get('/api/contract-view/:leadId', async (req, res) => {
             }
         });
     } catch (error) {
-        console.error('❌ Error loading contract for signing:', error);
+        console.error('? Error loading contract for signing:', error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -1001,17 +1006,17 @@ app.get('/api/contract-view/:leadId', async (req, res) => {
 // Save signature and generate signed PDF
 app.post('/api/sign-contract/:leadId', async (req, res) => {
     try {
-        console.log('✍️ Saving signature for lead:', req.params.leadId);
+        console.log('?? Saving signature for lead:', req.params.leadId);
         
         const { signature } = req.body;
         
         if (!signature) {
-            return res.status(400).json({ error: 'חתימה לא התקבלה' });
+            return res.status(400).json({ error: '����� �� ������' });
         }
 
         const lead = await Lead.findById(req.params.leadId);
         if (!lead) {
-            return res.status(404).json({ error: 'ליד לא נמצא' });
+            return res.status(404).json({ error: '��� �� ����' });
         }
 
         // Save signature to lead
@@ -1019,12 +1024,12 @@ app.post('/api/sign-contract/:leadId', async (req, res) => {
         lead.customerSignedAt = new Date();
         lead.contractStatus = 'signed';
 
-        console.log('📄 Generating signed PDF with signature...');
+        console.log('?? Generating signed PDF with signature...');
 
         // Load custom template
         const customTemplate = await ContractTemplate.findOne({ userId: 'default' });
         if (!customTemplate) {
-            return res.status(404).json({ error: 'לא נמצאה תבנית חוזה' });
+            return res.status(404).json({ error: '�� ����� ����� ����' });
         }
 
         // Prepare contract data
@@ -1044,9 +1049,9 @@ app.post('/api/sign-contract/:leadId', async (req, res) => {
         const balance = totalPrice - deposit;
         
         const escortTypeHebrew = {
-            'none': 'ללא ליווי',
-            'short': 'ליווי קצר',
-            'long': 'ליווי ארוך'
+            'none': '��� �����',
+            'short': '����� ���',
+            'long': '����� ����'
         };
 
         // Build services table
@@ -1054,8 +1059,8 @@ app.post('/api/sign-contract/:leadId', async (req, res) => {
         if (lead.bridesmaids && lead.bridesmaids.length > 0) {
             bridesmaidsRowsHtml = lead.bridesmaids.map((bridesmaid, i) => `
                 <tr>
-                    <td style="border: 1px solid #333; padding: 10px; text-align: right;">מלווה ${i + 1}</td>
-                    <td style="border: 1px solid #333; padding: 10px; text-align: center;">${bridesmaid.service || 'שירות מלווה'}</td>
+                    <td style="border: 1px solid #333; padding: 10px; text-align: right;">����� ${i + 1}</td>
+                    <td style="border: 1px solid #333; padding: 10px; text-align: center;">${bridesmaid.service || '����� �����'}</td>
                     <td style="border: 1px solid #333; padding: 10px; text-align: center;">${(bridesmaid.price || 0).toLocaleString('he-IL')}</td>
                 </tr>`).join('');
         }
@@ -1064,20 +1069,20 @@ app.post('/api/sign-contract/:leadId', async (req, res) => {
             <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
                 <thead>
                     <tr style="background-color: #f5f5f5;">
-                        <th style="border: 1px solid #333; padding: 12px; text-align: center; font-weight: bold;">תיאור השירות</th>
-                        <th style="border: 1px solid #333; padding: 12px; text-align: center; font-weight: bold;">פרטים</th>
-                        <th style="border: 1px solid #333; padding: 12px; text-align: center; font-weight: bold;">מחיר (₪)</th>
+                        <th style="border: 1px solid #333; padding: 12px; text-align: center; font-weight: bold;">����� ������</th>
+                        <th style="border: 1px solid #333; padding: 12px; text-align: center; font-weight: bold;">�����</th>
+                        <th style="border: 1px solid #333; padding: 12px; text-align: center; font-weight: bold;">���� (�)</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <td style="border: 1px solid #333; padding: 10px; text-align: right;">${lead.service || 'שירות עיקרי'}</td>
-                        <td style="border: 1px solid #333; padding: 10px; text-align: center;">שירות עיקרי</td>
+                        <td style="border: 1px solid #333; padding: 10px; text-align: right;">${lead.service || '����� �����'}</td>
+                        <td style="border: 1px solid #333; padding: 10px; text-align: center;">����� �����</td>
                         <td style="border: 1px solid #333; padding: 10px; text-align: center;">${price.toLocaleString('he-IL')}</td>
                     </tr>
                     ${lead.escortType && lead.escortType !== 'none' ? `
                     <tr>
-                        <td style="border: 1px solid #333; padding: 10px; text-align: right;">ליווי לאירוע</td>
+                        <td style="border: 1px solid #333; padding: 10px; text-align: right;">����� ������</td>
                         <td style="border: 1px solid #333; padding: 10px; text-align: center;">${escortTypeHebrew[lead.escortType]}</td>
                         <td style="border: 1px solid #333; padding: 10px; text-align: center;">${(lead.escortPrice || 0).toLocaleString('he-IL')}</td>
                     </tr>
@@ -1092,16 +1097,16 @@ app.post('/api/sign-contract/:leadId', async (req, res) => {
         
         const replacements = {
             '{{fullName}}': fullName,
-            '{{phone}}': lead.phone || 'לא הוזן',
-            '{{service}}': lead.service || 'לא הוזן',
-            '{{eventDate}}': lead.eventDate || 'לא הוזן',
-            '{{location}}': lead.location || 'לא הוזן',
+            '{{phone}}': lead.phone || '�� ����',
+            '{{service}}': lead.service || '�� ����',
+            '{{eventDate}}': lead.eventDate || '�� ����',
+            '{{location}}': lead.location || '�� ����',
             '{{proposedPrice}}': (lead.proposedPrice || 0).toLocaleString('he-IL'),
             '{{totalPrice}}': totalPrice.toLocaleString('he-IL'),
             '{{price}}': price.toLocaleString('he-IL'),
             '{{deposit}}': deposit.toLocaleString('he-IL'),
             '{{balance}}': balance.toLocaleString('he-IL'),
-            '{{date}}': new Date().toLocaleDateString('he-IL'),
+            '{{date}}': getIsraelDate(),
             '{{servicesTable}}': servicesTableHTML,
             '{{logoUrl}}': customTemplate?.logoUrl || ''
         };
@@ -1122,17 +1127,17 @@ app.post('/api/sign-contract/:leadId', async (req, res) => {
         // Add signature section to HTML
         const signatureSection = `
             <div style="margin-top: 50px; page-break-inside: avoid;">
-                <h3 style="font-size: 18px; font-weight: bold; margin-bottom: 20px;">חתימות:</h3>
+                <h3 style="font-size: 18px; font-weight: bold; margin-bottom: 20px;">������:</h3>
                 <div style="display: flex; justify-content: space-between; align-items: flex-end;">
                     <div style="text-align: center;">
                         <img src="${signature}" style="max-width: 200px; max-height: 80px; border-bottom: 2px solid #333; padding-bottom: 5px;" />
-                        <p style="margin-top: 10px; font-size: 12px;">חתימת הלקוחה</p>
-                        <p style="font-size: 11px; color: #666;">תאריך: ${new Date(lead.customerSignedAt).toLocaleDateString('he-IL')}</p>
+                        <p style="margin-top: 10px; font-size: 12px;">����� ������</p>
+                        <p style="font-size: 11px; color: #666;">�����: ${new Date(lead.customerSignedAt).toLocaleDateString('he-IL')}</p>
                     </div>
                     <div style="text-align: center;">
-                        <p style="font-family: 'Brush Script MT', cursive; font-size: 32px; margin: 0; padding: 20px 0;">איה שוסטרמן</p>
-                        <p style="margin-top: 10px; font-size: 12px;">חתימת נותן השירות</p>
-                        <p style="font-size: 11px; color: #666;">תאריך: ${new Date().toLocaleDateString('he-IL')}</p>
+                        <p style="font-family: 'Brush Script MT', cursive; font-size: 32px; margin: 0; padding: 20px 0;">��� �������</p>
+                        <p style="margin-top: 10px; font-size: 12px;">����� ���� ������</p>
+                        <p style="font-size: 11px; color: #666;">�����: ${getIsraelDate()}</p>
                     </div>
                 </div>
             </div>
@@ -1197,7 +1202,7 @@ app.post('/api/sign-contract/:leadId', async (req, res) => {
         });
         await browser.close();
 
-        console.log('✅ Signed PDF generated successfully');
+        console.log('? Signed PDF generated successfully');
 
         // Update lead with signed contract URL
         lead.signedContractUrl = `/contracts/${signedFilename}`;
@@ -1205,12 +1210,12 @@ app.post('/api/sign-contract/:leadId', async (req, res) => {
 
         res.json({
             success: true,
-            message: 'החתימה נשמרה והחוזה החתום נוצר בהצלחה',
+            message: '������ ����� ������ ����� ���� ������',
             signedAt: lead.customerSignedAt,
             signedContractUrl: lead.signedContractUrl
         });
     } catch (error) {
-        console.error('❌ Error saving signature:', error);
+        console.error('? Error saving signature:', error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -1218,15 +1223,15 @@ app.post('/api/sign-contract/:leadId', async (req, res) => {
 // Generate contract from lead data
 app.post('/api/generate-contract/:leadId', async (req, res) => {
     try {
-        console.log('📄 Generating contract for lead:', req.params.leadId);
+        console.log('?? Generating contract for lead:', req.params.leadId);
         
         const lead = await Lead.findById(req.params.leadId);
         if (!lead) {
-            console.error('❌ Lead not found:', req.params.leadId);
-            return res.status(404).json({ error: 'ליד לא נמצא' });
+            console.error('? Lead not found:', req.params.leadId);
+            return res.status(404).json({ error: '��� �� ����' });
         }
 
-        console.log('✅ Lead found:', {
+        console.log('? Lead found:', {
             name: lead.name,
             lastName: lead.lastName,
             escortType: lead.escortType,
@@ -1247,9 +1252,9 @@ app.post('/api/generate-contract/:leadId', async (req, res) => {
                 linebreaks: true,
             });
             templateExists = true;
-            console.log('📋 Template loaded, preparing data...');
+            console.log('?? Template loaded, preparing data...');
         } catch (templateError) {
-            console.log('⚠️ No template file found, will generate PDF directly from HTML');
+            console.log('?? No template file found, will generate PDF directly from HTML');
             templateExists = false;
         }
 
@@ -1276,9 +1281,9 @@ app.post('/api/generate-contract/:leadId', async (req, res) => {
         
         // Translate escort type to Hebrew
         const escortTypeHebrew = {
-            'none': 'ללא ליווי',
-            'short': 'ליווי קצר',
-            'long': 'ליווי ארוך'
+            'none': '��� �����',
+            'short': '����� ���',
+            'long': '����� ����'
         };
         
         // Build services array for table loop in Word
@@ -1286,15 +1291,15 @@ app.post('/api/generate-contract/:leadId', async (req, res) => {
         
         // Main service
         services.push({
-            description: lead.service || 'שירות עיקרי',
-            details: 'שירות עיקרי',
+            description: lead.service || '����� �����',
+            details: '����� �����',
             price: price
         });
         
         // Escort service
         if (lead.escortType && lead.escortType !== 'none') {
             services.push({
-                description: 'ליווי לאירוע',
+                description: '����� ������',
                 details: escortTypeHebrew[lead.escortType],
                 price: lead.escortPrice || 0
             });
@@ -1304,8 +1309,8 @@ app.post('/api/generate-contract/:leadId', async (req, res) => {
         if (lead.bridesmaids && lead.bridesmaids.length > 0) {
             lead.bridesmaids.forEach((bridesmaid, index) => {
                 services.push({
-                    description: `מלווה ${index + 1}`,
-                    details: bridesmaid.service || 'שירות מלווה',
+                    description: `����� ${index + 1}`,
+                    details: bridesmaid.service || '����� �����',
                     price: bridesmaid.price || 0
                 });
             });
@@ -1314,21 +1319,21 @@ app.post('/api/generate-contract/:leadId', async (req, res) => {
         // Build services text as a single string (simpler than loop)
         let servicesText = '';
         services.forEach(service => {
-            servicesText += `• ${service.description} - ${service.details}: ${service.price} ₪\n`;
+            servicesText += `� ${service.description} - ${service.details}: ${service.price} �\n`;
         });
         
         // Build complete pricing section (no logic in template!)
         const pricingSection = `
-פירוט השירותים והעלויות:
-השירותים שסוכמו בין הצדדים כוללים:
+����� �������� ��������:
+�������� ������ ��� ������ ������:
 
 ${servicesText}
-סיכום פיננסי:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-סה"כ עלות כל השירותים: ${totalPrice.toLocaleString('he-IL')} ₪
-מקדמה ששולמה (עם חתימת החוזה): ${deposit.toLocaleString('he-IL')} ₪
-יתרה לתשלום ביום האירוע: ${balance.toLocaleString('he-IL')} ₪
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+����� ������:
+??????????????????????????????????
+��"� ���� �� ��������: ${totalPrice.toLocaleString('he-IL')} �
+����� ������ (�� ����� �����): ${deposit.toLocaleString('he-IL')} �
+���� ������ ���� ������: ${balance.toLocaleString('he-IL')} �
+??????????????????????????????????
         `.trim();
         
         const templateData = {
@@ -1353,10 +1358,10 @@ ${servicesText}
             escortPrice: lead.escortPrice || 0,
             bridesmaids: lead.bridesmaids || [],
             bridesmaidsCount: lead.bridesmaids?.length || 0,
-            date: new Date().toLocaleDateString('he-IL'),
+            date: getIsraelDate(),
         };
 
-        console.log('📊 Template data prepared:', JSON.stringify(templateData, null, 2));
+        console.log('?? Template data prepared:', JSON.stringify(templateData, null, 2));
 
         // Try to use Word template, fallback to HTML if template fails
         let useWordTemplate = false;
@@ -1364,19 +1369,19 @@ ${servicesText}
         
         if (templateExists && doc) {
             try {
-                console.log('🔄 Rendering Word template...');
+                console.log('?? Rendering Word template...');
                 doc.render(templateData);
-                console.log('✅ Word template rendered successfully');
+                console.log('? Word template rendered successfully');
                 buf = doc.getZip().generate({ type: 'nodebuffer' });
                 useWordTemplate = true;
             } catch (renderError) {
-                console.error('❌ Word template rendering failed:', renderError);
+                console.error('? Word template rendering failed:', renderError);
                 console.error('Error properties:', renderError.properties);
-                console.log('🔄 Falling back to direct PDF generation (HTML-based)...');
+                console.log('?? Falling back to direct PDF generation (HTML-based)...');
                 useWordTemplate = false;
             }
         } else {
-            console.log('📄 Generating PDF directly from HTML (no Word template)');
+            console.log('?? Generating PDF directly from HTML (no Word template)');
         }
 
         // Save the filled Word document (if template worked)
@@ -1388,7 +1393,7 @@ ${servicesText}
         
         if (useWordTemplate && buf) {
             await fs.writeFile(wordPath, buf);
-            console.log('💾 Word contract saved');
+            console.log('?? Word contract saved');
         }
 
         // Convert to PDF using Puppeteer
@@ -1396,14 +1401,14 @@ ${servicesText}
         const pdfPath = path.join(contractsDir, pdfFilename);
 
         // Load custom template from database
-        console.log('📋 Loading custom contract template from database...');
+        console.log('?? Loading custom contract template from database...');
         let customTemplate = await ContractTemplate.findOne({ userId: 'default' });
         
         if (!customTemplate || !customTemplate.templateHTML) {
-            console.log('⚠️ No custom template found, using default hardcoded template');
+            console.log('?? No custom template found, using default hardcoded template');
             customTemplate = { templateHTML: '', logoUrl: '' };
         } else {
-            console.log('✅ Custom template loaded');
+            console.log('? Custom template loaded');
         }
 
         // Build bridesmaids rows HTML
@@ -1411,8 +1416,8 @@ ${servicesText}
         if (lead.bridesmaids && lead.bridesmaids.length > 0) {
             bridesmaidsRowsHtml = lead.bridesmaids.map((bridesmaid, i) => `
                         <tr>
-                            <td>מלווה ${i + 1}</td>
-                            <td>${bridesmaid.service || 'שירות מלווה'}</td>
+                            <td>����� ${i + 1}</td>
+                            <td>${bridesmaid.service || '����� �����'}</td>
                             <td>${(bridesmaid.price || 0).toLocaleString('he-IL')}</td>
                         </tr>`).join('');
         }
@@ -1422,20 +1427,20 @@ ${servicesText}
             <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
                 <thead>
                     <tr style="background-color: #f5f5f5;">
-                        <th style="border: 1px solid #333; padding: 12px; text-align: center; font-weight: bold;">תיאור השירות</th>
-                        <th style="border: 1px solid #333; padding: 12px; text-align: center; font-weight: bold;">פרטים</th>
-                        <th style="border: 1px solid #333; padding: 12px; text-align: center; font-weight: bold;">מחיר (₪)</th>
+                        <th style="border: 1px solid #333; padding: 12px; text-align: center; font-weight: bold;">����� ������</th>
+                        <th style="border: 1px solid #333; padding: 12px; text-align: center; font-weight: bold;">�����</th>
+                        <th style="border: 1px solid #333; padding: 12px; text-align: center; font-weight: bold;">���� (�)</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <td style="border: 1px solid #333; padding: 10px; text-align: right;">${lead.service || 'שירות עיקרי'}</td>
-                        <td style="border: 1px solid #333; padding: 10px; text-align: center;">שירות עיקרי</td>
+                        <td style="border: 1px solid #333; padding: 10px; text-align: right;">${lead.service || '����� �����'}</td>
+                        <td style="border: 1px solid #333; padding: 10px; text-align: center;">����� �����</td>
                         <td style="border: 1px solid #333; padding: 10px; text-align: center;">${price.toLocaleString('he-IL')}</td>
                     </tr>
                     ${lead.escortType && lead.escortType !== 'none' ? `
                     <tr>
-                        <td style="border: 1px solid #333; padding: 10px; text-align: right;">ליווי לאירוע</td>
+                        <td style="border: 1px solid #333; padding: 10px; text-align: right;">����� ������</td>
                         <td style="border: 1px solid #333; padding: 10px; text-align: center;">${escortTypeHebrew[lead.escortType]}</td>
                         <td style="border: 1px solid #333; padding: 10px; text-align: center;">${(lead.escortPrice || 0).toLocaleString('he-IL')}</td>
                     </tr>
@@ -1448,7 +1453,7 @@ ${servicesText}
         // Replace variables in custom template
         let htmlContent = customTemplate.templateHTML || '';
         
-        console.log('📝 Applying variable replacements to template...');
+        console.log('?? Applying variable replacements to template...');
         
         // Create replacement map
         const replacements = {
@@ -1505,20 +1510,20 @@ ${servicesText}
             `;
         }
         
-        console.log('✅ HTML content ready for PDF generation');
+        console.log('? HTML content ready for PDF generation');
 
         // Launch puppeteer and generate PDF
-        console.log('🚀 Launching Puppeteer...');
+        console.log('?? Launching Puppeteer...');
         
         // Find Chromium executable
         let chromiumPath = process.env.PUPPETEER_EXECUTABLE_PATH;
         
         // If not found in env, try to find it
         if (!chromiumPath || !require('fs').existsSync(chromiumPath)) {
-            console.log('⚠️ Custom chromium path not found, using puppeteer default');
+            console.log('?? Custom chromium path not found, using puppeteer default');
             chromiumPath = undefined; // Let puppeteer use its default
         } else {
-            console.log('✅ Using chromium from:', chromiumPath);
+            console.log('? Using chromium from:', chromiumPath);
         }
         
         const browser = await puppeteer.launch({
@@ -1534,12 +1539,12 @@ ${servicesText}
             ],
             executablePath: chromiumPath
         });
-        console.log('✅ Browser launched');
+        console.log('? Browser launched');
         
         const page = await browser.newPage();
-        console.log('📄 Setting content...');
+        console.log('?? Setting content...');
         await page.setContent(htmlContent);
-        console.log('📝 Generating PDF...');
+        console.log('?? Generating PDF...');
         await page.pdf({
             path: pdfPath,
             format: 'A4',
@@ -1551,39 +1556,39 @@ ${servicesText}
                 right: '20mm'
             }
         });
-        console.log('✅ PDF generated successfully');
+        console.log('? PDF generated successfully');
         await browser.close();
-        console.log('🔒 Browser closed');
+        console.log('?? Browser closed');
 
         // Update lead with contract URL
         lead.contractFileUrl = `/contracts/${pdfFilename}`;
         lead.contractStatus = 'sent';
         await lead.save();
-        console.log('💾 Lead updated with contract URL');
+        console.log('?? Lead updated with contract URL');
 
         res.json({
             success: true,
             pdfUrl: `/contracts/${pdfFilename}`,
             wordUrl: `/contracts/${wordFilename}`,
-            message: 'החוזה נוצר בהצלחה'
+            message: '����� ���� ������'
         });
     } catch (error) {
-        console.error('❌ Error generating contract:', error);
+        console.error('? Error generating contract:', error);
         console.error('Error name:', error.name);
         console.error('Error message:', error.message);
         console.error('Error stack:', error.stack);
         
         // Return more detailed error
         const errorResponse = {
-            error: error.message || 'שגיאה ביצירת החוזה',
+            error: error.message || '����� ������ �����',
             errorType: error.name || 'Error',
             errorDetails: error.stack
         };
         
         // If it's a Puppeteer error, add specific message
         if (error.message && error.message.includes('browserless')) {
-            errorResponse.error = 'Puppeteer לא זמין. נסי שוב בעוד דקה.';
-            errorResponse.hint = 'Railway מאתחל את Chromium';
+            errorResponse.error = 'Puppeteer �� ����. ��� ��� ���� ���.';
+            errorResponse.hint = 'Railway ����� �� Chromium';
         }
         
         res.status(500).json(errorResponse);
@@ -1614,22 +1619,22 @@ async function startServer() {
         // Drop the old 'id' index if it exists (after models are loaded)
         try {
             await Lead.collection.dropIndex('id_1');
-            console.log('🗑️  Dropped old id_1 index from leads collection');
+            console.log('???  Dropped old id_1 index from leads collection');
         } catch (dropError) {
             // Index doesn't exist, that's fine
             if (dropError.code !== 27) { // 27 = IndexNotFound
-                console.log('ℹ️  No id_1 index to drop (already clean)');
+                console.log('??  No id_1 index to drop (already clean)');
             }
         }
         
         app.listen(PORT, () => {
             console.log('');
             console.log('========================================');
-            console.log('ג¨  CRM Server Started Successfully!  ג¨');
+            console.log('✨  CRM Server Started Successfully!  ✨');
             console.log('========================================');
-            console.log(`נ  Server: http://localhost:${PORT}`);
-            console.log(`נ“  API: http://localhost:${PORT}/api`);
-            console.log(`נ’  Health Check: http://localhost:${PORT}/api/health`);
+            console.log(`🌐  Server: http://localhost:${PORT}`);
+            console.log(`📊  API: http://localhost:${PORT}/api`);
+            console.log(`💚  Health Check: http://localhost:${PORT}/api/health`);
             console.log('========================================');
             console.log('');
         });
@@ -1647,7 +1652,7 @@ startServer().catch(err => {
 
 // Graceful shutdown
 process.on('SIGINT', async () => {
-    console.log('\nנ‘‹ Shutting down server...');
+    console.log('\n👋 Shutting down server...');
     await mongoose.connection.close();
     process.exit(0);
 });
