@@ -527,23 +527,25 @@ app.post('/api/generate-contract/:leadId', async (req, res) => {
             bridesmaids: lead.bridesmaids?.length || 0
         });
 
-        // Read the contract template
+        // Try to read the contract template (optional - we can fallback to HTML)
         const templatePath = path.join(__dirname, 'uploads', 'contract-template.docx');
+        let doc = null;
+        let templateExists = false;
         
         try {
             await fs.access(templatePath);
-        } catch {
-            return res.status(404).json({ error: 'תבנית חוזה לא נמצאה. יש להעלות תבנית קודם.' });
+            const content = await fs.readFile(templatePath, 'binary');
+            const zip = new PizZip(content);
+            doc = new Docxtemplater(zip, {
+                paragraphLoop: true,
+                linebreaks: true,
+            });
+            templateExists = true;
+            console.log('📋 Template loaded, preparing data...');
+        } catch (templateError) {
+            console.log('⚠️ No template file found, will generate PDF directly from HTML');
+            templateExists = false;
         }
-
-        const content = await fs.readFile(templatePath, 'binary');
-        const zip = new PizZip(content);
-        const doc = new Docxtemplater(zip, {
-            paragraphLoop: true,
-            linebreaks: true,
-        });
-
-        console.log('📋 Template loaded, preparing data...');
 
         // Prepare data for template
         const fullName = `${lead.name} ${lead.lastName || ''}`.trim();
@@ -647,22 +649,27 @@ ${servicesText}
             date: new Date().toLocaleDateString('he-IL'),
         };
 
-        console.log('� Template data prepared:', JSON.stringify(templateData, null, 2));
+        console.log('📊 Template data prepared:', JSON.stringify(templateData, null, 2));
 
         // Try to use Word template, fallback to HTML if template fails
-        let useWordTemplate = true;
+        let useWordTemplate = false;
         let buf = null;
         
-        try {
-            console.log('🔄 Rendering Word template...');
-            doc.render(templateData);
-            console.log('✅ Word template rendered successfully');
-            buf = doc.getZip().generate({ type: 'nodebuffer' });
-        } catch (renderError) {
-            console.error('❌ Word template rendering failed:', renderError);
-            console.error('Error properties:', renderError.properties);
-            console.log('🔄 Falling back to direct PDF generation (HTML-based)...');
-            useWordTemplate = false;
+        if (templateExists && doc) {
+            try {
+                console.log('🔄 Rendering Word template...');
+                doc.render(templateData);
+                console.log('✅ Word template rendered successfully');
+                buf = doc.getZip().generate({ type: 'nodebuffer' });
+                useWordTemplate = true;
+            } catch (renderError) {
+                console.error('❌ Word template rendering failed:', renderError);
+                console.error('Error properties:', renderError.properties);
+                console.log('🔄 Falling back to direct PDF generation (HTML-based)...');
+                useWordTemplate = false;
+            }
+        } else {
+            console.log('📄 Generating PDF directly from HTML (no Word template)');
         }
 
         // Save the filled Word document (if template worked)
