@@ -47,7 +47,7 @@ async function connectDB() {
 // MongoDB Schemas
 const clientSchema = new mongoose.Schema({
     name: { type: String, required: true },
-    phone: { type: String, required: true },
+    phone: { type: String, required: false },
     service: { type: String, required: true },
     price: { type: Number, required: true },
     date: { type: Date, required: true },

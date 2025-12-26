@@ -2772,6 +2772,7 @@ const StageManager = {
             if (actualDeposit > 0) {
                 const incomeRecord = {
                     name: this.pendingLead.fullName || this.pendingLead.name,
+                    phone: this.pendingLead.phone || '',
                     amount: actualDeposit,
                     price: actualDeposit,
                     service: `מקדמה - ${this.pendingLead.fullName || this.pendingLead.name}`,
@@ -2873,6 +2874,7 @@ const StageManager = {
         if (additionalPayment > 0) {
             const incomeRecord = {
                 name: this.pendingLead.fullName || this.pendingLead.name,
+                phone: this.pendingLead.phone || '',
                 amount: additionalPayment,
                 price: additionalPayment,
                 service: `יתרת תשלום - ${this.pendingLead.fullName || this.pendingLead.name}`,
