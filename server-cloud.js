@@ -601,6 +601,12 @@ app.post('/api/generate-contract/:leadId', async (req, res) => {
             });
         }
         
+        // Build services text as a single string (simpler than loop)
+        let servicesText = '';
+        services.forEach(service => {
+            servicesText += `• ${service.description} - ${service.details}: ${service.price} ₪\n`;
+        });
+        
         const templateData = {
             name: lead.name || '',
             lastName: lead.lastName || '',
@@ -615,6 +621,7 @@ app.post('/api/generate-contract/:leadId', async (req, res) => {
             totalPrice: totalPrice,
             subtotal: totalPrice, // Alias for totalPrice
             services: services, // Array for table loop
+            servicesText: servicesText, // Pre-formatted text (simpler!)
             escortType: lead.escortType || 'none',
             escortTypeHebrew: escortTypeHebrew[lead.escortType || 'none'],
             escortPrice: lead.escortPrice || 0,
