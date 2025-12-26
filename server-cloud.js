@@ -488,17 +488,23 @@ app.put('/api/goals', async (req, res) => {
 // Upload contract template
 app.post('/api/contract-template', upload.single('template'), async (req, res) => {
     try {
+        console.log('📄 Contract template upload request received');
+        console.log('File:', req.file);
+        
         if (!req.file) {
-            return res.status(400).json({ error: 'לא נבחר קובץ' });
+            console.error('❌ No file in request');
+            return res.status(400).json({ error: 'לא נבחר קובץ. יש לבחור קובץ .docx' });
         }
         
+        console.log('✅ Template uploaded successfully:', req.file.filename);
         res.json({ 
             success: true, 
-            message: 'תבנית החוזה הועלתה בהצלחה',
+            message: 'תבנית החוזה הועלתה בהצלחה! ✅',
             filename: req.file.filename 
         });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error('❌ Error uploading template:', error);
+        res.status(500).json({ error: 'שגיאה בהעלאת התבנית: ' + error.message });
     }
 });
 

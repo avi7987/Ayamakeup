@@ -2364,18 +2364,34 @@ window.onload = async () => {
 const ContractManager = {
     async uploadTemplate(file) {
         if (!file) {
-            alert('לא נבחר קובץ');
+            alert('❌ לא נבחר קובץ. אנא בחרי קובץ Word (.docx)');
+            return;
+        }
+
+        // Check file extension
+        const fileName = file.name.toLowerCase();
+        if (!fileName.endsWith('.docx')) {
+            alert('❌ רק קבצי .docx מותרים!\n\nיש לשמור את הקובץ כ-Word Document (.docx) ולא .doc או פורמט אחר.');
+            return;
+        }
+
+        // Check file size (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            alert('❌ הקובץ גדול מדי!\n\nגודל מקסימלי: 5MB\nגודל הקובץ שלך: ' + (file.size / 1024 / 1024).toFixed(2) + 'MB');
             return;
         }
 
         const statusDiv = document.getElementById('contract-template-status');
-        statusDiv.textContent = '⏳ מעלה...';
+        statusDiv.textContent = '⏳ מעלה את הקובץ...';
+        statusDiv.className = 'text-sm text-blue-600';
 
         const formData = new FormData();
         formData.append('template', file);
 
         try {
-            const response = await fetch(`${CONFIG.API_BASE}/contract-template`, {
+            console.log('📤 Uploading template:', file.name, 'Size:', file.size);
+            
+            const response = await fetch(`${CONFIG.API_BASE_URL}/contract-template`, {
                 method: 'POST',
                 body: formData
             });
@@ -2383,20 +2399,24 @@ const ContractManager = {
             const data = await response.json();
             
             if (response.ok) {
-                statusDiv.textContent = '✅ תבנית הועלתה בהצלחה!';
+                statusDiv.textContent = '✅ תבנית הועלתה בהצלחה! שם: ' + file.name;
                 statusDiv.className = 'text-sm text-green-600 font-bold';
+                console.log('✅ Template uploaded successfully');
+                alert('🎉 התבנית הועלתה בהצלחה!\n\nשם הקובץ: ' + file.name + '\nעכשיו אפשר ליצור חוזים!');
             } else {
                 throw new Error(data.error || 'שגיאה בהעלאת התבנית');
             }
         } catch (error) {
+            console.error('❌ Upload error:', error);
             statusDiv.textContent = `❌ שגיאה: ${error.message}`;
-            statusDiv.className = 'text-sm text-red-600';
+            statusDiv.className = 'text-sm text-red-600 font-bold';
+            alert('❌ שגיאה בהעלאת התבנית!\n\n' + error.message + '\n\nבדקי:\n1. שהקובץ שמור כ-.docx\n2. שגודל הקובץ פחות מ-5MB\n3. שיש חיבור לאינטרנט');
         }
     },
 
     async checkTemplateStatus() {
         try {
-            const response = await fetch(`${CONFIG.API_BASE}/contract-template/status`);
+            const response = await fetch(`${CONFIG.API_BASE_URL}/contract-template/status`);
             const data = await response.json();
             
             const statusDiv = document.getElementById('contract-template-status');
@@ -2416,7 +2436,7 @@ const ContractManager = {
 
     async generateContract(leadId) {
         try {
-            const response = await fetch(`${CONFIG.API_BASE}/generate-contract/${leadId}`, {
+            const response = await fetch(`${CONFIG.API_BASE_URL}/generate-contract/${leadId}`, {
                 method: 'POST'
             });
 
