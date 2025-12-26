@@ -2778,8 +2778,8 @@ const StageManager = {
                     service: `מקדמה - ${this.pendingLead.fullName || this.pendingLead.name}`,
                     date: new Date().toISOString().split('T')[0],
                     payment: paymentMethod,
-                    isBride: true,
-                    notes: `מקדמה לחתונה - אירוע: ${this.pendingLead.eventDate || ''} | אמצעי תשלום: ${paymentMethod} | כלה 👰`,
+                    isBride: this.pendingLead.isBride || false,
+                    notes: `מקדמה לחתונה - אירוע: ${this.pendingLead.eventDate || ''} | אמצעי תשלום: ${paymentMethod}${this.pendingLead.isBride ? ' | כלה 👰' : ''}`,
                     income: actualDeposit,
                     leadId: this.pendingLead._id || this.pendingLead.id
                 };
@@ -2880,8 +2880,8 @@ const StageManager = {
                 service: `יתרת תשלום - ${this.pendingLead.fullName || this.pendingLead.name}`,
                 date: new Date().toISOString().split('T')[0],
                 payment: paymentMethod,
-                isBride: true,
-                notes: `יתרת תשלום באירוע - אירוע: ${this.pendingLead.eventDate || ''} | אמצעי תשלום: ${paymentMethod} | כלה 👰`,
+                isBride: this.pendingLead.isBride || false,
+                notes: `יתרת תשלום באירוע - אירוע: ${this.pendingLead.eventDate || ''} | אמצעי תשלום: ${paymentMethod}${this.pendingLead.isBride ? ' | כלה 👰' : ''}`,
                 income: additionalPayment,
                 leadId: this.pendingLead._id || this.pendingLead.id
             };
