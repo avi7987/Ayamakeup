@@ -545,7 +545,7 @@ const LeadsManager = {
             isBride: document.getElementById('lead-is-bride').checked,
             // New fields
             notes: '',
-            proposedPrice: parseFloat(document.getElementById('lead-proposed-price').value) || 0,
+            proposedPrice: 0, // Will be filled in later stage
             price: 0,
             deposit: 0,
             contractStatus: 'pending',
@@ -588,7 +588,6 @@ const LeadsManager = {
             document.getElementById('lead-service').value = '';
             document.getElementById('lead-event-date').value = '';
             document.getElementById('lead-location').value = '';
-            document.getElementById('lead-proposed-price').value = '';
             document.getElementById('lead-is-bride').checked = false;
         } catch (error) {
             alert("שגיאה בהוספת ליד: " + error.message);
@@ -2678,6 +2677,26 @@ const StageManager = {
             return false; // Don't complete stage change yet
         }
         
+        // Check if moving to "completed" (האירוע בוצע) - need to record actual deposit
+        if (newStage === 'completed') {
+            this.pendingLead = lead;
+            const totalPrice = (lead.proposedPrice || 0) + (lead.escortPrice || 0) + 
+                              (lead.bridesmaids || []).reduce((sum, b) => sum + (b.price || 0), 0);
+            document.getElementById('completed-totalPrice').textContent = totalPrice.toLocaleString('he-IL');
+            document.getElementById('completed-actualDeposit').value = lead.actualDeposit || lead.proposedDeposit || '';
+            document.getElementById('completed-income').textContent = '0';
+            
+            // Calculate income on input change
+            document.getElementById('completed-actualDeposit').oninput = (e) => {
+                const deposit = parseInt(e.target.value) || 0;
+                const income = totalPrice - deposit;
+                document.getElementById('completed-income').textContent = income.toLocaleString('he-IL');
+            };
+            
+            openModal('modal-event-completed');
+            return false; // Don't complete stage change yet
+        }
+        
         return true; // OK to proceed
     },
     
@@ -2706,6 +2725,54 @@ const StageManager = {
         await WhatsAppAutomation.checkAndPrompt(this.pendingLead._id || this.pendingLead.id, 'in-process');
         
         this.pendingLead = null;
+    },
+    
+    async confirmEventCompleted() {
+        if (!this.pendingLead) return;
+        
+        const actualDeposit = parseInt(document.getElementById('completed-actualDeposit').value) || 0;
+        const totalPrice = (this.pendingLead.proposedPrice || 0) + (this.pendingLead.escortPrice || 0) + 
+                          (this.pendingLead.bridesmaids || []).reduce((sum, b) => sum + (b.price || 0), 0);
+        const income = totalPrice - actualDeposit;
+        
+        // Save actual deposit and calculated income
+        this.pendingLead.actualDeposit = actualDeposit;
+        this.pendingLead.income = income;
+        this.pendingLead.completedAt = new Date().toISOString();
+        
+        await API.updateLead(this.pendingLead._id || this.pendingLead.id, this.pendingLead);
+        
+        closeModal('modal-event-completed');
+        
+        // Complete the stage change to "completed"
+        const leadId = this.pendingLead._id || this.pendingLead.id;
+        this.pendingLead = null;
+        
+        // Now update the status
+        const lead = State.leads.find(l => (l._id || l.id) === leadId);
+        if (lead) {
+            lead.status = 'completed';
+            await API.updateLeadStatus(leadId, 'completed');
+            HomeView.update();
+            alert(`✅ האירוע סומן כהושלם!\n💰 הכנסה: ${income.toLocaleString('he-IL')} ₪`);
+        }
+    },
+    
+    async skipEventCompleted() {
+        if (!this.pendingLead) return;
+        
+        closeModal('modal-event-completed');
+        
+        // Complete stage change without recording deposit
+        const leadId = this.pendingLead._id || this.pendingLead.id;
+        this.pendingLead = null;
+        
+        const lead = State.leads.find(l => (l._id || l.id) === leadId);
+        if (lead) {
+            lead.status = 'completed';
+            await API.updateLeadStatus(leadId, 'completed');
+            HomeView.update();
+        }
     }
 };
 
