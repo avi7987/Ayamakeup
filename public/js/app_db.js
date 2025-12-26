@@ -545,6 +545,7 @@ const LeadsManager = {
             isBride: document.getElementById('lead-is-bride').checked,
             // New fields
             notes: '',
+            proposedPrice: parseFloat(document.getElementById('lead-proposed-price').value) || 0,
             price: 0,
             deposit: 0,
             contractStatus: 'pending',
@@ -587,6 +588,7 @@ const LeadsManager = {
             document.getElementById('lead-service').value = '';
             document.getElementById('lead-event-date').value = '';
             document.getElementById('lead-location').value = '';
+            document.getElementById('lead-proposed-price').value = '';
             document.getElementById('lead-is-bride').checked = false;
         } catch (error) {
             alert("שגיאה בהוספת ליד: " + error.message);

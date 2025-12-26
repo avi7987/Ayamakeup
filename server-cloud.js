@@ -65,6 +65,7 @@ const leadSchema = new mongoose.Schema({
     isBride: { type: Boolean, default: false },
     // Enhanced fields
     notes: { type: String, default: '' },
+    proposedPrice: { type: Number, default: 0 },
     price: { type: Number, default: 0 },
     deposit: { type: Number, default: 0 },
     contractStatus: { type: String, default: 'pending' }, // pending, sent, signed
@@ -757,6 +758,7 @@ app.get('/api/preview-contract/:leadId', async (req, res) => {
             '{{service}}': lead.service || 'לא הוזן',
             '{{eventDate}}': lead.eventDate || 'לא הוזן',
             '{{location}}': lead.location || 'לא הוזן',
+            '{{proposedPrice}}': (lead.proposedPrice || 0).toLocaleString('he-IL'),
             '{{totalPrice}}': totalPrice.toLocaleString('he-IL'),
             '{{price}}': price.toLocaleString('he-IL'),
             '{{deposit}}': deposit.toLocaleString('he-IL'),
@@ -975,6 +977,7 @@ ${servicesText}
             service: lead.service || '',
             eventDate: lead.eventDate || '',
             location: lead.location || '',
+            proposedPrice: (lead.proposedPrice || 0).toLocaleString('he-IL'),
             price: price,
             deposit: deposit,
             balance: balance,
