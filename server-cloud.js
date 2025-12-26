@@ -512,10 +512,20 @@ app.post('/api/contract-template', upload.single('template'), async (req, res) =
 // Generate contract from lead data
 app.post('/api/generate-contract/:leadId', async (req, res) => {
     try {
+        console.log('📄 Generating contract for lead:', req.params.leadId);
+        
         const lead = await Lead.findById(req.params.leadId);
         if (!lead) {
+            console.error('❌ Lead not found:', req.params.leadId);
             return res.status(404).json({ error: 'ליד לא נמצא' });
         }
+
+        console.log('✅ Lead found:', {
+            name: lead.name,
+            lastName: lead.lastName,
+            escortType: lead.escortType,
+            bridesmaids: lead.bridesmaids?.length || 0
+        });
 
         // Read the contract template
         const templatePath = path.join(__dirname, 'uploads', 'contract-template.docx');
@@ -814,8 +824,12 @@ app.post('/api/generate-contract/:leadId', async (req, res) => {
             message: 'החוזה נוצר בהצלחה'
         });
     } catch (error) {
-        console.error('Error generating contract:', error);
-        res.status(500).json({ error: error.message });
+        console.error('❌ Error generating contract:', error);
+        console.error('Error stack:', error.stack);
+        res.status(500).json({ 
+            error: error.message,
+            details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
     }
 });
 

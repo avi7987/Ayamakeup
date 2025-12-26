@@ -2484,18 +2484,25 @@ const ContractManager = {
 
     async generateContract(leadId) {
         try {
+            console.log('📄 Generating contract for lead:', leadId);
+            
             const response = await fetch(`${CONFIG.API_BASE_URL}/generate-contract/${leadId}`, {
                 method: 'POST'
             });
 
             const data = await response.json();
             
+            console.log('Response:', response.status, data);
+            
             if (response.ok) {
+                console.log('✅ Contract generated successfully');
                 return data;
             } else {
+                console.error('❌ Contract generation failed:', data);
                 throw new Error(data.error || 'שגיאה ביצירת החוזה');
             }
         } catch (error) {
+            console.error('❌ Contract generation error:', error);
             throw error;
         }
     }
