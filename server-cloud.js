@@ -632,38 +632,35 @@ app.post('/api/generate-contract/:leadId', async (req, res) => {
             date: new Date().toLocaleDateString('he-IL'),
         };
 
-        console.log('📝 Template data prepared:', JSON.stringify(templateData, null, 2));
+        console.log('� Template data prepared:', JSON.stringify(templateData, null, 2));
 
-        // Render the document
+        // Try to use Word template, fallback to HTML if template fails
+        let useWordTemplate = true;
+        let buf = null;
+        
         try {
-            console.log('🔄 Rendering template...');
+            console.log('🔄 Rendering Word template...');
             doc.render(templateData);
-            console.log('✅ Template rendered successfully');
+            console.log('✅ Word template rendered successfully');
+            buf = doc.getZip().generate({ type: 'nodebuffer' });
         } catch (renderError) {
-            console.error('❌ Template rendering failed:', renderError);
+            console.error('❌ Word template rendering failed:', renderError);
             console.error('Error properties:', renderError.properties);
-            console.error('Error stack:', renderError.stack);
-            
-            // Extract meaningful error message
-            let errorMessage = 'שגיאה בעיבוד התבנית';
-            if (renderError.properties && renderError.properties.errors) {
-                const errors = renderError.properties.errors;
-                errorMessage += ':\n' + errors.map(e => `- ${e.message || e.toString()}`).join('\n');
-            }
-            
-            throw new Error(errorMessage);
+            console.log('🔄 Falling back to direct PDF generation (HTML-based)...');
+            useWordTemplate = false;
         }
 
-        // Get the filled document as buffer
-        const buf = doc.getZip().generate({ type: 'nodebuffer' });
-
-        // Save the filled Word document
+        // Save the filled Word document (if template worked)
         const contractsDir = path.join(__dirname, 'contracts');
         await fs.mkdir(contractsDir, { recursive: true });
         
         const wordFilename = `contract-${lead._id}.docx`;
         const wordPath = path.join(contractsDir, wordFilename);
-        await fs.writeFile(wordPath, buf);
+        
+        if (useWordTemplate && buf) {
+            await fs.writeFile(wordPath, buf);
+            console.log('💾 Word contract saved');
+        }
 
         // Convert to PDF using Puppeteer
         const pdfFilename = `contract-${lead._id}.pdf`;
