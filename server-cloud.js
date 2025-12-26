@@ -4,6 +4,11 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const path = require('path');
 const mongoose = require('mongoose');
+const multer = require('multer');
+const fs = require('fs').promises;
+const Docxtemplater = require('docxtemplater');
+const PizZip = require('pizzip');
+const puppeteer = require('puppeteer');
 
 // Initialize Express App
 const app = express();
@@ -50,6 +55,7 @@ const clientSchema = new mongoose.Schema({
 
 const leadSchema = new mongoose.Schema({
     name: { type: String, required: true },
+    lastName: { type: String, default: '' },
     phone: { type: String, required: true },
     service: { type: String, default: '' },
     status: { type: String, default: 'new' },
@@ -62,6 +68,13 @@ const leadSchema = new mongoose.Schema({
     price: { type: Number, default: 0 },
     deposit: { type: Number, default: 0 },
     contractStatus: { type: String, default: 'pending' }, // pending, sent, signed
+    // Contract-related fields
+    hasEscort: { type: Boolean, default: false },
+    escortPrice: { type: Number, default: 0 },
+    hasBridesmaids: { type: Boolean, default: false },
+    bridesmaidsCount: { type: Number, default: 0 },
+    bridesmaidsPrice: { type: Number, default: 0 },
+    contractFileUrl: { type: String, default: '' },
     reminders: [{ 
         id: Number,
         date: String,
@@ -92,9 +105,42 @@ const Client = mongoose.model('Client', clientSchema);
 const Lead = mongoose.model('Lead', leadSchema);
 const Goals = mongoose.model('Goals', goalsSchema);
 
+// ==================== FILE UPLOAD SETUP ====================
+// Setup multer for file uploads
+const storage = multer.diskStorage({
+    destination: async (req, file, cb) => {
+        const uploadDir = path.join(__dirname, 'uploads');
+        try {
+            await fs.mkdir(uploadDir, { recursive: true });
+            cb(null, uploadDir);
+        } catch (err) {
+            cb(err);
+        }
+    },
+    filename: (req, file, cb) => {
+        // Save contract template with a fixed name
+        const ext = path.extname(file.originalname);
+        cb(null, `contract-template${ext}`);
+    }
+});
+
+const upload = multer({ 
+    storage: storage,
+    fileFilter: (req, file, cb) => {
+        // Only accept .docx files
+        if (path.extname(file.originalname).toLowerCase() === '.docx') {
+            cb(null, true);
+        } else {
+            cb(new Error('רק קבצי .docx מותרים'));
+        }
+    }
+});
+
 // ==================== STATIC FILES ====================
 // Serve static files from public directory
 app.use(express.static(path.join(__dirname, 'public')));
+// Serve generated contracts
+app.use('/contracts', express.static(path.join(__dirname, 'contracts')));
 
 // Serve index.html for root path with no-cache headers
 app.get('/', (req, res) => {
@@ -432,6 +478,230 @@ app.put('/api/goals', async (req, res) => {
         }
         
         res.json(goals);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// ==================== CONTRACT ENDPOINTS ====================
+
+// Upload contract template
+app.post('/api/contract-template', upload.single('template'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: 'לא נבחר קובץ' });
+        }
+        
+        res.json({ 
+            success: true, 
+            message: 'תבנית החוזה הועלתה בהצלחה',
+            filename: req.file.filename 
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Generate contract from lead data
+app.post('/api/generate-contract/:leadId', async (req, res) => {
+    try {
+        const lead = await Lead.findById(req.params.leadId);
+        if (!lead) {
+            return res.status(404).json({ error: 'ליד לא נמצא' });
+        }
+
+        // Read the contract template
+        const templatePath = path.join(__dirname, 'uploads', 'contract-template.docx');
+        
+        try {
+            await fs.access(templatePath);
+        } catch {
+            return res.status(404).json({ error: 'תבנית חוזה לא נמצאה. יש להעלות תבנית קודם.' });
+        }
+
+        const content = await fs.readFile(templatePath, 'binary');
+        const zip = new PizZip(content);
+        const doc = new Docxtemplater(zip, {
+            paragraphLoop: true,
+            linebreaks: true,
+        });
+
+        // Prepare data for template
+        const fullName = `${lead.name} ${lead.lastName || ''}`.trim();
+        const templateData = {
+            name: lead.name || '',
+            lastName: lead.lastName || '',
+            fullName: fullName,
+            phone: lead.phone || '',
+            service: lead.service || '',
+            eventDate: lead.eventDate || '',
+            location: lead.location || '',
+            price: lead.price || 0,
+            deposit: lead.deposit || 0,
+            hasEscort: lead.hasEscort ? 'כן' : 'לא',
+            escortPrice: lead.escortPrice || 0,
+            hasBridesmaids: lead.hasBridesmaids ? 'כן' : 'לא',
+            bridesmaidsCount: lead.bridesmaidsCount || 0,
+            bridesmaidsPrice: lead.bridesmaidsPrice || 0,
+            date: new Date().toLocaleDateString('he-IL'),
+        };
+
+        // Render the document
+        doc.render(templateData);
+
+        // Get the filled document as buffer
+        const buf = doc.getZip().generate({ type: 'nodebuffer' });
+
+        // Save the filled Word document
+        const contractsDir = path.join(__dirname, 'contracts');
+        await fs.mkdir(contractsDir, { recursive: true });
+        
+        const wordFilename = `contract-${lead._id}.docx`;
+        const wordPath = path.join(contractsDir, wordFilename);
+        await fs.writeFile(wordPath, buf);
+
+        // Convert to PDF using Puppeteer
+        const pdfFilename = `contract-${lead._id}.pdf`;
+        const pdfPath = path.join(contractsDir, pdfFilename);
+
+        // Create HTML from Word content for PDF conversion
+        // Note: This is a simplified conversion. For RTL Hebrew text and complex formatting,
+        // you might want to use a more sophisticated solution like LibreOffice or an external API
+        const htmlContent = `
+        <!DOCTYPE html>
+        <html dir="rtl" lang="he">
+        <head>
+            <meta charset="UTF-8">
+            <style>
+                body { 
+                    font-family: Arial, sans-serif; 
+                    direction: rtl; 
+                    padding: 40px;
+                    line-height: 1.8;
+                }
+                .contract-header {
+                    text-align: center;
+                    margin-bottom: 40px;
+                    border-bottom: 2px solid #333;
+                    padding-bottom: 20px;
+                }
+                .contract-title {
+                    font-size: 28px;
+                    font-weight: bold;
+                    margin-bottom: 10px;
+                }
+                .contract-section {
+                    margin-bottom: 20px;
+                }
+                .field-label {
+                    font-weight: bold;
+                    display: inline-block;
+                    width: 150px;
+                }
+                .signature-section {
+                    margin-top: 60px;
+                    display: flex;
+                    justify-content: space-between;
+                }
+                .signature-box {
+                    text-align: center;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="contract-header">
+                <div class="contract-title">חוזה מתן שירותים</div>
+                <div>תאריך: ${templateData.date}</div>
+            </div>
+            
+            <div class="contract-section">
+                <div><span class="field-label">שם:</span> ${fullName}</div>
+                <div><span class="field-label">טלפון:</span> ${templateData.phone}</div>
+                <div><span class="field-label">שירות:</span> ${templateData.service}</div>
+                <div><span class="field-label">תאריך אירוע:</span> ${templateData.eventDate}</div>
+                <div><span class="field-label">מיקום:</span> ${templateData.location}</div>
+            </div>
+            
+            <div class="contract-section">
+                <div><span class="field-label">מחיר כולל:</span> ${templateData.price} ₪</div>
+                <div><span class="field-label">מקדמה:</span> ${templateData.deposit} ₪</div>
+            </div>
+            
+            ${templateData.hasEscort === 'כן' ? `
+            <div class="contract-section">
+                <div><span class="field-label">ליווי:</span> כן</div>
+                <div><span class="field-label">מחיר ליווי:</span> ${templateData.escortPrice} ₪</div>
+            </div>
+            ` : ''}
+            
+            ${templateData.hasBridesmaids === 'כן' ? `
+            <div class="contract-section">
+                <div><span class="field-label">מלוות:</span> כן (${templateData.bridesmaidsCount})</div>
+                <div><span class="field-label">מחיר מלוות:</span> ${templateData.bridesmaidsPrice} ₪</div>
+            </div>
+            ` : ''}
+            
+            <div class="signature-section">
+                <div class="signature-box">
+                    <div>חתימת הלקוח</div>
+                    <div style="margin-top: 40px;">_______________</div>
+                </div>
+                <div class="signature-box">
+                    <div>חתימת נותן השירות</div>
+                    <div style="margin-top: 40px;">_______________</div>
+                </div>
+            </div>
+        </body>
+        </html>
+        `;
+
+        // Launch puppeteer and generate PDF
+        const browser = await puppeteer.launch({
+            headless: true,
+            args: ['--no-sandbox', '--disable-setuid-sandbox']
+        });
+        const page = await browser.newPage();
+        await page.setContent(htmlContent);
+        await page.pdf({
+            path: pdfPath,
+            format: 'A4',
+            printBackground: true,
+            margin: {
+                top: '20mm',
+                bottom: '20mm',
+                left: '20mm',
+                right: '20mm'
+            }
+        });
+        await browser.close();
+
+        // Update lead with contract URL
+        lead.contractFileUrl = `/contracts/${pdfFilename}`;
+        lead.contractStatus = 'sent';
+        await lead.save();
+
+        res.json({
+            success: true,
+            pdfUrl: `/contracts/${pdfFilename}`,
+            wordUrl: `/contracts/${wordFilename}`,
+            message: 'החוזה נוצר בהצלחה'
+        });
+    } catch (error) {
+        console.error('Error generating contract:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Check if contract template exists
+app.get('/api/contract-template/status', async (req, res) => {
+    try {
+        const templatePath = path.join(__dirname, 'uploads', 'contract-template.docx');
+        try {
+            await fs.access(templatePath);
+            res.json({ exists: true });
+        } catch {
+            res.json({ exists: false });
+        }
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

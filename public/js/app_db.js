@@ -379,6 +379,8 @@ const ModalManager = {
             // Render message settings when opening that modal
             if (modalId === 'modal-message-settings') {
                 MessageSettings.render();
+                // Check template status after a small delay to ensure UI is rendered
+                setTimeout(() => ContractManager.checkTemplateStatus(), 100);
             }
         }
     },
@@ -534,6 +536,7 @@ const LeadsManager = {
         const data = {
             status: 'new',
             name: document.getElementById('lead-name').value.trim(),
+            lastName: document.getElementById('lead-last-name').value.trim(),
             phone: document.getElementById('lead-phone').value.trim(),
             source: document.getElementById('lead-source').value.trim(),
             service: document.getElementById('lead-service').value.trim(),
@@ -575,6 +578,7 @@ const LeadsManager = {
             
             // Clear form
             document.getElementById('lead-name').value = '';
+            document.getElementById('lead-last-name').value = '';
             document.getElementById('lead-phone').value = '';
             document.getElementById('lead-source').value = '';
             document.getElementById('lead-service').value = '';
@@ -1795,6 +1799,29 @@ const MessageSettings = {
                             onchange="MessageSettings.updateTemplate('${stage.id}', 'followUp', this.value)"
                         >${stageSettings.followUp.template || ''}</textarea>
                     </div>
+                    
+                    <!-- Contract Template Upload (only for contract-sent stage) -->
+                    ${stage.id === 'contract-sent' ? `
+                    <div class="bg-blue-50 rounded-xl p-4 mt-4 border border-blue-200">
+                        <div class="font-bold text-gray-800 mb-3 flex items-center gap-2">
+                            <span>📋</span>
+                            <span>תבנית חוזה (Word)</span>
+                        </div>
+                        <div class="flex flex-col gap-2">
+                            <input 
+                                type="file" 
+                                id="contract-template-upload"
+                                accept=".docx"
+                                class="text-sm"
+                                onchange="ContractManager.uploadTemplate(this.files[0])"
+                            >
+                            <div id="contract-template-status" class="text-sm text-gray-600"></div>
+                            <div class="text-xs text-gray-500 mt-2">
+                                💡 השתמש במשתנים בקובץ Word: {{firstName}}, {{lastName}}, {{fullName}}, {{phone}}, {{service}}, {{eventDate}}, {{location}}, {{price}}, {{deposit}}, {{hasEscort}}, {{escortPrice}}, {{hasBridesmaids}}, {{bridesmaidsCount}}, {{bridesmaidsPrice}}, {{date}}
+                            </div>
+                        </div>
+                    </div>
+                    ` : ''}
                 </div>
             `;
         }).join('');
@@ -1866,6 +1893,30 @@ const WhatsAppAutomation = {
             this.pendingLead = lead;
             this.pendingStage = newStage;
             
+            // For contract-sent stage, show additional fields
+            const additionalFields = document.getElementById('contract-additional-fields');
+            const contractActions = document.getElementById('contract-actions');
+            
+            if (newStage === 'contract-sent') {
+                additionalFields.classList.remove('hidden');
+                contractActions.classList.remove('hidden');
+                
+                // Pre-fill existing data
+                document.getElementById('contract-lastName').value = lead.lastName || '';
+                document.getElementById('contract-hasEscort').checked = lead.hasEscort || false;
+                document.getElementById('contract-escortPrice').value = lead.escortPrice || '';
+                document.getElementById('contract-hasBridesmaids').checked = lead.hasBridesmaids || false;
+                document.getElementById('contract-bridesmaidsCount').value = lead.bridesmaidsCount || '';
+                document.getElementById('contract-bridesmaidsPrice').value = lead.bridesmaidsPrice || '';
+                
+                // Toggle fields visibility
+                toggleEscortFields();
+                toggleBridesmaidsFields();
+            } else {
+                additionalFields.classList.add('hidden');
+                contractActions.classList.add('hidden');
+            }
+            
             // Generate message with variables
             const message = this.fillTemplate(stageSettings.immediate.template, lead);
             
@@ -1892,8 +1943,118 @@ const WhatsAppAutomation = {
     async sendConfirmed() {
         if (!this.pendingLead || !this.pendingStage) return;
         
+        // If contract-sent stage, update lead with additional fields
+        if (this.pendingStage === 'contract-sent') {
+            this.pendingLead.lastName = document.getElementById('contract-lastName').value.trim();
+            this.pendingLead.hasEscort = document.getElementById('contract-hasEscort').checked;
+            this.pendingLead.escortPrice = parseInt(document.getElementById('contract-escortPrice').value) || 0;
+            this.pendingLead.hasBridesmaids = document.getElementById('contract-hasBridesmaids').checked;
+            this.pendingLead.bridesmaidsCount = parseInt(document.getElementById('contract-bridesmaidsCount').value) || 0;
+            this.pendingLead.bridesmaidsPrice = parseInt(document.getElementById('contract-bridesmaidsPrice').value) || 0;
+            
+            // Save updated lead data
+            await API.updateLead(this.pendingLead._id || this.pendingLead.id, this.pendingLead);
+            
+            // Generate contract
+            try {
+                const result = await ContractManager.generateContract(this.pendingLead._id || this.pendingLead.id);
+                
+                // Update lead with contract URL
+                this.pendingLead.contractFileUrl = result.pdfUrl;
+                
+                // Add contract link to message
+                const stageSettings = MessageSettings.getSettings(this.pendingStage);
+                let message = this.fillTemplate(stageSettings.immediate.template, this.pendingLead);
+                message += `\n\nקישור לחוזה: ${window.location.origin}${result.pdfUrl}`;
+                
+                // Send via WhatsApp with contract link
+                const phone = this.pendingLead.phone.replace(/[^0-9]/g, '').replace(/^0/, '');
+                const url = `https://wa.me/972${phone}?text=${encodeURIComponent(message)}`;
+                window.open(url, '_blank');
+                
+                // Record message sent
+                if (!this.pendingLead.messageHistory) this.pendingLead.messageHistory = [];
+                this.pendingLead.messageHistory.push({
+                    type: 'immediate',
+                    stage: this.pendingStage,
+                    message: message,
+                    sentAt: new Date().toISOString(),
+                    contractUrl: result.pdfUrl
+                });
+                
+                // Complete stage change
+                await this.completeStageChange(this.pendingLead._id || this.pendingLead.id, this.pendingStage);
+                
+                closeModal('modal-whatsapp-confirm');
+                this.pendingLead = null;
+                this.pendingStage = null;
+                
+                alert('✅ החוזה נוצר ונשלח בהצלחה!');
+            } catch (error) {
+                alert('❌ שגיאה ביצירת החוזה: ' + error.message);
+            }
+        } else {
+            // Regular message sending (non-contract)
+            const stageSettings = MessageSettings.getSettings(this.pendingStage);
+            const message = this.fillTemplate(stageSettings.immediate.template, this.pendingLead);
+            
+            // Send via WhatsApp
+            const phone = this.pendingLead.phone.replace(/[^0-9]/g, '').replace(/^0/, '');
+            const url = `https://wa.me/972${phone}?text=${encodeURIComponent(message)}`;
+            window.open(url, '_blank');
+            
+            // Record message sent
+            if (!this.pendingLead.messageHistory) this.pendingLead.messageHistory = [];
+            this.pendingLead.messageHistory.push({
+                type: 'immediate',
+                stage: this.pendingStage,
+                message: message,
+                sentAt: new Date().toISOString()
+            });
+            
+            // Complete stage change
+            await this.completeStageChange(this.pendingLead._id || this.pendingLead.id, this.pendingStage);
+            
+            closeModal('modal-whatsapp-confirm');
+            this.pendingLead = null;
+            this.pendingStage = null;
+        }
+    },
+    
+    async previewContract() {
+        if (!this.pendingLead) return;
+        
+        // Update lead with current form values
+        this.pendingLead.lastName = document.getElementById('contract-lastName').value.trim();
+        this.pendingLead.hasEscort = document.getElementById('contract-hasEscort').checked;
+        this.pendingLead.escortPrice = parseInt(document.getElementById('contract-escortPrice').value) || 0;
+        this.pendingLead.hasBridesmaids = document.getElementById('contract-hasBridesmaids').checked;
+        this.pendingLead.bridesmaidsCount = parseInt(document.getElementById('contract-bridesmaidsCount').value) || 0;
+        this.pendingLead.bridesmaidsPrice = parseInt(document.getElementById('contract-bridesmaidsPrice').value) || 0;
+        
+        // Save lead data first
+        await API.updateLead(this.pendingLead._id || this.pendingLead.id, this.pendingLead);
+        
+        try {
+            const result = await ContractManager.generateContract(this.pendingLead._id || this.pendingLead.id);
+            
+            // Show preview in iframe
+            const iframe = document.getElementById('contract-preview-frame');
+            iframe.src = result.pdfUrl;
+            
+            // Hide confirm modal, show preview modal
+            closeModal('modal-whatsapp-confirm');
+            openModal('modal-contract-preview');
+        } catch (error) {
+            alert('❌ שגיאה ביצירת תצוגה מקדימה: ' + error.message);
+        }
+    },
+    
+    async confirmContractSend() {
+        // Contract already generated in preview, just send the message
         const stageSettings = MessageSettings.getSettings(this.pendingStage);
-        const message = this.fillTemplate(stageSettings.immediate.template, this.pendingLead);
+        let message = this.fillTemplate(stageSettings.immediate.template, this.pendingLead);
+        message += `\n\nקישור לחוזה: ${window.location.origin}${this.pendingLead.contractFileUrl}`;
         
         // Send via WhatsApp
         const phone = this.pendingLead.phone.replace(/[^0-9]/g, '').replace(/^0/, '');
@@ -1906,15 +2067,18 @@ const WhatsAppAutomation = {
             type: 'immediate',
             stage: this.pendingStage,
             message: message,
-            sentAt: new Date().toISOString()
+            sentAt: new Date().toISOString(),
+            contractUrl: this.pendingLead.contractFileUrl
         });
         
         // Complete stage change
         await this.completeStageChange(this.pendingLead._id || this.pendingLead.id, this.pendingStage);
         
-        closeModal('modal-whatsapp-confirm');
+        closeModal('modal-contract-preview');
         this.pendingLead = null;
         this.pendingStage = null;
+        
+        alert('✅ החוזה נשלח בהצלחה!');
     },
     
     async skipMessage() {
@@ -2153,6 +2317,26 @@ window.loadGoalsToModal = async () => {
     document.getElementById('goal-brides').value = goals.brides || '';
 };
 
+window.toggleEscortFields = () => {
+    const checked = document.getElementById('contract-hasEscort').checked;
+    const fields = document.getElementById('escort-fields');
+    if (checked) {
+        fields.classList.remove('hidden');
+    } else {
+        fields.classList.add('hidden');
+    }
+};
+
+window.toggleBridesmaidsFields = () => {
+    const checked = document.getElementById('contract-hasBridesmaids').checked;
+    const fields = document.getElementById('bridesmaids-fields');
+    if (checked) {
+        fields.classList.remove('hidden');
+    } else {
+        fields.classList.add('hidden');
+    }
+};
+
 // Initialize Application
 window.onload = async () => {
     // Show loading indicator
@@ -2174,6 +2358,79 @@ window.onload = async () => {
     switchPage('home');
     
     console.log('✅ CRM Ready!');
+};
+
+// ==================== CONTRACT MANAGER ====================
+const ContractManager = {
+    async uploadTemplate(file) {
+        if (!file) {
+            alert('לא נבחר קובץ');
+            return;
+        }
+
+        const statusDiv = document.getElementById('contract-template-status');
+        statusDiv.textContent = '⏳ מעלה...';
+
+        const formData = new FormData();
+        formData.append('template', file);
+
+        try {
+            const response = await fetch(`${CONFIG.API_BASE}/contract-template`, {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+            
+            if (response.ok) {
+                statusDiv.textContent = '✅ תבנית הועלתה בהצלחה!';
+                statusDiv.className = 'text-sm text-green-600 font-bold';
+            } else {
+                throw new Error(data.error || 'שגיאה בהעלאת התבנית');
+            }
+        } catch (error) {
+            statusDiv.textContent = `❌ שגיאה: ${error.message}`;
+            statusDiv.className = 'text-sm text-red-600';
+        }
+    },
+
+    async checkTemplateStatus() {
+        try {
+            const response = await fetch(`${CONFIG.API_BASE}/contract-template/status`);
+            const data = await response.json();
+            
+            const statusDiv = document.getElementById('contract-template-status');
+            if (statusDiv) {
+                if (data.exists) {
+                    statusDiv.textContent = '✅ תבנית קיימת במערכת';
+                    statusDiv.className = 'text-sm text-green-600';
+                } else {
+                    statusDiv.textContent = 'ℹ️ לא הועלתה תבנית עדיין';
+                    statusDiv.className = 'text-sm text-gray-500';
+                }
+            }
+        } catch (error) {
+            console.error('Error checking template status:', error);
+        }
+    },
+
+    async generateContract(leadId) {
+        try {
+            const response = await fetch(`${CONFIG.API_BASE}/generate-contract/${leadId}`, {
+                method: 'POST'
+            });
+
+            const data = await response.json();
+            
+            if (response.ok) {
+                return data;
+            } else {
+                throw new Error(data.error || 'שגיאה ביצירת החוזה');
+            }
+        } catch (error) {
+            throw error;
+        }
+    }
 };
 
 
