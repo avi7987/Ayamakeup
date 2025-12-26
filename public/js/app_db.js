@@ -2023,7 +2023,9 @@ const WhatsAppAutomation = {
                 
                 alert('✅ החוזה נוצר ונשלח בהצלחה!');
             } catch (error) {
-                alert('❌ שגיאה ביצירת החוזה: ' + error.message);
+                console.error('❌ Contract generation error:', error);
+                const errorMsg = error.message || JSON.stringify(error);
+                alert('❌ שגיאה ביצירת החוזה:\n\n' + errorMsg + '\n\nפרטים נוספים בקונסול (F12)');
             }
         } else {
             // Regular message sending (non-contract)
@@ -2056,6 +2058,8 @@ const WhatsAppAutomation = {
     async previewContract() {
         if (!this.pendingLead) return;
         
+        console.log('📋 Preparing contract preview for lead:', this.pendingLead._id || this.pendingLead.id);
+        
         // Update lead with current form values
         // lastName already exists from lead creation (required field)
         
@@ -2066,6 +2070,8 @@ const WhatsAppAutomation = {
         } else {
             this.pendingLead.escortPrice = 0;
         }
+        
+        console.log('👔 Escort:', this.pendingLead.escortType, this.pendingLead.escortPrice);
         
         // Collect bridesmaids data from dynamic fields
         const bridesmaidsCount = parseInt(document.getElementById('contract-bridesmaidsCount').value) || 0;
@@ -2080,11 +2086,17 @@ const WhatsAppAutomation = {
             }
         }
         
+        console.log('👥 Bridesmaids:', this.pendingLead.bridesmaids);
+        
         // Save lead data first
+        console.log('💾 Saving lead data...');
         await API.updateLead(this.pendingLead._id || this.pendingLead.id, this.pendingLead);
+        console.log('✅ Lead data saved');
         
         try {
+            console.log('📄 Generating contract...');
             const result = await ContractManager.generateContract(this.pendingLead._id || this.pendingLead.id);
+            console.log('✅ Contract generated:', result);
             
             // Show preview in iframe
             const iframe = document.getElementById('contract-preview-frame');
@@ -2094,7 +2106,9 @@ const WhatsAppAutomation = {
             closeModal('modal-whatsapp-confirm');
             openModal('modal-contract-preview');
         } catch (error) {
-            alert('❌ שגיאה ביצירת תצוגה מקדימה: ' + error.message);
+            console.error('❌ Preview error:', error);
+            const errorMsg = error.message || JSON.stringify(error);
+            alert('❌ שגיאה ביצירת תצוגה מקדימה:\n\n' + errorMsg + '\n\nפתחי קונסול (F12) לפרטים נוספים');
         }
     },
     
