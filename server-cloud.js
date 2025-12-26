@@ -599,6 +599,17 @@ app.post('/api/generate-contract/:leadId', async (req, res) => {
         const pdfFilename = `contract-${lead._id}.pdf`;
         const pdfPath = path.join(contractsDir, pdfFilename);
 
+        // Build bridesmaids rows HTML
+        let bridesmaidsRowsHtml = '';
+        if (lead.bridesmaids && lead.bridesmaids.length > 0) {
+            bridesmaidsRowsHtml = lead.bridesmaids.map((bridesmaid, i) => `
+                        <tr>
+                            <td>מלווה ${i + 1}</td>
+                            <td>${bridesmaid.service || 'שירות מלווה'}</td>
+                            <td>${(bridesmaid.price || 0).toLocaleString('he-IL')}</td>
+                        </tr>`).join('');
+        }
+
         // Create HTML from Word content for PDF conversion
         const htmlContent = `
         <!DOCTYPE html>
@@ -737,13 +748,7 @@ app.post('/api/generate-contract/:leadId', async (req, res) => {
                             <td>${templateData.escortPrice.toLocaleString('he-IL')}</td>
                         </tr>
                         ` : ''}
-                        ${lead.bridesmaids && lead.bridesmaids.length > 0 ? lead.bridesmaids.map((bridesmaid, i) => `
-                        <tr>
-                            <td>מלווה ${i + 1}</td>
-                            <td>${bridesmaid.service || 'שירות מלווה'}</td>
-                            <td>${(bridesmaid.price || 0).toLocaleString('he-IL')}</td>
-                        </tr>
-                        `).join('') : ''}
+                        ${bridesmaidsRowsHtml}
                     </tbody>
                 </table>
                 
@@ -758,7 +763,7 @@ app.post('/api/generate-contract/:leadId', async (req, res) => {
                     </div>
                     <div class="summary-line">
                         <span>יתרה לתשלום ביום האירוע:</span>
-                        <span><strong>${balance.toLocaleString('he-IL')} ₪</strong></span>
+                        <span><strong>${templateData.balance.toLocaleString('he-IL')} ₪</strong></span>
                     </div>
                 </div>
             </div>
