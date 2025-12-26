@@ -609,6 +609,20 @@ app.post('/api/generate-contract/:leadId', async (req, res) => {
             servicesText += `• ${service.description} - ${service.details}: ${service.price} ₪\n`;
         });
         
+        // Build complete pricing section (no logic in template!)
+        const pricingSection = `
+פירוט השירותים והעלויות:
+השירותים שסוכמו בין הצדדים כוללים:
+
+${servicesText}
+סיכום פיננסי:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+סה"כ עלות כל השירותים: ${totalPrice.toLocaleString('he-IL')} ₪
+מקדמה ששולמה (עם חתימת החוזה): ${deposit.toLocaleString('he-IL')} ₪
+יתרה לתשלום ביום האירוע: ${balance.toLocaleString('he-IL')} ₪
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        `.trim();
+        
         const templateData = {
             name: lead.name || '',
             lastName: lead.lastName || '',
@@ -624,6 +638,7 @@ app.post('/api/generate-contract/:leadId', async (req, res) => {
             subtotal: totalPrice, // Alias for totalPrice
             services: services, // Array for table loop
             servicesText: servicesText, // Pre-formatted text (simpler!)
+            pricingSection: pricingSection, // Complete pricing block - USE THIS!
             escortType: lead.escortType || 'none',
             escortTypeHebrew: escortTypeHebrew[lead.escortType || 'none'],
             escortPrice: lead.escortPrice || 0,
