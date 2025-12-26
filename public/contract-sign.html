@@ -80,7 +80,10 @@
         <div id="successMessage" class="hidden bg-green-50 border-2 border-green-500 rounded-xl p-8 text-center">
             <div class="text-6xl mb-4">✅</div>
             <h2 class="text-2xl font-bold text-green-800 mb-2">החוזה נחתם בהצלחה!</h2>
-            <p class="text-gray-600">תודה! החוזה החתום נשלח אלייך</p>
+            <p class="text-gray-600 mb-6">תודה! החוזה החתום נוצר</p>
+            <a id="downloadLink" href="#" download class="inline-block bg-purple-600 hover:bg-purple-700 text-white px-8 py-4 rounded-xl font-bold text-lg transition-all">
+                📥 הורדת החוזה החתום
+            </a>
         </div>
     </div>
 
@@ -171,6 +174,12 @@
                 document.querySelector('.signature-section').classList.add('hidden');
                 document.querySelector('.contract-content').classList.add('hidden');
                 document.getElementById('successMessage').classList.remove('hidden');
+                
+                // Update download link
+                if (data.signedContractUrl) {
+                    const downloadLink = document.getElementById('downloadLink');
+                    downloadLink.href = window.location.origin + data.signedContractUrl;
+                }
                 
                 // Scroll to top
                 window.scrollTo({ top: 0, behavior: 'smooth' });

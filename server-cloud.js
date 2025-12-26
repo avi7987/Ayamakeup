@@ -1005,17 +1005,196 @@ app.post('/api/sign-contract/:leadId', async (req, res) => {
         lead.customerSignature = signature;
         lead.customerSignedAt = new Date();
         lead.contractStatus = 'signed';
+
+        console.log('📄 Generating signed PDF with signature...');
+
+        // Load custom template
+        const customTemplate = await ContractTemplate.findOne({ userId: 'default' });
+        if (!customTemplate) {
+            return res.status(404).json({ error: 'לא נמצאה תבנית חוזה' });
+        }
+
+        // Prepare contract data
+        const fullName = `${lead.name} ${lead.lastName || ''}`.trim();
+        const price = lead.price || 0;
+        const deposit = lead.deposit || 0;
+        
+        let totalPrice = price;
+        if (lead.escortType && lead.escortType !== 'none' && lead.escortPrice) {
+            totalPrice += lead.escortPrice;
+        }
+        if (lead.bridesmaids && lead.bridesmaids.length > 0) {
+            const bridesmaidsTotal = lead.bridesmaids.reduce((sum, b) => sum + (b.price || 0), 0);
+            totalPrice += bridesmaidsTotal;
+        }
+        
+        const balance = totalPrice - deposit;
+        
+        const escortTypeHebrew = {
+            'none': 'ללא ליווי',
+            'short': 'ליווי קצר',
+            'long': 'ליווי ארוך'
+        };
+
+        // Build services table
+        let bridesmaidsRowsHtml = '';
+        if (lead.bridesmaids && lead.bridesmaids.length > 0) {
+            bridesmaidsRowsHtml = lead.bridesmaids.map((bridesmaid, i) => `
+                <tr>
+                    <td style="border: 1px solid #333; padding: 10px; text-align: right;">מלווה ${i + 1}</td>
+                    <td style="border: 1px solid #333; padding: 10px; text-align: center;">${bridesmaid.service || 'שירות מלווה'}</td>
+                    <td style="border: 1px solid #333; padding: 10px; text-align: center;">${(bridesmaid.price || 0).toLocaleString('he-IL')}</td>
+                </tr>`).join('');
+        }
+
+        const servicesTableHTML = `
+            <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+                <thead>
+                    <tr style="background-color: #f5f5f5;">
+                        <th style="border: 1px solid #333; padding: 12px; text-align: center; font-weight: bold;">תיאור השירות</th>
+                        <th style="border: 1px solid #333; padding: 12px; text-align: center; font-weight: bold;">פרטים</th>
+                        <th style="border: 1px solid #333; padding: 12px; text-align: center; font-weight: bold;">מחיר (₪)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="border: 1px solid #333; padding: 10px; text-align: right;">${lead.service || 'שירות עיקרי'}</td>
+                        <td style="border: 1px solid #333; padding: 10px; text-align: center;">שירות עיקרי</td>
+                        <td style="border: 1px solid #333; padding: 10px; text-align: center;">${price.toLocaleString('he-IL')}</td>
+                    </tr>
+                    ${lead.escortType && lead.escortType !== 'none' ? `
+                    <tr>
+                        <td style="border: 1px solid #333; padding: 10px; text-align: right;">ליווי לאירוע</td>
+                        <td style="border: 1px solid #333; padding: 10px; text-align: center;">${escortTypeHebrew[lead.escortType]}</td>
+                        <td style="border: 1px solid #333; padding: 10px; text-align: center;">${(lead.escortPrice || 0).toLocaleString('he-IL')}</td>
+                    </tr>
+                    ` : ''}
+                    ${bridesmaidsRowsHtml}
+                </tbody>
+            </table>
+        `;
+
+        // Replace variables in template
+        let htmlContent = customTemplate.templateHTML || '';
+        
+        const replacements = {
+            '{{fullName}}': fullName,
+            '{{phone}}': lead.phone || 'לא הוזן',
+            '{{service}}': lead.service || 'לא הוזן',
+            '{{eventDate}}': lead.eventDate || 'לא הוזן',
+            '{{location}}': lead.location || 'לא הוזן',
+            '{{proposedPrice}}': (lead.proposedPrice || 0).toLocaleString('he-IL'),
+            '{{totalPrice}}': totalPrice.toLocaleString('he-IL'),
+            '{{price}}': price.toLocaleString('he-IL'),
+            '{{deposit}}': deposit.toLocaleString('he-IL'),
+            '{{balance}}': balance.toLocaleString('he-IL'),
+            '{{date}}': new Date().toLocaleDateString('he-IL'),
+            '{{servicesTable}}': servicesTableHTML,
+            '{{logoUrl}}': customTemplate?.logoUrl || ''
+        };
+        
+        for (const [key, value] of Object.entries(replacements)) {
+            const regex = new RegExp(key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+            htmlContent = htmlContent.replace(regex, value || '');
+        }
+        
+        // Handle conditional logo
+        if (customTemplate?.logoUrl) {
+            htmlContent = htmlContent.replace(/\{\{#if logoUrl\}\}/g, '');
+            htmlContent = htmlContent.replace(/\{\{\/if\}\}/g, '');
+        } else {
+            htmlContent = htmlContent.replace(/\{\{#if logoUrl\}\}[\s\S]*?\{\{\/if\}\}/g, '');
+        }
+
+        // Add signature section to HTML
+        const signatureSection = `
+            <div style="margin-top: 50px; page-break-inside: avoid;">
+                <h3 style="font-size: 18px; font-weight: bold; margin-bottom: 20px;">חתימות:</h3>
+                <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+                    <div style="text-align: center;">
+                        <img src="${signature}" style="max-width: 200px; max-height: 80px; border-bottom: 2px solid #333; padding-bottom: 5px;" />
+                        <p style="margin-top: 10px; font-size: 12px;">חתימת הלקוחה</p>
+                        <p style="font-size: 11px; color: #666;">תאריך: ${new Date(lead.customerSignedAt).toLocaleDateString('he-IL')}</p>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="width: 200px; border-bottom: 2px solid #333; height: 80px;"></div>
+                        <p style="margin-top: 10px; font-size: 12px;">חתימת נותן השירות</p>
+                        <p style="font-size: 11px; color: #666;">תאריך: ___________</p>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        htmlContent += signatureSection;
+
+        // Wrap in full HTML document
+        const fullHTML = `
+        <!DOCTYPE html>
+        <html dir="rtl" lang="he">
+        <head>
+            <meta charset="UTF-8">
+            <style>
+                body { 
+                    font-family: Arial, sans-serif; 
+                    direction: rtl; 
+                    padding: 40px;
+                    line-height: 1.8;
+                    font-size: 14px;
+                }
+            </style>
+        </head>
+        <body>
+            ${htmlContent}
+        </body>
+        </html>
+        `;
+
+        // Generate signed PDF
+        const contractsDir = path.join(__dirname, 'contracts');
+        await fs.mkdir(contractsDir, { recursive: true });
+        
+        const signedFilename = `signed-contract-${lead._id}.pdf`;
+        const signedPath = path.join(contractsDir, signedFilename);
+
+        const browser = await puppeteer.launch({
+            headless: true,
+            args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage',
+                '--disable-accelerated-2d-canvas',
+                '--disable-gpu',
+                '--disable-software-rasterizer',
+                '--disable-extensions'
+            ]
+        });
+        
+        const page = await browser.newPage();
+        await page.setContent(fullHTML);
+        await page.pdf({
+            path: signedPath,
+            format: 'A4',
+            printBackground: true,
+            margin: {
+                top: '20mm',
+                bottom: '20mm',
+                left: '20mm',
+                right: '20mm'
+            }
+        });
+        await browser.close();
+
+        console.log('✅ Signed PDF generated successfully');
+
+        // Update lead with signed contract URL
+        lead.signedContractUrl = `/contracts/${signedFilename}`;
         await lead.save();
-
-        console.log('✅ Signature saved successfully');
-
-        // TODO: Generate signed PDF with signature embedded
-        // This will be implemented in the next step
 
         res.json({
             success: true,
-            message: 'החתימה נשמרה בהצלחה',
-            signedAt: lead.customerSignedAt
+            message: 'החתימה נשמרה והחוזה החתום נוצר בהצלחה',
+            signedAt: lead.customerSignedAt,
+            signedContractUrl: lead.signedContractUrl
         });
     } catch (error) {
         console.error('❌ Error saving signature:', error);
