@@ -2584,10 +2584,14 @@ const ContractManager = {
 
             const data = await response.json();
             
-            console.log('Response:', response.status, data);
+            console.log('🔍 Full response status:', response.status);
+            console.log('🔍 Full response data:', JSON.stringify(data, null, 2));
+            console.log('🔍 data.pdfUrl:', data.pdfUrl);
+            console.log('🔍 data.success:', data.success);
             
             if (response.ok) {
                 console.log('✅ Contract generated successfully');
+                console.log('✅ Returning data:', data);
                 return data;
             } else {
                 console.error('❌ Contract generation failed:', data);
