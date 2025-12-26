@@ -1817,7 +1817,7 @@ const MessageSettings = {
                             >
                             <div id="contract-template-status" class="text-sm text-gray-600"></div>
                             <div class="text-xs text-gray-500 mt-2">
-                                💡 השתמש במשתנים בקובץ Word: {{firstName}}, {{lastName}}, {{fullName}}, {{phone}}, {{service}}, {{eventDate}}, {{location}}, {{price}}, {{deposit}}, {{hasEscort}}, {{escortPrice}}, {{hasBridesmaids}}, {{bridesmaidsCount}}, {{bridesmaidsPrice}}, {{date}}
+                                💡 משתנים זמינים: {{firstName}}, {{lastName}}, {{fullName}}, {{phone}}, {{service}}, {{eventDate}}, {{location}}, {{price}}, {{deposit}}, {{balance}}, {{hasEscort}}, {{escortPrice}}, {{hasBridesmaids}}, {{bridesmaidsCount}}, {{bridesmaidsPrice}}, {{date}}
                             </div>
                         </div>
                     </div>

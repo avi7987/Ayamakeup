@@ -528,6 +528,10 @@ app.post('/api/generate-contract/:leadId', async (req, res) => {
 
         // Prepare data for template
         const fullName = `${lead.name} ${lead.lastName || ''}`.trim();
+        const price = lead.price || 0;
+        const deposit = lead.deposit || 0;
+        const balance = price - deposit;
+        
         const templateData = {
             name: lead.name || '',
             lastName: lead.lastName || '',
@@ -536,8 +540,9 @@ app.post('/api/generate-contract/:leadId', async (req, res) => {
             service: lead.service || '',
             eventDate: lead.eventDate || '',
             location: lead.location || '',
-            price: lead.price || 0,
-            deposit: lead.deposit || 0,
+            price: price,
+            deposit: deposit,
+            balance: balance,
             hasEscort: lead.hasEscort ? 'כן' : 'לא',
             escortPrice: lead.escortPrice || 0,
             hasBridesmaids: lead.hasBridesmaids ? 'כן' : 'לא',
@@ -565,8 +570,6 @@ app.post('/api/generate-contract/:leadId', async (req, res) => {
         const pdfPath = path.join(contractsDir, pdfFilename);
 
         // Create HTML from Word content for PDF conversion
-        // Note: This is a simplified conversion. For RTL Hebrew text and complex formatting,
-        // you might want to use a more sophisticated solution like LibreOffice or an external API
         const htmlContent = `
         <!DOCTYPE html>
         <html dir="rtl" lang="he">
@@ -578,6 +581,7 @@ app.post('/api/generate-contract/:leadId', async (req, res) => {
                     direction: rtl; 
                     padding: 40px;
                     line-height: 1.8;
+                    font-size: 14px;
                 }
                 .contract-header {
                     text-align: center;
@@ -591,12 +595,59 @@ app.post('/api/generate-contract/:leadId', async (req, res) => {
                     margin-bottom: 10px;
                 }
                 .contract-section {
-                    margin-bottom: 20px;
+                    margin-bottom: 25px;
+                }
+                .section-title {
+                    font-size: 18px;
+                    font-weight: bold;
+                    margin-bottom: 15px;
+                    color: #333;
+                    border-bottom: 1px solid #ccc;
+                    padding-bottom: 5px;
                 }
                 .field-label {
                     font-weight: bold;
                     display: inline-block;
                     width: 150px;
+                }
+                .services-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin: 20px 0;
+                }
+                .services-table th {
+                    background-color: #f5f5f5;
+                    border: 1px solid #333;
+                    padding: 12px;
+                    text-align: center;
+                    font-weight: bold;
+                }
+                .services-table td {
+                    border: 1px solid #333;
+                    padding: 10px;
+                    text-align: center;
+                }
+                .services-table td:first-child {
+                    text-align: right;
+                }
+                .financial-summary {
+                    background-color: #f9f9f9;
+                    padding: 20px;
+                    border: 2px solid #333;
+                    border-radius: 5px;
+                    margin-top: 20px;
+                }
+                .financial-summary .summary-line {
+                    display: flex;
+                    justify-content: space-between;
+                    padding: 8px 0;
+                    border-bottom: 1px solid #ddd;
+                }
+                .financial-summary .summary-line:last-child {
+                    border-bottom: none;
+                    font-weight: bold;
+                    font-size: 16px;
+                    padding-top: 15px;
                 }
                 .signature-section {
                     margin-top: 60px;
@@ -605,6 +656,12 @@ app.post('/api/generate-contract/:leadId', async (req, res) => {
                 }
                 .signature-box {
                     text-align: center;
+                    width: 40%;
+                }
+                .signature-line {
+                    margin-top: 40px;
+                    border-top: 1px solid #333;
+                    padding-top: 5px;
                 }
             </style>
         </head>
@@ -615,40 +672,75 @@ app.post('/api/generate-contract/:leadId', async (req, res) => {
             </div>
             
             <div class="contract-section">
-                <div><span class="field-label">שם:</span> ${fullName}</div>
+                <div class="section-title">פרטי הלקוח/ה</div>
+                <div><span class="field-label">שם מלא:</span> ${fullName}</div>
                 <div><span class="field-label">טלפון:</span> ${templateData.phone}</div>
-                <div><span class="field-label">שירות:</span> ${templateData.service}</div>
-                <div><span class="field-label">תאריך אירוע:</span> ${templateData.eventDate}</div>
-                <div><span class="field-label">מיקום:</span> ${templateData.location}</div>
             </div>
             
             <div class="contract-section">
-                <div><span class="field-label">מחיר כולל:</span> ${templateData.price} ₪</div>
-                <div><span class="field-label">מקדמה:</span> ${templateData.deposit} ₪</div>
+                <div class="section-title">פרטי האירוע</div>
+                <div><span class="field-label">סוג האירוע:</span> ${templateData.service}</div>
+                <div><span class="field-label">תאריך האירוע:</span> ${templateData.eventDate}</div>
+                <div><span class="field-label">מיקום האירוע:</span> ${templateData.location}</div>
             </div>
             
-            ${templateData.hasEscort === 'כן' ? `
             <div class="contract-section">
-                <div><span class="field-label">ליווי:</span> כן</div>
-                <div><span class="field-label">מחיר ליווי:</span> ${templateData.escortPrice} ₪</div>
+                <div class="section-title">פירוט השירותים והעלויות</div>
+                <table class="services-table">
+                    <thead>
+                        <tr>
+                            <th>תיאור השירות</th>
+                            <th>פרטים</th>
+                            <th>מחיר (₪)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>${templateData.service}</td>
+                            <td>שירות עיקרי</td>
+                            <td>${templateData.price.toLocaleString('he-IL')}</td>
+                        </tr>
+                        ${lead.hasEscort ? `
+                        <tr>
+                            <td>ליווי לאירוע</td>
+                            <td>נוכחות והכנה באירוע</td>
+                            <td>${templateData.escortPrice.toLocaleString('he-IL')}</td>
+                        </tr>
+                        ` : ''}
+                        ${lead.hasBridesmaids ? `
+                        <tr>
+                            <td>איפור מלוות</td>
+                            <td>${templateData.bridesmaidsCount} מלוות</td>
+                            <td>${templateData.bridesmaidsPrice.toLocaleString('he-IL')}</td>
+                        </tr>
+                        ` : ''}
+                    </tbody>
+                </table>
+                
+                <div class="financial-summary">
+                    <div class="summary-line">
+                        <span>סה"כ עלות השירותים:</span>
+                        <span><strong>${templateData.price.toLocaleString('he-IL')} ₪</strong></span>
+                    </div>
+                    <div class="summary-line">
+                        <span>מקדמה ששולמה:</span>
+                        <span><strong>${templateData.deposit.toLocaleString('he-IL')} ₪</strong></span>
+                    </div>
+                    <div class="summary-line">
+                        <span>יתרה לתשלום ביום האירוע:</span>
+                        <span><strong>${balance.toLocaleString('he-IL')} ₪</strong></span>
+                    </div>
+                </div>
             </div>
-            ` : ''}
-            
-            ${templateData.hasBridesmaids === 'כן' ? `
-            <div class="contract-section">
-                <div><span class="field-label">מלוות:</span> כן (${templateData.bridesmaidsCount})</div>
-                <div><span class="field-label">מחיר מלוות:</span> ${templateData.bridesmaidsPrice} ₪</div>
-            </div>
-            ` : ''}
             
             <div class="signature-section">
                 <div class="signature-box">
-                    <div>חתימת הלקוח</div>
-                    <div style="margin-top: 40px;">_______________</div>
+                    <div>חתימת הלקוח/ה</div>
+                    <div class="signature-line">תאריך: ___________</div>
                 </div>
                 <div class="signature-box">
                     <div>חתימת נותן השירות</div>
-                    <div style="margin-top: 40px;">_______________</div>
+                    <div class="signature-line">תאריך: ___________</div>
                 </div>
             </div>
         </body>

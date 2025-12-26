@@ -32,6 +32,7 @@
 {{location}}           - מיקום
 {{price}}              - מחיר
 {{deposit}}            - מקדמה
+{{balance}}            - יתרה לתשלום (מחושב אוטומטית)
 {{hasEscort}}          - יש ליווי? (כן/לא)
 {{escortPrice}}        - מחיר ליווי
 {{hasBridesmaids}}     - יש מלוות? (כן/לא)
