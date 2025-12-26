@@ -1913,22 +1913,19 @@ const WhatsAppAutomation = {
             // For in-process stage, show proposed price field
             const inProcessFields = document.getElementById('in-process-fields');
             const additionalFields = document.getElementById('contract-additional-fields');
-            const closedDealFields = document.getElementById('closed-deal-fields');
             const contractActions = document.getElementById('contract-actions');
             
             if (newStage === 'in-process') {
-                inProcessFields.classList.remove('hidden');
-                additionalFields.classList.add('hidden');
-                closedDealFields.classList.add('hidden');
-                contractActions.classList.add('hidden');
+                if (inProcessFields) inProcessFields.classList.remove('hidden');
+                if (additionalFields) additionalFields.classList.add('hidden');
+                if (contractActions) contractActions.classList.add('hidden');
                 
                 // Pre-fill proposed price
                 document.getElementById('inprocess-proposedPrice').value = lead.proposedPrice || '';
             } else if (newStage === 'contract-sent') {
-                inProcessFields.classList.add('hidden');
-                additionalFields.classList.remove('hidden');
-                closedDealFields.classList.add('hidden');
-                contractActions.classList.remove('hidden');
+                if (inProcessFields) inProcessFields.classList.add('hidden');
+                if (additionalFields) additionalFields.classList.remove('hidden');
+                if (contractActions) contractActions.classList.remove('hidden');
                 
                 // Pre-fill existing data with NEW structure
                 // Escort type dropdown
@@ -1954,15 +1951,13 @@ const WhatsAppAutomation = {
             } else if (newStage === 'closed') {
                 // For 'closed' stage - no additional fields needed
                 // Deposit was already recorded in modal-deal-closed
-                inProcessFields.classList.add('hidden');
-                additionalFields.classList.add('hidden');
-                closedDealFields.classList.add('hidden');
-                contractActions.classList.add('hidden');
+                if (inProcessFields) inProcessFields.classList.add('hidden');
+                if (additionalFields) additionalFields.classList.add('hidden');
+                if (contractActions) contractActions.classList.add('hidden');
             } else {
-                inProcessFields.classList.add('hidden');
-                additionalFields.classList.add('hidden');
-                closedDealFields.classList.add('hidden');
-                contractActions.classList.add('hidden');
+                if (inProcessFields) inProcessFields.classList.add('hidden');
+                if (additionalFields) additionalFields.classList.add('hidden');
+                if (contractActions) contractActions.classList.add('hidden');
             }
             
             // Generate message with variables
@@ -2778,8 +2773,8 @@ const StageManager = {
                     service: `מקדמה - ${this.pendingLead.fullName || this.pendingLead.name}`,
                     date: new Date().toISOString().split('T')[0],
                     payment: paymentMethod,
-                    isBride: this.pendingLead.isBride || false,
-                    notes: `מקדמה לחתונה - אירוע: ${this.pendingLead.eventDate || ''} | אמצעי תשלום: ${paymentMethod}${this.pendingLead.isBride ? ' | כלה 👰' : ''}`,
+                    isBride: false, // Deposits don't count as bride events
+                    notes: `מקדמה - אירוע: ${this.pendingLead.eventDate || ''} | אמצעי תשלום: ${paymentMethod}`,
                     income: actualDeposit,
                     leadId: this.pendingLead._id || this.pendingLead.id
                 };
