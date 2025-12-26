@@ -2686,21 +2686,30 @@ const StageManager = {
             return false; // Don't complete stage change yet
         }
         
-        // Check if moving to "completed" (האירוע בוצע) - need to record actual deposit
+        // Check if moving to "closed" (סגורה) - need to record actual deposit paid
+        if (newStage === 'closed') {
+            this.pendingLead = lead;
+            const totalPrice = (lead.proposedPrice || 0) + (lead.escortPrice || 0) + 
+                              (lead.bridesmaids || []).reduce((sum, b) => sum + (b.price || 0), 0);
+            document.getElementById('closed-totalPrice').textContent = totalPrice.toLocaleString('he-IL');
+            document.getElementById('closed-proposedDeposit').textContent = (lead.proposedDeposit || 0).toLocaleString('he-IL');
+            document.getElementById('closed-actualDeposit').value = lead.actualDeposit || lead.proposedDeposit || '';
+            
+            openModal('modal-deal-closed');
+            return false; // Don't complete stage change yet
+        }
+        
+        // Check if moving to "completed" (האירוע בוצע) - calculate income from existing deposit
         if (newStage === 'completed') {
             this.pendingLead = lead;
             const totalPrice = (lead.proposedPrice || 0) + (lead.escortPrice || 0) + 
                               (lead.bridesmaids || []).reduce((sum, b) => sum + (b.price || 0), 0);
-            document.getElementById('completed-totalPrice').textContent = totalPrice.toLocaleString('he-IL');
-            document.getElementById('completed-actualDeposit').value = lead.actualDeposit || lead.proposedDeposit || '';
-            document.getElementById('completed-income').textContent = '0';
+            const actualDeposit = lead.actualDeposit || 0;
+            const income = totalPrice - actualDeposit;
             
-            // Calculate income on input change
-            document.getElementById('completed-actualDeposit').oninput = (e) => {
-                const deposit = parseInt(e.target.value) || 0;
-                const income = totalPrice - deposit;
-                document.getElementById('completed-income').textContent = income.toLocaleString('he-IL');
-            };
+            document.getElementById('completed-totalPrice').textContent = totalPrice.toLocaleString('he-IL');
+            document.getElementById('completed-depositPaid').textContent = actualDeposit.toLocaleString('he-IL');
+            document.getElementById('completed-income').textContent = income.toLocaleString('he-IL');
             
             openModal('modal-event-completed');
             return false; // Don't complete stage change yet
@@ -2736,16 +2745,74 @@ const StageManager = {
         this.pendingLead = null;
     },
     
+    async confirmDealClosed() {
+        if (!this.pendingLead) return;
+        
+        const actualDeposit = parseInt(document.getElementById('closed-actualDeposit').value) || 0;
+        
+        // Save actual deposit
+        this.pendingLead.actualDeposit = actualDeposit;
+        this.pendingLead.status = 'closed';
+        
+        // Update stage history
+        if (!this.pendingLead.stageHistory) this.pendingLead.stageHistory = [];
+        this.pendingLead.stageHistory.push({
+            stage: 'closed',
+            timestamp: new Date().toISOString(),
+            note: `עסקה נסגרה - מקדמה: ${actualDeposit.toLocaleString('he-IL')} ₪`
+        });
+        
+        await API.updateLead(this.pendingLead._id || this.pendingLead.id, this.pendingLead);
+        
+        closeModal('modal-deal-closed');
+        
+        // Continue with WhatsApp automation (if applicable)
+        const leadId = this.pendingLead._id || this.pendingLead.id;
+        this.pendingLead = null;
+        
+        await WhatsAppAutomation.checkAndPrompt(leadId, 'closed');
+        
+        // Refresh view
+        HomeView.update();
+    },
+    
+    async skipDealClosed() {
+        if (!this.pendingLead) return;
+        
+        closeModal('modal-deal-closed');
+        
+        // Complete stage change without recording deposit
+        const leadId = this.pendingLead._id || this.pendingLead.id;
+        const lead = this.pendingLead;
+        lead.status = 'closed';
+        
+        // Update stage history
+        if (!lead.stageHistory) lead.stageHistory = [];
+        lead.stageHistory.push({
+            stage: 'closed',
+            timestamp: new Date().toISOString(),
+            note: 'עסקה נסגרה (ללא רישום מקדמה)'
+        });
+        
+        await API.updateLead(leadId, lead);
+        
+        this.pendingLead = null;
+        
+        // Continue with WhatsApp automation
+        await WhatsAppAutomation.checkAndPrompt(leadId, 'closed');
+        
+        HomeView.update();
+    },
+    
     async confirmEventCompleted() {
         if (!this.pendingLead) return;
         
-        const actualDeposit = parseInt(document.getElementById('completed-actualDeposit').value) || 0;
         const totalPrice = (this.pendingLead.proposedPrice || 0) + (this.pendingLead.escortPrice || 0) + 
                           (this.pendingLead.bridesmaids || []).reduce((sum, b) => sum + (b.price || 0), 0);
+        const actualDeposit = this.pendingLead.actualDeposit || 0;
         const income = totalPrice - actualDeposit;
         
-        // Save actual deposit and calculated income
-        this.pendingLead.actualDeposit = actualDeposit;
+        // Save calculated income
         this.pendingLead.income = income;
         this.pendingLead.completedAt = new Date().toISOString();
         this.pendingLead.status = 'completed';
@@ -2780,7 +2847,7 @@ const StageManager = {
         
         closeModal('modal-event-completed');
         
-        // Complete stage change without recording deposit
+        // Complete stage change without recording income
         const leadId = this.pendingLead._id || this.pendingLead.id;
         const lead = this.pendingLead;
         lead.status = 'completed';
@@ -2790,7 +2857,7 @@ const StageManager = {
         lead.stageHistory.push({
             stage: 'completed',
             timestamp: new Date().toISOString(),
-            note: 'האירוע הושלם (ללא רישום הכנסה)'
+            note: 'האירוע הושלם'
         });
         
         await API.updateLead(leadId, lead);
