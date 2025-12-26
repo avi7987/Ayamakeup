@@ -1952,13 +1952,12 @@ const WhatsAppAutomation = {
                     });
                 }
             } else if (newStage === 'closed') {
+                // For 'closed' stage - no additional fields needed
+                // Deposit was already recorded in modal-deal-closed
                 inProcessFields.classList.add('hidden');
                 additionalFields.classList.add('hidden');
-                closedDealFields.classList.remove('hidden');
+                closedDealFields.classList.add('hidden');
                 contractActions.classList.add('hidden');
-                
-                // Pre-fill actual deposit
-                document.getElementById('closed-actualDeposit').value = lead.actualDeposit || '';
             } else {
                 inProcessFields.classList.add('hidden');
                 additionalFields.classList.add('hidden');
@@ -2750,52 +2749,57 @@ const StageManager = {
     async confirmDealClosed() {
         if (!this.pendingLead) return;
         
-        const actualDeposit = parseInt(document.getElementById('closed-actualDeposit').value) || 0;
-        const paymentMethod = document.getElementById('closed-paymentMethod').value;
-        
-        // Save actual deposit
-        this.pendingLead.actualDeposit = actualDeposit;
-        this.pendingLead.depositPaymentMethod = paymentMethod;
-        this.pendingLead.status = 'closed';
-        
-        // Update stage history
-        if (!this.pendingLead.stageHistory) this.pendingLead.stageHistory = [];
-        this.pendingLead.stageHistory.push({
-            stage: 'closed',
-            timestamp: new Date().toISOString(),
-            note: `עסקה נסגרה - מקדמה: ${actualDeposit.toLocaleString('he-IL')} ₪ (תשלום: ${paymentMethod})`
-        });
-        
-        await API.updateLead(this.pendingLead._id || this.pendingLead.id, this.pendingLead);
-        
-        // Create income record for deposit if amount > 0
-        if (actualDeposit > 0) {
-            const incomeRecord = {
-                name: this.pendingLead.fullName || this.pendingLead.name,
-                amount: actualDeposit,
-                price: actualDeposit,
-                service: `מקדמה - ${this.pendingLead.fullName || this.pendingLead.name}`,
-                date: new Date().toISOString().split('T')[0],
-                payment: paymentMethod,
-                isBride: true,
-                notes: `מקדמה לחתונה - אירוע: ${this.pendingLead.eventDate || ''} | אמצעי תשלום: ${paymentMethod} | כלה 👰`,
-                income: actualDeposit,
-                leadId: this.pendingLead._id || this.pendingLead.id
-            };
+        try {
+            const actualDeposit = parseInt(document.getElementById('closed-actualDeposit').value) || 0;
+            const paymentMethod = document.getElementById('closed-paymentMethod').value;
             
-            await API.createClient(incomeRecord);
+            // Save actual deposit
+            this.pendingLead.actualDeposit = actualDeposit;
+            this.pendingLead.depositPaymentMethod = paymentMethod;
+            this.pendingLead.status = 'closed';
+            
+            // Update stage history
+            if (!this.pendingLead.stageHistory) this.pendingLead.stageHistory = [];
+            this.pendingLead.stageHistory.push({
+                stage: 'closed',
+                timestamp: new Date().toISOString(),
+                note: `עסקה נסגרה - מקדמה: ${actualDeposit.toLocaleString('he-IL')} ₪ (תשלום: ${paymentMethod})`
+            });
+            
+            await API.updateLead(this.pendingLead._id || this.pendingLead.id, this.pendingLead);
+            
+            // Create income record for deposit if amount > 0
+            if (actualDeposit > 0) {
+                const incomeRecord = {
+                    name: this.pendingLead.fullName || this.pendingLead.name,
+                    amount: actualDeposit,
+                    price: actualDeposit,
+                    service: `מקדמה - ${this.pendingLead.fullName || this.pendingLead.name}`,
+                    date: new Date().toISOString().split('T')[0],
+                    payment: paymentMethod,
+                    isBride: true,
+                    notes: `מקדמה לחתונה - אירוע: ${this.pendingLead.eventDate || ''} | אמצעי תשלום: ${paymentMethod} | כלה 👰`,
+                    income: actualDeposit,
+                    leadId: this.pendingLead._id || this.pendingLead.id
+                };
+                
+                await API.createClient(incomeRecord);
+            }
+            
+            closeModal('modal-deal-closed');
+            
+            // Continue with WhatsApp automation (if applicable)
+            const leadId = this.pendingLead._id || this.pendingLead.id;
+            this.pendingLead = null;
+            
+            await WhatsAppAutomation.checkAndPrompt(leadId, 'closed');
+            
+            // Refresh view
+            HomeView.update();
+        } catch (error) {
+            console.error('Error in confirmDealClosed:', error);
+            alert('אירעה שגיאה בשמירת המקדמה. אנא נסה שוב.');
         }
-        
-        closeModal('modal-deal-closed');
-        
-        // Continue with WhatsApp automation (if applicable)
-        const leadId = this.pendingLead._id || this.pendingLead.id;
-        this.pendingLead = null;
-        
-        await WhatsAppAutomation.checkAndPrompt(leadId, 'closed');
-        
-        // Refresh view
-        HomeView.update();
     },
     
     async skipDealClosed() {
