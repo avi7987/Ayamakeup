@@ -897,15 +897,24 @@ app.post('/api/generate-contract/:leadId', async (req, res) => {
         });
     } catch (error) {
         console.error('❌ Error generating contract:', error);
-        console.error('Error stack:', error.stack);
         console.error('Error name:', error.name);
         console.error('Error message:', error.message);
+        console.error('Error stack:', error.stack);
         
-        res.status(500).json({ 
+        // Return more detailed error
+        const errorResponse = {
             error: error.message || 'שגיאה ביצירת החוזה',
-            errorType: error.name,
-            details: process.env.NODE_ENV === 'development' ? error.stack : 'בדוק לוגים בשרת'
-        });
+            errorType: error.name || 'Error',
+            errorDetails: error.stack
+        };
+        
+        // If it's a Puppeteer error, add specific message
+        if (error.message && error.message.includes('browserless')) {
+            errorResponse.error = 'Puppeteer לא זמין. נסי שוב בעוד דקה.';
+            errorResponse.hint = 'Railway מאתחל את Chromium';
+        }
+        
+        res.status(500).json(errorResponse);
     }
 });
 
