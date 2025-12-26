@@ -1229,7 +1229,7 @@ const HomeView = {
             console.log(`📊 לקוחות השנה: ${yearlyClients.length}`);
             
             // Income progress
-            const totalIncome = yearlyClients.reduce((sum, c) => sum + (c.price || c.amount || 0), 0);
+            const totalIncome = yearlyClients.reduce((sum, c) => sum + (c.income || c.price || c.amount || 0), 0);
             const incomeGoal = goals.income || 0;
             const incomePercent = incomeGoal > 0 ? Math.min(100, Math.round((totalIncome / incomeGoal) * 100)) : 0;
             const incomeRemaining = Math.max(0, incomeGoal - totalIncome);
@@ -1313,7 +1313,7 @@ const StatsView = {
     },
     
     updateSummary(filtered, filterVal) {
-        const totalIncome = filtered.reduce((sum, client) => sum + (client.price || client.amount || 0), 0);
+        const totalIncome = filtered.reduce((sum, client) => sum + (client.income || client.price || client.amount || 0), 0);
         const bridesCount = filtered.filter(c => c.isBride || c.notes?.includes('כלה')).length;
         const totalCount = filtered.length;
         
@@ -1337,7 +1337,7 @@ const StatsView = {
                         const date = new Date(c.date);
                         return date.getMonth() === idx;
                     })
-                    .reduce((sum, c) => sum + (c.price || c.amount || 0), 0);
+                    .reduce((sum, c) => sum + (c.income || c.price || c.amount || 0), 0);
             });
             bridesData = months.map((_, idx) => {
                 return State.clients
@@ -1349,7 +1349,7 @@ const StatsView = {
             });
         } else {
             labels = [filterVal];
-            incomeData = [filtered.reduce((sum, c) => sum + (c.price || c.amount || 0), 0)];
+            incomeData = [filtered.reduce((sum, c) => sum + (c.income || c.price || c.amount || 0), 0)];
             bridesData = [filtered.filter(c => c.isBride || c.notes?.includes('כלה')).length];
         }
         
@@ -1464,7 +1464,7 @@ const ManageView = {
                     <td class="p-3 text-xs text-gray-500">${dateOnly}</td>
                     <td class="p-3 font-bold">${client.name}</td>
                     <td class="p-3 text-sm text-gray-600">${client.service || '-'}</td>
-                    <td class="p-3 text-purple-600 font-bold">${client.price || client.amount} ₪</td>
+                    <td class="p-3 text-purple-600 font-bold">${client.income || client.price || client.amount} ₪</td>
                     <td class="p-3 text-xs text-gray-600">${client.payment || 'מזומן'}</td>
                     <td class="p-3 text-center">${brideIcon}</td>
                     <td class="p-3 flex gap-2">
@@ -1565,7 +1565,7 @@ const ExcelExporter = {
                 return date.getMonth() === index;
             });
             
-            const total = monthClients.reduce((sum, c) => sum + (c.price || c.amount || 0), 0);
+            const total = monthClients.reduce((sum, c) => sum + (c.income || c.price || c.amount || 0), 0);
             const count = monthClients.length;
             const brides = monthClients.filter(c => c.isBride).length;
             
@@ -1576,7 +1576,7 @@ const ExcelExporter = {
             // Count payment methods
             monthClients.forEach(c => {
                 const payment = c.payment || 'מזומן';
-                paymentMethods[payment] = (paymentMethods[payment] || 0) + (c.price || c.amount || 0);
+                paymentMethods[payment] = (paymentMethods[payment] || 0) + (c.income || c.price || c.amount || 0);
             });
             
             if (count > 0) {
@@ -1651,7 +1651,7 @@ const ExcelExporter = {
         ws_data.push([]);
         
         // Summary box at top
-        const total = clients.reduce((sum, c) => sum + (c.price || c.amount || 0), 0);
+        const total = clients.reduce((sum, c) => sum + (c.income || c.price || c.amount || 0), 0);
         const brides = clients.filter(c => c.isBride).length;
         const avg = Math.round(total / clients.length);
         
@@ -1672,7 +1672,7 @@ const ExcelExporter = {
                 client.date,
                 client.name,
                 client.service || 'שירות רגיל',
-                client.price || client.amount || 0,
+                client.income || client.price || client.amount || 0,
                 client.payment || 'מזומן',
                 client.isBride ? '✓ כן' : 'לא'
             ]);
@@ -2708,7 +2708,7 @@ const StageManager = {
             const income = totalPrice - actualDeposit;
             
             document.getElementById('completed-totalPrice').textContent = totalPrice.toLocaleString('he-IL');
-            document.getElementById('completed-depositPaid').textContent = actualDeposit.toLocaleString('he-IL');
+            document.getElementById('completed-depositPaid').value = actualDeposit || 0;
             document.getElementById('completed-income').textContent = income.toLocaleString('he-IL');
             
             openModal('modal-event-completed');
@@ -2804,15 +2804,27 @@ const StageManager = {
         HomeView.update();
     },
     
+    updateIncomeCalculation() {
+        if (!this.pendingLead) return;
+        
+        const totalPrice = (this.pendingLead.proposedPrice || 0) + (this.pendingLead.escortPrice || 0) + 
+                          (this.pendingLead.bridesmaids || []).reduce((sum, b) => sum + (b.price || 0), 0);
+        const actualDeposit = parseFloat(document.getElementById('completed-depositPaid').value) || 0;
+        const income = totalPrice - actualDeposit;
+        
+        document.getElementById('completed-income').textContent = `${income.toLocaleString('he-IL')} ₪`;
+    },
+    
     async confirmEventCompleted() {
         if (!this.pendingLead) return;
         
         const totalPrice = (this.pendingLead.proposedPrice || 0) + (this.pendingLead.escortPrice || 0) + 
                           (this.pendingLead.bridesmaids || []).reduce((sum, b) => sum + (b.price || 0), 0);
-        const actualDeposit = this.pendingLead.actualDeposit || 0;
+        const actualDeposit = parseFloat(document.getElementById('completed-depositPaid').value) || 0;
         const income = totalPrice - actualDeposit;
         
-        // Save calculated income
+        // Save calculated income and updated deposit
+        this.pendingLead.actualDeposit = actualDeposit;
         this.pendingLead.income = income;
         this.pendingLead.completedAt = new Date().toISOString();
         this.pendingLead.status = 'completed';

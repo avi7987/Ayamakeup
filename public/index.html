@@ -595,9 +595,14 @@
                     <span class="text-sm text-gray-600">סה"כ מחיר חוזה:</span>
                     <span id="completed-totalPrice" class="text-lg font-bold text-purple-700">0 ₪</span>
                 </div>
-                <div class="flex justify-between items-center">
-                    <span class="text-sm text-gray-600">מקדמה ששולמה:</span>
-                    <span id="completed-depositPaid" class="text-lg font-bold text-orange-600">0 ₪</span>
+                <div class="mb-4">
+                    <label class="block text-sm font-bold text-gray-600 mb-2">💳 מקדמה ששולמה:</label>
+                    <input 
+                        type="number" 
+                        id="completed-depositPaid" 
+                        placeholder="הזן סכום מקדמה"
+                        class="w-full p-3 border-2 border-orange-300 rounded-xl focus:border-orange-500 focus:outline-none text-center text-lg font-bold"
+                        onchange="StageManager.updateIncomeCalculation()">
                 </div>
                 <div class="border-t pt-2 mt-2">
                     <div class="flex justify-between items-center">
@@ -608,7 +613,7 @@
             </div>
             
             <div class="bg-blue-50 rounded-xl p-3 mb-4 text-center text-sm text-gray-600">
-                ההכנסה חושבה אוטומטית: מחיר חוזה - מקדמה
+                ההכנסה מחושבת אוטומטית: מחיר חוזה - מקדמה
             </div>
             
             <div class="flex gap-3">
