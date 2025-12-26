@@ -1909,8 +1909,6 @@ const WhatsAppAutomation = {
                 contractActions.classList.remove('hidden');
                 
                 // Pre-fill existing data with NEW structure
-                document.getElementById('contract-lastName').value = lead.lastName || '';
-                
                 // Escort type dropdown
                 document.getElementById('contract-escortType').value = lead.escortType || 'none';
                 document.getElementById('contract-escortPrice').value = lead.escortPrice || '';
@@ -1963,7 +1961,7 @@ const WhatsAppAutomation = {
         
         // If contract-sent stage, update lead with additional fields
         if (this.pendingStage === 'contract-sent') {
-            this.pendingLead.lastName = document.getElementById('contract-lastName').value.trim();
+            // lastName already exists from lead creation (required field)
             
             // Update escort type and price
             this.pendingLead.escortType = document.getElementById('contract-escortType').value;
@@ -2059,7 +2057,7 @@ const WhatsAppAutomation = {
         if (!this.pendingLead) return;
         
         // Update lead with current form values
-        this.pendingLead.lastName = document.getElementById('contract-lastName').value.trim();
+        // lastName already exists from lead creation (required field)
         
         // Update escort type and price
         this.pendingLead.escortType = document.getElementById('contract-escortType').value;
