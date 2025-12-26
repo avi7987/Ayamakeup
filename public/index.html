@@ -306,7 +306,8 @@
         <div class="bg-white p-6 rounded-3xl w-full max-w-md shadow-2xl text-right overflow-y-auto max-h-[90vh]">
             <h3 class="text-xl font-bold mb-4 text-purple-800 text-center">הוספת ליד חדש</h3>
             
-            <input type="text" id="lead-name" placeholder="שם הלקוחה *">
+            <input type="text" id="lead-name" placeholder="שם פרטי *">
+            <input type="text" id="lead-last-name" placeholder="שם משפחה *">
             <input type="tel" id="lead-phone" placeholder="מספר טלפון *">
             
             <select id="lead-source" class="mb-4">
@@ -337,7 +338,6 @@
             </div>
         </div>
     </div>
-
     <!-- Modal: View Lead Details (OLD - will be replaced by LeadProfile) -->
     <div id="modal-view-lead" class="modal" style="display: none;">
         <div class="bg-white p-8 rounded-3xl w-full max-w-sm shadow-2xl text-right">
@@ -383,25 +383,28 @@
                 <div class="bg-blue-50 rounded-xl p-4 border border-blue-200">
                     <div class="font-bold text-sm text-gray-700 mb-3">📋 פרטים נוספים לחוזה</div>
                     
-                    <input type="text" id="contract-lastName" placeholder="שם משפחה" class="w-full p-2 border-2 border-gray-300 rounded-lg mb-2 text-sm">
+                    <!-- Escort Type Selection -->
+                    <div class="mb-3">
+                        <label class="block text-sm font-bold text-gray-700 mb-2">ליווי:</label>
+                        <select id="contract-escortType" class="w-full p-2 border-2 border-gray-300 rounded-lg text-sm" onchange="toggleEscortPrice()">
+                            <option value="none">ללא ליווי</option>
+                            <option value="short">ליווי קצר</option>
+                            <option value="long">ליווי ארוך</option>
+                        </select>
+                    </div>
                     
-                    <label class="flex items-center gap-2 mb-2 cursor-pointer">
-                        <input type="checkbox" id="contract-hasEscort" class="w-4 h-4" onchange="toggleEscortFields()">
-                        <span class="text-sm font-bold">יש ליווי?</span>
-                    </label>
-                    
-                    <div id="escort-fields" class="hidden space-y-2 mr-6 mb-2">
+                    <div id="escort-price-field" class="hidden mb-3">
                         <input type="number" id="contract-escortPrice" placeholder="מחיר ליווי (₪)" class="w-full p-2 border-2 border-gray-300 rounded-lg text-sm">
                     </div>
                     
-                    <label class="flex items-center gap-2 mb-2 cursor-pointer">
-                        <input type="checkbox" id="contract-hasBridesmaids" class="w-4 h-4" onchange="toggleBridesmaidsFields()">
-                        <span class="text-sm font-bold">יש מלוות?</span>
-                    </label>
+                    <!-- Bridesmaids Section -->
+                    <div class="mb-3">
+                        <label class="block text-sm font-bold text-gray-700 mb-2">מלוות:</label>
+                        <input type="number" id="contract-bridesmaidsCount" placeholder="כמות מלוות (0 אם אין)" min="0" class="w-full p-2 border-2 border-gray-300 rounded-lg text-sm" onchange="updateBridesmaidsFields()">
+                    </div>
                     
-                    <div id="bridesmaids-fields" class="hidden space-y-2 mr-6">
-                        <input type="number" id="contract-bridesmaidsCount" placeholder="כמות מלוות" class="w-full p-2 border-2 border-gray-300 rounded-lg text-sm">
-                        <input type="number" id="contract-bridesmaidsPrice" placeholder="מחיר כולל למלוות (₪)" class="w-full p-2 border-2 border-gray-300 rounded-lg text-sm">
+                    <div id="bridesmaids-list" class="space-y-2">
+                        <!-- Dynamic bridesmaid fields will be inserted here -->
                     </div>
                 </div>
             </div>
@@ -460,6 +463,34 @@
                     onclick="closeModal('modal-contract-preview')" 
                     class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-3 rounded-xl font-bold transition-all">
                     חזור
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Set Price (In-Process Stage) -->
+    <div id="modal-set-price" class="modal">
+        <div class="bg-white p-6 rounded-2xl w-full max-w-md shadow-2xl text-right">
+            <div class="text-center mb-4">
+                <div class="text-5xl mb-3">💰</div>
+                <h3 class="text-xl font-bold text-gray-800">הזנת מחיר</h3>
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-bold text-gray-700 mb-2">מחיר מוצע ללקוחה (₪):</label>
+                <input type="number" id="price-input" placeholder="לדוגמה: 3500" class="w-full p-3 border-2 border-gray-300 rounded-xl text-lg" min="0">
+            </div>
+            
+            <div class="flex gap-3">
+                <button 
+                    onclick="StageManager.confirmPrice()" 
+                    class="flex-1 bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-xl font-bold transition-all">
+                    ✓ אשר
+                </button>
+                <button 
+                    onclick="StageManager.skipPrice()" 
+                    class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-3 rounded-xl font-bold transition-all">
+                    דלג (יישאר 0)
                 </button>
             </div>
         </div>

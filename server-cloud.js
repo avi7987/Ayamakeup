@@ -55,7 +55,7 @@ const clientSchema = new mongoose.Schema({
 
 const leadSchema = new mongoose.Schema({
     name: { type: String, required: true },
-    lastName: { type: String, default: '' },
+    lastName: { type: String, required: true }, // Changed to required
     phone: { type: String, required: true },
     service: { type: String, default: '' },
     status: { type: String, default: 'new' },
@@ -69,11 +69,12 @@ const leadSchema = new mongoose.Schema({
     deposit: { type: Number, default: 0 },
     contractStatus: { type: String, default: 'pending' }, // pending, sent, signed
     // Contract-related fields
-    hasEscort: { type: Boolean, default: false },
+    escortType: { type: String, default: 'none' }, // none, short, long
     escortPrice: { type: Number, default: 0 },
-    hasBridesmaids: { type: Boolean, default: false },
-    bridesmaidsCount: { type: Number, default: 0 },
-    bridesmaidsPrice: { type: Number, default: 0 },
+    bridesmaids: [{ 
+        service: String,
+        price: Number
+    }],
     contractFileUrl: { type: String, default: '' },
     reminders: [{ 
         id: Number,
@@ -536,7 +537,29 @@ app.post('/api/generate-contract/:leadId', async (req, res) => {
         const fullName = `${lead.name} ${lead.lastName || ''}`.trim();
         const price = lead.price || 0;
         const deposit = lead.deposit || 0;
-        const balance = price - deposit;
+        
+        // Calculate total including escort and bridesmaids
+        let totalPrice = price;
+        
+        // Add escort price if not 'none'
+        if (lead.escortType && lead.escortType !== 'none' && lead.escortPrice) {
+            totalPrice += lead.escortPrice;
+        }
+        
+        // Add bridesmaids prices
+        if (lead.bridesmaids && lead.bridesmaids.length > 0) {
+            const bridesmaidsTotal = lead.bridesmaids.reduce((sum, b) => sum + (b.price || 0), 0);
+            totalPrice += bridesmaidsTotal;
+        }
+        
+        const balance = totalPrice - deposit;
+        
+        // Translate escort type to Hebrew
+        const escortTypeHebrew = {
+            'none': 'ללא ליווי',
+            'short': 'ליווי קצר',
+            'long': 'ליווי ארוך'
+        };
         
         const templateData = {
             name: lead.name || '',
@@ -549,11 +572,12 @@ app.post('/api/generate-contract/:leadId', async (req, res) => {
             price: price,
             deposit: deposit,
             balance: balance,
-            hasEscort: lead.hasEscort ? 'כן' : 'לא',
+            totalPrice: totalPrice,
+            escortType: lead.escortType || 'none',
+            escortTypeHebrew: escortTypeHebrew[lead.escortType || 'none'],
             escortPrice: lead.escortPrice || 0,
-            hasBridesmaids: lead.hasBridesmaids ? 'כן' : 'לא',
-            bridesmaidsCount: lead.bridesmaidsCount || 0,
-            bridesmaidsPrice: lead.bridesmaidsPrice || 0,
+            bridesmaids: lead.bridesmaids || [],
+            bridesmaidsCount: lead.bridesmaids?.length || 0,
             date: new Date().toLocaleDateString('he-IL'),
         };
 
@@ -706,27 +730,27 @@ app.post('/api/generate-contract/:leadId', async (req, res) => {
                             <td>שירות עיקרי</td>
                             <td>${templateData.price.toLocaleString('he-IL')}</td>
                         </tr>
-                        ${lead.hasEscort ? `
+                        ${lead.escortType && lead.escortType !== 'none' ? `
                         <tr>
                             <td>ליווי לאירוע</td>
-                            <td>נוכחות והכנה באירוע</td>
+                            <td>${templateData.escortTypeHebrew}</td>
                             <td>${templateData.escortPrice.toLocaleString('he-IL')}</td>
                         </tr>
                         ` : ''}
-                        ${lead.hasBridesmaids ? `
+                        ${lead.bridesmaids && lead.bridesmaids.length > 0 ? lead.bridesmaids.map((bridesmaid, i) => `
                         <tr>
-                            <td>איפור מלוות</td>
-                            <td>${templateData.bridesmaidsCount} מלוות</td>
-                            <td>${templateData.bridesmaidsPrice.toLocaleString('he-IL')}</td>
+                            <td>מלווה ${i + 1}</td>
+                            <td>${bridesmaid.service || 'שירות מלווה'}</td>
+                            <td>${(bridesmaid.price || 0).toLocaleString('he-IL')}</td>
                         </tr>
-                        ` : ''}
+                        `).join('') : ''}
                     </tbody>
                 </table>
                 
                 <div class="financial-summary">
                     <div class="summary-line">
                         <span>סה"כ עלות השירותים:</span>
-                        <span><strong>${templateData.price.toLocaleString('he-IL')} ₪</strong></span>
+                        <span><strong>${templateData.totalPrice.toLocaleString('he-IL')} ₪</strong></span>
                     </div>
                     <div class="summary-line">
                         <span>מקדמה ששולמה:</span>

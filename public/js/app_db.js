@@ -548,6 +548,9 @@ const LeadsManager = {
             price: 0,
             deposit: 0,
             contractStatus: 'pending',
+            escortType: 'none',
+            escortPrice: 0,
+            bridesmaids: [],
             reminders: [],
             stageHistory: [{
                 stage: 'new',
@@ -560,8 +563,8 @@ const LeadsManager = {
             calendarEventId: null
         };
         
-        if (!data.name || !data.phone) {
-            alert('מלא את השדות החובה');
+        if (!data.name || !data.lastName || !data.phone) {
+            alert('אנא מלאי את כל השדות המסומנים בכוכבית (*): שם פרטי, שם משפחה וטלפון');
             return;
         }
         
@@ -597,6 +600,10 @@ const LeadsManager = {
         try {
             const lead = State.leads.find(l => (l._id || l.id) === leadId);
             if (!lead) return;
+            
+            // Check if stage manager needs to handle this
+            const canProceed = await StageManager.handleStageChange(leadId, newStatus);
+            if (!canProceed) return; // Wait for modal
             
             const oldStatus = lead.status;
             
@@ -1901,17 +1908,28 @@ const WhatsAppAutomation = {
                 additionalFields.classList.remove('hidden');
                 contractActions.classList.remove('hidden');
                 
-                // Pre-fill existing data
+                // Pre-fill existing data with NEW structure
                 document.getElementById('contract-lastName').value = lead.lastName || '';
-                document.getElementById('contract-hasEscort').checked = lead.hasEscort || false;
-                document.getElementById('contract-escortPrice').value = lead.escortPrice || '';
-                document.getElementById('contract-hasBridesmaids').checked = lead.hasBridesmaids || false;
-                document.getElementById('contract-bridesmaidsCount').value = lead.bridesmaidsCount || '';
-                document.getElementById('contract-bridesmaidsPrice').value = lead.bridesmaidsPrice || '';
                 
-                // Toggle fields visibility
-                toggleEscortFields();
-                toggleBridesmaidsFields();
+                // Escort type dropdown
+                document.getElementById('contract-escortType').value = lead.escortType || 'none';
+                document.getElementById('contract-escortPrice').value = lead.escortPrice || '';
+                toggleEscortPrice(); // Show/hide price field based on dropdown
+                
+                // Bridesmaids dynamic fields
+                const bridesmaidsCount = lead.bridesmaids?.length || 0;
+                document.getElementById('contract-bridesmaidsCount').value = bridesmaidsCount;
+                updateBridesmaidsFields();
+                
+                // Fill existing bridesmaids data
+                if (lead.bridesmaids && lead.bridesmaids.length > 0) {
+                    lead.bridesmaids.forEach((bridesmaid, i) => {
+                        const serviceInput = document.getElementById(`bridesmaid-service-${i}`);
+                        const priceInput = document.getElementById(`bridesmaid-price-${i}`);
+                        if (serviceInput) serviceInput.value = bridesmaid.service || '';
+                        if (priceInput) priceInput.value = bridesmaid.price || '';
+                    });
+                }
             } else {
                 additionalFields.classList.add('hidden');
                 contractActions.classList.add('hidden');
@@ -1946,11 +1964,27 @@ const WhatsAppAutomation = {
         // If contract-sent stage, update lead with additional fields
         if (this.pendingStage === 'contract-sent') {
             this.pendingLead.lastName = document.getElementById('contract-lastName').value.trim();
-            this.pendingLead.hasEscort = document.getElementById('contract-hasEscort').checked;
-            this.pendingLead.escortPrice = parseInt(document.getElementById('contract-escortPrice').value) || 0;
-            this.pendingLead.hasBridesmaids = document.getElementById('contract-hasBridesmaids').checked;
-            this.pendingLead.bridesmaidsCount = parseInt(document.getElementById('contract-bridesmaidsCount').value) || 0;
-            this.pendingLead.bridesmaidsPrice = parseInt(document.getElementById('contract-bridesmaidsPrice').value) || 0;
+            
+            // Update escort type and price
+            this.pendingLead.escortType = document.getElementById('contract-escortType').value;
+            if (this.pendingLead.escortType !== 'none') {
+                this.pendingLead.escortPrice = parseInt(document.getElementById('contract-escortPrice').value) || 0;
+            } else {
+                this.pendingLead.escortPrice = 0;
+            }
+            
+            // Collect bridesmaids data from dynamic fields
+            const bridesmaidsCount = parseInt(document.getElementById('contract-bridesmaidsCount').value) || 0;
+            this.pendingLead.bridesmaids = [];
+            
+            for (let i = 0; i < bridesmaidsCount; i++) {
+                const service = document.getElementById(`bridesmaid-service-${i}`)?.value.trim() || '';
+                const price = parseInt(document.getElementById(`bridesmaid-price-${i}`)?.value) || 0;
+                
+                if (service) { // Only add if service is provided
+                    this.pendingLead.bridesmaids.push({ service, price });
+                }
+            }
             
             // Save updated lead data
             await API.updateLead(this.pendingLead._id || this.pendingLead.id, this.pendingLead);
@@ -2026,11 +2060,27 @@ const WhatsAppAutomation = {
         
         // Update lead with current form values
         this.pendingLead.lastName = document.getElementById('contract-lastName').value.trim();
-        this.pendingLead.hasEscort = document.getElementById('contract-hasEscort').checked;
-        this.pendingLead.escortPrice = parseInt(document.getElementById('contract-escortPrice').value) || 0;
-        this.pendingLead.hasBridesmaids = document.getElementById('contract-hasBridesmaids').checked;
-        this.pendingLead.bridesmaidsCount = parseInt(document.getElementById('contract-bridesmaidsCount').value) || 0;
-        this.pendingLead.bridesmaidsPrice = parseInt(document.getElementById('contract-bridesmaidsPrice').value) || 0;
+        
+        // Update escort type and price
+        this.pendingLead.escortType = document.getElementById('contract-escortType').value;
+        if (this.pendingLead.escortType !== 'none') {
+            this.pendingLead.escortPrice = parseInt(document.getElementById('contract-escortPrice').value) || 0;
+        } else {
+            this.pendingLead.escortPrice = 0;
+        }
+        
+        // Collect bridesmaids data from dynamic fields
+        const bridesmaidsCount = parseInt(document.getElementById('contract-bridesmaidsCount').value) || 0;
+        this.pendingLead.bridesmaids = [];
+        
+        for (let i = 0; i < bridesmaidsCount; i++) {
+            const service = document.getElementById(`bridesmaid-service-${i}`)?.value.trim() || '';
+            const price = parseInt(document.getElementById(`bridesmaid-price-${i}`)?.value) || 0;
+            
+            if (service) { // Only add if service is provided
+                this.pendingLead.bridesmaids.push({ service, price });
+            }
+        }
         
         // Save lead data first
         await API.updateLead(this.pendingLead._id || this.pendingLead.id, this.pendingLead);
@@ -2451,6 +2501,98 @@ const ContractManager = {
             throw error;
         }
     }
+};
+
+// ==================== STAGE MANAGER ====================
+const StageManager = {
+    pendingLead: null,
+    
+    async handleStageChange(leadId, newStage) {
+        const lead = State.leads.find(l => (l._id || l.id) === leadId);
+        if (!lead) return;
+        
+        // Check if moving to "in-process" and price is 0
+        if (newStage === 'in-process' && (!lead.price || lead.price === 0)) {
+            this.pendingLead = lead;
+            document.getElementById('price-input').value = lead.price || '';
+            openModal('modal-set-price');
+            return false; // Don't complete stage change yet
+        }
+        
+        return true; // OK to proceed
+    },
+    
+    async confirmPrice() {
+        if (!this.pendingLead) return;
+        
+        const price = parseInt(document.getElementById('price-input').value) || 0;
+        
+        this.pendingLead.price = price;
+        await API.updateLead(this.pendingLead._id || this.pendingLead.id, this.pendingLead);
+        
+        closeModal('modal-set-price');
+        
+        // Now complete the stage change
+        await WhatsAppAutomation.checkAndPrompt(this.pendingLead._id || this.pendingLead.id, 'in-process');
+        
+        this.pendingLead = null;
+    },
+    
+    async skipPrice() {
+        if (!this.pendingLead) return;
+        
+        closeModal('modal-set-price');
+        
+        // Complete stage change without price
+        await WhatsAppAutomation.checkAndPrompt(this.pendingLead._id || this.pendingLead.id, 'in-process');
+        
+        this.pendingLead = null;
+    }
+};
+
+// ==================== UI HELPERS ====================
+window.toggleEscortPrice = () => {
+    const escortType = document.getElementById('contract-escortType').value;
+    const priceField = document.getElementById('escort-price-field');
+    
+    if (escortType === 'none') {
+        priceField.classList.add('hidden');
+    } else {
+        priceField.classList.remove('hidden');
+    }
+};
+
+window.updateBridesmaidsFields = () => {
+    const count = parseInt(document.getElementById('contract-bridesmaidsCount').value) || 0;
+    const container = document.getElementById('bridesmaids-list');
+    
+    if (count === 0) {
+        container.innerHTML = '';
+        return;
+    }
+    
+    let html = '<div class="bg-gray-50 rounded-lg p-3 space-y-2">';
+    html += '<div class="font-bold text-sm text-gray-700 mb-2">פרטי המלוות:</div>';
+    
+    for (let i = 0; i < count; i++) {
+        html += `
+            <div class="bg-white rounded-lg p-2 border border-gray-200">
+                <div class="text-xs font-bold text-gray-600 mb-1">מלווה ${i + 1}</div>
+                <input type="text" 
+                    id="bridesmaid-service-${i}" 
+                    placeholder="שירות (למשל: איפור + שיער)" 
+                    class="w-full p-2 border border-gray-300 rounded text-sm mb-1">
+                <input type="number" 
+                    id="bridesmaid-price-${i}" 
+                    placeholder="מחיר (₪)" 
+                    class="w-full p-2 border border-gray-300 rounded text-sm"
+                    min="0">
+            </div>
+        `;
+    }
+    
+    html += '</div>';
+    container.innerHTML = html;
 };
 
 
