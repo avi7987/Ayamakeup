@@ -2249,12 +2249,39 @@ const WhatsAppAutomation = {
             await API.updateLead(this.pendingLead._id || this.pendingLead.id, this.pendingLead);
         }
         
+        // If contract-sent stage, save deposit and other fields before skipping
+        if (this.pendingStage === 'contract-sent') {
+            this.pendingLead.proposedDeposit = parseInt(document.getElementById('contract-proposedDeposit').value) || 0;
+            this.pendingLead.escortType = document.getElementById('contract-escortType').value;
+            if (this.pendingLead.escortType !== 'none') {
+                this.pendingLead.escortPrice = parseInt(document.getElementById('contract-escortPrice').value) || 0;
+            }
+            await API.updateLead(this.pendingLead._id || this.pendingLead.id, this.pendingLead);
+        }
+        
         // Just update stage without sending
         await this.completeStageChange(this.pendingLead._id || this.pendingLead.id, this.pendingStage);
         
         closeModal('modal-whatsapp-confirm');
         this.pendingLead = null;
         this.pendingStage = null;
+    },
+    
+    // Save proposed deposit immediately when changed
+    async saveProposedDeposit() {
+        if (!this.pendingLead) return;
+        
+        const deposit = parseInt(document.getElementById('contract-proposedDeposit').value) || 0;
+        this.pendingLead.proposedDeposit = deposit;
+        
+        console.log('💰 Auto-saving proposed deposit:', deposit);
+        
+        try {
+            await API.updateLead(this.pendingLead._id || this.pendingLead.id, { proposedDeposit: deposit });
+            console.log('✅ Deposit saved to database');
+        } catch (error) {
+            console.error('❌ Failed to save deposit:', error);
+        }
     },
     
     async completeStageChange(leadId, newStage) {
