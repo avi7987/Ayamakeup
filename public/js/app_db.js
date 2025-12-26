@@ -1905,11 +1905,13 @@ const WhatsAppAutomation = {
             // For in-process stage, show proposed price field
             const inProcessFields = document.getElementById('in-process-fields');
             const additionalFields = document.getElementById('contract-additional-fields');
+            const closedDealFields = document.getElementById('closed-deal-fields');
             const contractActions = document.getElementById('contract-actions');
             
             if (newStage === 'in-process') {
                 inProcessFields.classList.remove('hidden');
                 additionalFields.classList.add('hidden');
+                closedDealFields.classList.add('hidden');
                 contractActions.classList.add('hidden');
                 
                 // Pre-fill proposed price
@@ -1917,12 +1919,14 @@ const WhatsAppAutomation = {
             } else if (newStage === 'contract-sent') {
                 inProcessFields.classList.add('hidden');
                 additionalFields.classList.remove('hidden');
+                closedDealFields.classList.add('hidden');
                 contractActions.classList.remove('hidden');
                 
                 // Pre-fill existing data with NEW structure
                 // Escort type dropdown
                 document.getElementById('contract-escortType').value = lead.escortType || 'none';
                 document.getElementById('contract-escortPrice').value = lead.escortPrice || '';
+                document.getElementById('contract-proposedDeposit').value = lead.proposedDeposit || '';
                 toggleEscortPrice(); // Show/hide price field based on dropdown
                 
                 // Bridesmaids dynamic fields
@@ -1939,9 +1943,18 @@ const WhatsAppAutomation = {
                         if (priceInput) priceInput.value = bridesmaid.price || '';
                     });
                 }
+            } else if (newStage === 'closed') {
+                inProcessFields.classList.add('hidden');
+                additionalFields.classList.add('hidden');
+                closedDealFields.classList.remove('hidden');
+                contractActions.classList.add('hidden');
+                
+                // Pre-fill actual deposit
+                document.getElementById('closed-actualDeposit').value = lead.actualDeposit || '';
             } else {
                 inProcessFields.classList.add('hidden');
                 additionalFields.classList.add('hidden');
+                closedDealFields.classList.add('hidden');
                 contractActions.classList.add('hidden');
             }
             
@@ -1977,9 +1990,18 @@ const WhatsAppAutomation = {
             this.pendingLead.proposedPrice = proposedPrice;
         }
         
+        // If closed stage, update actual deposit (real payment)
+        if (this.pendingStage === 'closed') {
+            const actualDeposit = parseFloat(document.getElementById('closed-actualDeposit').value) || 0;
+            this.pendingLead.actualDeposit = actualDeposit;
+        }
+        
         // If contract-sent stage, update lead with additional fields
         if (this.pendingStage === 'contract-sent') {
             // lastName already exists from lead creation (required field)
+            
+            // Update proposed deposit (for contract display)
+            this.pendingLead.proposedDeposit = parseInt(document.getElementById('contract-proposedDeposit').value) || 0;
             
             // Update escort type and price
             this.pendingLead.escortType = document.getElementById('contract-escortType').value;

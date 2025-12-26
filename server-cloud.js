@@ -66,8 +66,10 @@ const leadSchema = new mongoose.Schema({
     // Enhanced fields
     notes: { type: String, default: '' },
     proposedPrice: { type: Number, default: 0 },
+    proposedDeposit: { type: Number, default: 0 }, // Proposed deposit shown in contract
     price: { type: Number, default: 0 },
-    deposit: { type: Number, default: 0 },
+    deposit: { type: Number, default: 0 }, // Old field - keeping for backwards compatibility
+    actualDeposit: { type: Number, default: 0 }, // Actual deposit paid when deal is closed
     contractStatus: { type: String, default: 'pending' }, // pending, sent, signed
     // Contract-related fields
     escortType: { type: String, default: 'none' }, // none, short, long
@@ -694,7 +696,7 @@ app.get('/api/preview-contract/:leadId', async (req, res) => {
         // Prepare data (same as PDF generation)
         const fullName = `${lead.name} ${lead.lastName || ''}`.trim();
         const price = lead.proposedPrice || 0;
-        const deposit = lead.deposit || 0;
+        const deposit = lead.proposedDeposit || 0;
         
         let totalPrice = price;
         
@@ -882,7 +884,7 @@ app.get('/api/contract-view/:leadId', async (req, res) => {
         // Prepare contract data (same as preview)
         const fullName = `${lead.name} ${lead.lastName || ''}`.trim();
         const price = lead.proposedPrice || 0;
-        const deposit = lead.deposit || 0;
+        const deposit = lead.proposedDeposit || 0;
         
         let totalPrice = price;
         if (lead.escortType && lead.escortType !== 'none' && lead.escortPrice) {
@@ -1017,7 +1019,7 @@ app.post('/api/sign-contract/:leadId', async (req, res) => {
         // Prepare contract data
         const fullName = `${lead.name} ${lead.lastName || ''}`.trim();
         const price = lead.proposedPrice || 0;
-        const deposit = lead.deposit || 0;
+        const deposit = lead.proposedDeposit || 0;
         
         let totalPrice = price;
         if (lead.escortType && lead.escortType !== 'none' && lead.escortPrice) {
@@ -1117,9 +1119,9 @@ app.post('/api/sign-contract/:leadId', async (req, res) => {
                         <p style="font-size: 11px; color: #666;">תאריך: ${new Date(lead.customerSignedAt).toLocaleDateString('he-IL')}</p>
                     </div>
                     <div style="text-align: center;">
-                        <div style="width: 200px; border-bottom: 2px solid #333; height: 80px;"></div>
+                        <p style="font-family: 'Brush Script MT', cursive; font-size: 32px; margin: 0; padding: 20px 0;">איה שוסטרמן</p>
                         <p style="margin-top: 10px; font-size: 12px;">חתימת נותן השירות</p>
-                        <p style="font-size: 11px; color: #666;">תאריך: ___________</p>
+                        <p style="font-size: 11px; color: #666;">תאריך: ${new Date().toLocaleDateString('he-IL')}</p>
                     </div>
                 </div>
             </div>
@@ -1243,7 +1245,7 @@ app.post('/api/generate-contract/:leadId', async (req, res) => {
         // Prepare data for template
         const fullName = `${lead.name} ${lead.lastName || ''}`.trim();
         const price = lead.proposedPrice || 0;
-        const deposit = lead.deposit || 0;
+        const deposit = lead.proposedDeposit || 0;
         
         // Calculate total including escort and bridesmaids
         let totalPrice = price;
