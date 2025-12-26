@@ -571,6 +571,36 @@ app.post('/api/generate-contract/:leadId', async (req, res) => {
             'long': 'ליווי ארוך'
         };
         
+        // Build services array for table loop in Word
+        const services = [];
+        
+        // Main service
+        services.push({
+            description: lead.service || 'שירות עיקרי',
+            details: 'שירות עיקרי',
+            price: price
+        });
+        
+        // Escort service
+        if (lead.escortType && lead.escortType !== 'none') {
+            services.push({
+                description: 'ליווי לאירוע',
+                details: escortTypeHebrew[lead.escortType],
+                price: lead.escortPrice || 0
+            });
+        }
+        
+        // Bridesmaids services
+        if (lead.bridesmaids && lead.bridesmaids.length > 0) {
+            lead.bridesmaids.forEach((bridesmaid, index) => {
+                services.push({
+                    description: `מלווה ${index + 1}`,
+                    details: bridesmaid.service || 'שירות מלווה',
+                    price: bridesmaid.price || 0
+                });
+            });
+        }
+        
         const templateData = {
             name: lead.name || '',
             lastName: lead.lastName || '',
@@ -583,6 +613,8 @@ app.post('/api/generate-contract/:leadId', async (req, res) => {
             deposit: deposit,
             balance: balance,
             totalPrice: totalPrice,
+            subtotal: totalPrice, // Alias for totalPrice
+            services: services, // Array for table loop
             escortType: lead.escortType || 'none',
             escortTypeHebrew: escortTypeHebrew[lead.escortType || 'none'],
             escortPrice: lead.escortPrice || 0,
