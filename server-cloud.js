@@ -102,9 +102,19 @@ const goalsSchema = new mongoose.Schema({
     updatedAt: { type: Date, default: Date.now }
 });
 
+// Contract Template Schema - stores the custom HTML template
+const contractTemplateSchema = new mongoose.Schema({
+    userId: { type: String, default: 'default' },
+    templateHTML: { type: String, required: true },
+    logoUrl: { type: String, default: '' },
+    createdAt: { type: Date, default: Date.now },
+    updatedAt: { type: Date, default: Date.now }
+});
+
 const Client = mongoose.model('Client', clientSchema);
 const Lead = mongoose.model('Lead', leadSchema);
 const Goals = mongoose.model('Goals', goalsSchema);
+const ContractTemplate = mongoose.model('ContractTemplate', contractTemplateSchema);
 
 // ==================== FILE UPLOAD SETUP ====================
 // Setup multer for file uploads
@@ -485,6 +495,158 @@ app.put('/api/goals', async (req, res) => {
 });
 
 // ==================== CONTRACT ENDPOINTS ====================
+
+// Get contract template HTML from database
+app.get('/api/contract-template-html', async (req, res) => {
+    try {
+        let template = await ContractTemplate.findOne({ userId: 'default' });
+        
+        if (!template) {
+            // Create default template if doesn't exist
+            const defaultTemplate = `<div style="text-align: center; margin-bottom: 30px;">
+    {{#if logoUrl}}
+    <img src="{{logoUrl}}" alt="לוגו" style="max-width: 200px; margin-bottom: 20px;">
+    {{/if}}
+    <h1 style="font-size: 28px; margin-bottom: 10px;">חוזה מתן שירותי איפור ושיער</h1>
+    <p>תאריך: {{date}}</p>
+</div>
+
+<div style="margin-bottom: 25px;">
+    <h2 style="font-size: 18px; border-bottom: 1px solid #ccc; padding-bottom: 5px;">פרטי הצדדים</h2>
+    <p><strong>בין:</strong> איה שוסטרמן - איפור ושיער (להלן: "נותן השירות")</p>
+    <p><strong>לבין:</strong> {{fullName}} (להלן: "הלקוחה")</p>
+    <p><strong>טלפון:</strong> {{phone}}</p>
+</div>
+
+<div style="margin-bottom: 25px;">
+    <h2 style="font-size: 18px; border-bottom: 1px solid #ccc; padding-bottom: 5px;">פרטי האירוע</h2>
+    <p><strong>סוג האירוע:</strong> {{service}}</p>
+    <p><strong>תאריך האירוע:</strong> {{eventDate}}</p>
+    <p><strong>מיקום ההתארגנות:</strong> {{location}}</p>
+</div>
+
+<div style="margin-bottom: 25px;">
+    <h2 style="font-size: 18px; border-bottom: 1px solid #ccc; padding-bottom: 5px;">פירוט השירותים והעלויות</h2>
+    {{servicesTable}}
+    
+    <div style="background-color: #f9f9f9; padding: 20px; border: 2px solid #333; margin-top: 20px;">
+        <p style="display: flex; justify-content: space-between; border-bottom: 1px solid #ddd; padding: 8px 0;">
+            <span>סה"כ עלות השירותים:</span>
+            <strong>{{totalPrice}} ₪</strong>
+        </p>
+        <p style="display: flex; justify-content: space-between; border-bottom: 1px solid #ddd; padding: 8px 0;">
+            <span>מקדמה ששולמה:</span>
+            <strong>{{deposit}} ₪</strong>
+        </p>
+        <p style="display: flex; justify-content: space-between; padding: 15px 0 0 0; font-size: 16px;">
+            <span>יתרה לתשלום ביום האירוע:</span>
+            <strong>{{balance}} ₪</strong>
+        </p>
+    </div>
+</div>
+
+<div style="margin-bottom: 25px;">
+    <h2 style="font-size: 18px; border-bottom: 1px solid #ccc; padding-bottom: 5px;">תנאי תשלום</h2>
+    <ol>
+        <li>המקדמה שולמה במלואה ואינה ניתנת להחזר.</li>
+        <li>היתרה תשולם במזומן או בהעברה בנקאית ביום האירוע.</li>
+        <li>תשלום היתרה יבוצע לפני תחילת מתן השירותים.</li>
+    </ol>
+</div>
+
+<div style="margin-bottom: 25px;">
+    <h2 style="font-size: 18px; border-bottom: 1px solid #ccc; padding-bottom: 5px;">ביטול ושינויים</h2>
+    <ol>
+        <li>ביטול עד 30 יום לפני האירוע - זיכוי מלא בניכוי המקדמה.</li>
+        <li>ביטול בין 30-14 יום לפני האירוע - זיכוי של 50% בלבד.</li>
+        <li>ביטול פחות מ-14 יום לפני האירוע - ללא זיכוי.</li>
+    </ol>
+</div>
+
+<div style="margin-top: 60px; display: flex; justify-content: space-between;">
+    <div style="text-align: center; width: 40%;">
+        <p>חתימת הלקוחה</p>
+        <div style="margin-top: 40px; border-top: 1px solid #333; padding-top: 5px;">תאריך: ___________</div>
+    </div>
+    <div style="text-align: center; width: 40%;">
+        <p>חתימת נותן השירות</p>
+        <div style="margin-top: 40px; border-top: 1px solid #333; padding-top: 5px;">תאריך: ___________</div>
+    </div>
+</div>
+
+<p style="margin-top: 40px; text-align: center; font-size: 12px; color: #666;">
+    הערה: חוזה זה נערך בשתי העתקים, כשכל צד קיבל את העתקו.
+</p>`;
+
+            template = await ContractTemplate.create({
+                userId: 'default',
+                templateHTML: defaultTemplate,
+                logoUrl: ''
+            });
+        }
+        
+        res.json(template);
+    } catch (error) {
+        console.error('Error fetching template:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Save contract template HTML
+app.post('/api/contract-template-html', async (req, res) => {
+    try {
+        const { templateHTML } = req.body;
+        
+        let template = await ContractTemplate.findOne({ userId: 'default' });
+        
+        if (template) {
+            template.templateHTML = templateHTML;
+            template.updatedAt = new Date();
+            await template.save();
+        } else {
+            template = await ContractTemplate.create({
+                userId: 'default',
+                templateHTML,
+                logoUrl: ''
+            });
+        }
+        
+        res.json({ success: true, template });
+    } catch (error) {
+        console.error('Error saving template:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Upload logo
+app.post('/api/upload-logo', upload.single('logo'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: 'No file uploaded' });
+        }
+        
+        const logoUrl = `/uploads/${req.file.filename}`;
+        
+        let template = await ContractTemplate.findOne({ userId: 'default' });
+        
+        if (template) {
+            template.logoUrl = logoUrl;
+            template.updatedAt = new Date();
+            await template.save();
+        } else {
+            template = await ContractTemplate.create({
+                userId: 'default',
+                templateHTML: '',
+                logoUrl
+            });
+        }
+        
+        res.json({ success: true, logoUrl });
+    } catch (error) {
+        console.error('Error uploading logo:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
 
 // Upload contract template
 app.post('/api/contract-template', upload.single('template'), async (req, res) => {
@@ -955,6 +1117,17 @@ ${servicesText}
         const pdfFilename = `contract-${lead._id}.pdf`;
         const pdfPath = path.join(contractsDir, pdfFilename);
 
+        // Load custom template from database
+        console.log('📋 Loading custom contract template from database...');
+        let customTemplate = await ContractTemplate.findOne({ userId: 'default' });
+        
+        if (!customTemplate || !customTemplate.templateHTML) {
+            console.log('⚠️ No custom template found, using default hardcoded template');
+            customTemplate = { templateHTML: '', logoUrl: '' };
+        } else {
+            console.log('✅ Custom template loaded');
+        }
+
         // Build bridesmaids rows HTML
         let bridesmaidsRowsHtml = '';
         if (lead.bridesmaids && lead.bridesmaids.length > 0) {
@@ -965,9 +1138,42 @@ ${servicesText}
                             <td>${(bridesmaid.price || 0).toLocaleString('he-IL')}</td>
                         </tr>`).join('');
         }
+        
+        // Build services table HTML
+        const servicesTableHTML = `
+            <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+                <thead>
+                    <tr style="background-color: #f5f5f5;">
+                        <th style="border: 1px solid #333; padding: 12px; text-align: center; font-weight: bold;">תיאור השירות</th>
+                        <th style="border: 1px solid #333; padding: 12px; text-align: center; font-weight: bold;">פרטים</th>
+                        <th style="border: 1px solid #333; padding: 12px; text-align: center; font-weight: bold;">מחיר (₪)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="border: 1px solid #333; padding: 10px; text-align: right;">${lead.service || 'שירות עיקרי'}</td>
+                        <td style="border: 1px solid #333; padding: 10px; text-align: center;">שירות עיקרי</td>
+                        <td style="border: 1px solid #333; padding: 10px; text-align: center;">${price.toLocaleString('he-IL')}</td>
+                    </tr>
+                    ${lead.escortType && lead.escortType !== 'none' ? `
+                    <tr>
+                        <td style="border: 1px solid #333; padding: 10px; text-align: right;">ליווי לאירוע</td>
+                        <td style="border: 1px solid #333; padding: 10px; text-align: center;">${escortTypeHebrew[lead.escortType]}</td>
+                        <td style="border: 1px solid #333; padding: 10px; text-align: center;">${(lead.escortPrice || 0).toLocaleString('he-IL')}</td>
+                    </tr>
+                    ` : ''}
+                    ${bridesmaidsRowsHtml}
+                </tbody>
+            </table>
+        `;
 
-        // Create HTML from Word content for PDF conversion
-        const htmlContent = `
+        // Replace variables in custom template
+        let htmlContent = customTemplate.templateHTML || '';
+        
+        // If no custom template, use default
+        if (!htmlContent) {
+            console.log('Using default template structure...');
+            htmlContent = `
         <!DOCTYPE html>
         <html dir="rtl" lang="he">
         <head>

@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>עריכת תבנית חוזה - Ayamakeup CRM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .editor-container {
+            display: grid;
+            grid-template-columns: 250px 1fr 1fr;
+            gap: 20px;
+            height: calc(100vh - 200px);
+        }
+        .variables-panel {
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 15px;
+            overflow-y: auto;
+            background: #f9fafb;
+        }
+        .editor-panel {
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+        .preview-panel {
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 15px;
+            overflow-y: auto;
+            background: white;
+        }
+        #templateEditor {
+            width: 100%;
+            flex: 1;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            padding: 15px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            resize: none;
+            direction: ltr;
+            text-align: left;
+        }
+        .variable-item {
+            padding: 8px 12px;
+            margin: 5px 0;
+            background: white;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .variable-item:hover {
+            background: #e0e7ff;
+            border-color: #818cf8;
+        }
+        .variable-name {
+            font-family: 'Courier New', monospace;
+            color: #4f46e5;
+            font-weight: bold;
+            font-size: 13px;
+        }
+        .variable-desc {
+            font-size: 11px;
+            color: #6b7280;
+            margin-top: 3px;
+        }
+        .logo-preview {
+            max-width: 200px;
+            max-height: 100px;
+            margin-top: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="container mx-auto px-4 py-6">
+        <!-- Header -->
+        <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-800">📝 עריכת תבנית חוזה</h1>
+                    <p class="text-gray-600 mt-2">ערוך את התבנית הבסיסית לחוזים שלך והוסף משתנים דינמיים</p>
+                </div>
+                <div class="flex gap-3">
+                    <button onclick="previewContract()" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-xl font-bold transition-all">
+                        👁️ תצוגה מקדימה
+                    </button>
+                    <button onclick="saveTemplate()" class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-xl font-bold transition-all">
+                        💾 שמור תבנית
+                    </button>
+                    <button onclick="window.location.href='/'" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-xl font-bold transition-all">
+                        🏠 חזרה לראשי
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Logo Upload -->
+        <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+            <h2 class="text-xl font-bold mb-4">🖼️ לוגו</h2>
+            <div class="flex items-center gap-4">
+                <input type="file" id="logoInput" accept="image/*" class="block w-64 text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50">
+                <button onclick="uploadLogo()" class="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg font-bold transition-all">
+                    📤 העלה לוגו
+                </button>
+            </div>
+            <div id="logoPreviewContainer" class="hidden mt-4">
+                <p class="text-sm text-gray-600 mb-2">לוגו נוכחי:</p>
+                <img id="logoPreview" src="" alt="לוגו" class="logo-preview">
+            </div>
+        </div>
+
+        <!-- Editor -->
+        <div class="editor-container">
+            <!-- Variables Panel -->
+            <div class="variables-panel">
+                <h3 class="font-bold text-lg mb-4">📋 משתנים זמינים</h3>
+                <p class="text-xs text-gray-600 mb-4">לחץ על משתנה כדי להעתיק</p>
+                
+                <div class="space-y-2">
+                    <!-- Basic Info -->
+                    <div class="text-sm font-bold text-gray-700 mt-4 mb-2">פרטי לקוח:</div>
+                    <div class="variable-item" onclick="insertVariable('{{fullName}}')">
+                        <div class="variable-name">{{fullName}}</div>
+                        <div class="variable-desc">שם מלא</div>
+                    </div>
+                    <div class="variable-item" onclick="insertVariable('{{phone}}')">
+                        <div class="variable-name">{{phone}}</div>
+                        <div class="variable-desc">מספר טלפון</div>
+                    </div>
+                    
+                    <!-- Event Info -->
+                    <div class="text-sm font-bold text-gray-700 mt-4 mb-2">פרטי אירוע:</div>
+                    <div class="variable-item" onclick="insertVariable('{{service}}')">
+                        <div class="variable-name">{{service}}</div>
+                        <div class="variable-desc">סוג שירות</div>
+                    </div>
+                    <div class="variable-item" onclick="insertVariable('{{eventDate}}')">
+                        <div class="variable-name">{{eventDate}}</div>
+                        <div class="variable-desc">תאריך אירוע</div>
+                    </div>
+                    <div class="variable-item" onclick="insertVariable('{{location}}')">
+                        <div class="variable-name">{{location}}</div>
+                        <div class="variable-desc">מיקום</div>
+                    </div>
+                    
+                    <!-- Financial -->
+                    <div class="text-sm font-bold text-gray-700 mt-4 mb-2">פיננסים:</div>
+                    <div class="variable-item" onclick="insertVariable('{{totalPrice}}')">
+                        <div class="variable-name">{{totalPrice}}</div>
+                        <div class="variable-desc">מחיר כולל</div>
+                    </div>
+                    <div class="variable-item" onclick="insertVariable('{{price}}')">
+                        <div class="variable-name">{{price}}</div>
+                        <div class="variable-desc">מחיר עיקרי</div>
+                    </div>
+                    <div class="variable-item" onclick="insertVariable('{{deposit}}')">
+                        <div class="variable-name">{{deposit}}</div>
+                        <div class="variable-desc">מקדמה</div>
+                    </div>
+                    <div class="variable-item" onclick="insertVariable('{{balance}}')">
+                        <div class="variable-name">{{balance}}</div>
+                        <div class="variable-desc">יתרה</div>
+                    </div>
+                    
+                    <!-- Special -->
+                    <div class="text-sm font-bold text-gray-700 mt-4 mb-2">מיוחדים:</div>
+                    <div class="variable-item" onclick="insertVariable('{{date}}')">
+                        <div class="variable-name">{{date}}</div>
+                        <div class="variable-desc">תאריך היום</div>
+                    </div>
+                    <div class="variable-item" onclick="insertVariable('{{servicesTable}}')">
+                        <div class="variable-name">{{servicesTable}}</div>
+                        <div class="variable-desc">טבלת שירותים</div>
+                    </div>
+                    <div class="variable-item" onclick="insertVariable('{{logoUrl}}')">
+                        <div class="variable-name">{{logoUrl}}</div>
+                        <div class="variable-desc">כתובת לוגו</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Editor Panel -->
+            <div class="editor-panel">
+                <h3 class="font-bold text-lg mb-4">✏️ עורך תבנית (HTML)</h3>
+                <textarea id="templateEditor" placeholder="הקלד כאן את תבנית החוזה...&#10;&#10;אתה יכול להשתמש ב-HTML לעיצוב ובמשתנים מהרשימה משמאל.&#10;&#10;דוגמה:&#10;<h1>חוזה</h1>&#10;<p>שם הלקוח: {{fullName}}</p>"></textarea>
+            </div>
+
+            <!-- Preview Panel -->
+            <div class="preview-panel">
+                <h3 class="font-bold text-lg mb-4">👁️ תצוגה מקדימה</h3>
+                <div id="previewContent" class="text-gray-500 italic">
+                    לחץ על "תצוגה מקדימה" כדי לראות איך החוזה ייראה...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = window.location.origin + '/api';
+        let currentLogoUrl = '';
+
+        // Load template on page load
+        async function loadTemplate() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/contract-template-html`);
+                const data = await response.json();
+                
+                document.getElementById('templateEditor').value = data.templateHTML || '';
+                currentLogoUrl = data.logoUrl || '';
+                
+                if (currentLogoUrl) {
+                    document.getElementById('logoPreview').src = window.location.origin + currentLogoUrl;
+                    document.getElementById('logoPreviewContainer').classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('Error loading template:', error);
+                alert('שגיאה בטעינת התבנית');
+            }
+        }
+
+        // Insert variable at cursor position
+        function insertVariable(variable) {
+            const editor = document.getElementById('templateEditor');
+            const start = editor.selectionStart;
+            const end = editor.selectionEnd;
+            const text = editor.value;
+            
+            editor.value = text.substring(0, start) + variable + text.substring(end);
+            editor.selectionStart = editor.selectionEnd = start + variable.length;
+            editor.focus();
+            
+            // Show notification
+            const notification = document.createElement('div');
+            notification.textContent = `הוספתי: ${variable}`;
+            notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 2000);
+        }
+
+        // Save template
+        async function saveTemplate() {
+            const templateHTML = document.getElementById('templateEditor').value;
+            
+            if (!templateHTML.trim()) {
+                alert('התבנית ריקה! הקלד משהו קודם.');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/contract-template-html`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ templateHTML })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('✅ התבנית נשמרה בהצלחה!');
+                } else {
+                    throw new Error(data.error || 'שגיאה לא ידועה');
+                }
+            } catch (error) {
+                console.error('Error saving template:', error);
+                alert('❌ שגיאה בשמירת התבנית: ' + error.message);
+            }
+        }
+
+        // Upload logo
+        async function uploadLogo() {
+            const fileInput = document.getElementById('logoInput');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('בחר קובץ תמונה קודם');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('logo', file);
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/upload-logo`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentLogoUrl = data.logoUrl;
+                    document.getElementById('logoPreview').src = window.location.origin + data.logoUrl;
+                    document.getElementById('logoPreviewContainer').classList.remove('hidden');
+                    alert('✅ הלוגו הועלה בהצלחה!');
+                } else {
+                    throw new Error(data.error || 'שגיאה לא ידועה');
+                }
+            } catch (error) {
+                console.error('Error uploading logo:', error);
+                alert('❌ שגיאה בהעלאת הלוגו: ' + error.message);
+            }
+        }
+
+        // Preview contract with sample data
+        function previewContract() {
+            const templateHTML = document.getElementById('templateEditor').value;
+            
+            // Sample data for preview
+            const sampleData = {
+                fullName: 'שרה כהן',
+                phone: '050-1234567',
+                service: 'איפור ושיער לכלה',
+                eventDate: '15.06.2024',
+                location: 'אולמי הזהב, תל אביב',
+                totalPrice: '3,500',
+                price: '2,500',
+                deposit: '1,000',
+                balance: '2,500',
+                date: new Date().toLocaleDateString('he-IL'),
+                logoUrl: currentLogoUrl ? window.location.origin + currentLogoUrl : '',
+                servicesTable: `
+                    <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+                        <thead>
+                            <tr style="background-color: #f5f5f5;">
+                                <th style="border: 1px solid #333; padding: 12px; text-align: center;">תיאור השירות</th>
+                                <th style="border: 1px solid #333; padding: 12px; text-align: center;">פרטים</th>
+                                <th style="border: 1px solid #333; padding: 12px; text-align: center;">מחיר (₪)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="border: 1px solid #333; padding: 10px; text-align: right;">איפור ושיער לכלה</td>
+                                <td style="border: 1px solid #333; padding: 10px; text-align: center;">שירות עיקרי</td>
+                                <td style="border: 1px solid #333; padding: 10px; text-align: center;">2,500</td>
+                            </tr>
+                            <tr>
+                                <td style="border: 1px solid #333; padding: 10px; text-align: right;">ליווי לאירוע</td>
+                                <td style="border: 1px solid #333; padding: 10px; text-align: center;">ליווי קצר</td>
+                                <td style="border: 1px solid #333; padding: 10px; text-align: center;">500</td>
+                            </tr>
+                            <tr>
+                                <td style="border: 1px solid #333; padding: 10px; text-align: right;">מלווה 1</td>
+                                <td style="border: 1px solid #333; padding: 10px; text-align: center;">איפור ושיער</td>
+                                <td style="border: 1px solid #333; padding: 10px; text-align: center;">500</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                `
+            };
+            
+            // Replace variables
+            let preview = templateHTML;
+            for (const [key, value] of Object.entries(sampleData)) {
+                const regex = new RegExp(`\\{\\{${key}\\}\\}`, 'g');
+                preview = preview.replace(regex, value);
+            }
+            
+            // Handle conditional logo
+            if (currentLogoUrl) {
+                preview = preview.replace(/\{\{#if logoUrl\}\}/g, '');
+                preview = preview.replace(/\{\{\/if\}\}/g, '');
+            } else {
+                preview = preview.replace(/\{\{#if logoUrl\}\}[\s\S]*?\{\{\/if\}\}/g, '');
+            }
+            
+            document.getElementById('previewContent').innerHTML = preview;
+        }
+
+        // Load template on page load
+        loadTemplate();
+    </script>
+</body>
+</html>
