@@ -1153,7 +1153,16 @@ const LeadsView = {
                     const leadId = evt.item.getAttribute('data-id');
                     const newStatus = evt.to.getAttribute('data-status');
                     
-                    // Use WhatsApp automation system
+                    // First check if stage manager needs to handle this
+                    const canProceed = await StageManager.handleStageChange(leadId, newStatus);
+                    if (!canProceed) {
+                        // Stage manager opened a modal - will handle the rest
+                        // Revert the visual change temporarily
+                        evt.from.appendChild(evt.item);
+                        return;
+                    }
+                    
+                    // Now use WhatsApp automation system
                     await WhatsAppAutomation.checkAndPrompt(leadId, newStatus);
                 }
             });
@@ -2739,23 +2748,31 @@ const StageManager = {
         this.pendingLead.actualDeposit = actualDeposit;
         this.pendingLead.income = income;
         this.pendingLead.completedAt = new Date().toISOString();
+        this.pendingLead.status = 'completed';
+        
+        // Update stage history
+        if (!this.pendingLead.stageHistory) this.pendingLead.stageHistory = [];
+        this.pendingLead.stageHistory.push({
+            stage: 'completed',
+            timestamp: new Date().toISOString(),
+            note: `האירוע הושלם - הכנסה: ${income.toLocaleString('he-IL')} ₪`
+        });
         
         await API.updateLead(this.pendingLead._id || this.pendingLead.id, this.pendingLead);
         
         closeModal('modal-event-completed');
         
-        // Complete the stage change to "completed"
+        // Show success message
+        alert(`✅ האירוע סומן כהושלם!\n💰 הכנסה: ${income.toLocaleString('he-IL')} ₪`);
+        
+        // Now continue with WhatsApp automation (if applicable)
         const leadId = this.pendingLead._id || this.pendingLead.id;
         this.pendingLead = null;
         
-        // Now update the status
-        const lead = State.leads.find(l => (l._id || l.id) === leadId);
-        if (lead) {
-            lead.status = 'completed';
-            await API.updateLeadStatus(leadId, 'completed');
-            HomeView.update();
-            alert(`✅ האירוע סומן כהושלם!\n💰 הכנסה: ${income.toLocaleString('he-IL')} ₪`);
-        }
+        await WhatsAppAutomation.checkAndPrompt(leadId, 'completed');
+        
+        // Refresh view
+        HomeView.update();
     },
     
     async skipEventCompleted() {
@@ -2765,14 +2782,25 @@ const StageManager = {
         
         // Complete stage change without recording deposit
         const leadId = this.pendingLead._id || this.pendingLead.id;
+        const lead = this.pendingLead;
+        lead.status = 'completed';
+        
+        // Update stage history
+        if (!lead.stageHistory) lead.stageHistory = [];
+        lead.stageHistory.push({
+            stage: 'completed',
+            timestamp: new Date().toISOString(),
+            note: 'האירוע הושלם (ללא רישום הכנסה)'
+        });
+        
+        await API.updateLead(leadId, lead);
+        
         this.pendingLead = null;
         
-        const lead = State.leads.find(l => (l._id || l.id) === leadId);
-        if (lead) {
-            lead.status = 'completed';
-            await API.updateLeadStatus(leadId, 'completed');
-            HomeView.update();
-        }
+        // Continue with WhatsApp automation
+        await WhatsAppAutomation.checkAndPrompt(leadId, 'completed');
+        
+        HomeView.update();
     }
 };
 
