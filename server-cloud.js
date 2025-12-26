@@ -693,7 +693,7 @@ app.get('/api/preview-contract/:leadId', async (req, res) => {
 
         // Prepare data (same as PDF generation)
         const fullName = `${lead.name} ${lead.lastName || ''}`.trim();
-        const price = lead.price || 0;
+        const price = lead.proposedPrice || 0;
         const deposit = lead.deposit || 0;
         
         let totalPrice = price;
@@ -881,7 +881,7 @@ app.get('/api/contract-view/:leadId', async (req, res) => {
 
         // Prepare contract data (same as preview)
         const fullName = `${lead.name} ${lead.lastName || ''}`.trim();
-        const price = lead.price || 0;
+        const price = lead.proposedPrice || 0;
         const deposit = lead.deposit || 0;
         
         let totalPrice = price;
@@ -1016,7 +1016,7 @@ app.post('/api/sign-contract/:leadId', async (req, res) => {
 
         // Prepare contract data
         const fullName = `${lead.name} ${lead.lastName || ''}`.trim();
-        const price = lead.price || 0;
+        const price = lead.proposedPrice || 0;
         const deposit = lead.deposit || 0;
         
         let totalPrice = price;
@@ -1242,7 +1242,7 @@ app.post('/api/generate-contract/:leadId', async (req, res) => {
 
         // Prepare data for template
         const fullName = `${lead.name} ${lead.lastName || ''}`.trim();
-        const price = lead.price || 0;
+        const price = lead.proposedPrice || 0;
         const deposit = lead.deposit || 0;
         
         // Calculate total including escort and bridesmaids
