@@ -793,12 +793,24 @@ app.post('/api/generate-contract/:leadId', async (req, res) => {
         `;
 
         // Launch puppeteer and generate PDF
+        console.log('🚀 Launching Puppeteer...');
         const browser = await puppeteer.launch({
             headless: true,
-            args: ['--no-sandbox', '--disable-setuid-sandbox']
+            args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage',
+                '--disable-accelerated-2d-canvas',
+                '--disable-gpu'
+            ],
+            executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || puppeteer.executablePath()
         });
+        console.log('✅ Browser launched');
+        
         const page = await browser.newPage();
+        console.log('📄 Setting content...');
         await page.setContent(htmlContent);
+        console.log('📝 Generating PDF...');
         await page.pdf({
             path: pdfPath,
             format: 'A4',
@@ -810,12 +822,15 @@ app.post('/api/generate-contract/:leadId', async (req, res) => {
                 right: '20mm'
             }
         });
+        console.log('✅ PDF generated successfully');
         await browser.close();
+        console.log('🔒 Browser closed');
 
         // Update lead with contract URL
         lead.contractFileUrl = `/contracts/${pdfFilename}`;
         lead.contractStatus = 'sent';
         await lead.save();
+        console.log('💾 Lead updated with contract URL');
 
         res.json({
             success: true,
