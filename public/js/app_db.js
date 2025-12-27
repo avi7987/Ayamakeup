@@ -2693,19 +2693,21 @@ const StageManager = {
             return false; // Don't complete stage change yet
         }
         
-        // Check if moving to "completed" (האירוע בוצע) - calculate income from existing deposit
+        // Check if moving to "completed" (האירוע בוצע) - show event payment with auto-filled remaining balance
         if (newStage === 'completed') {
             this.pendingLead = lead;
             const totalPrice = (lead.proposedPrice || 0) + (lead.escortPrice || 0) + 
                               (lead.bridesmaids || []).reduce((sum, b) => sum + (b.price || 0), 0);
             const actualDeposit = lead.actualDeposit || 0;
-            const additionalPayment = lead.additionalPayment || 0;
-            const income = totalPrice - (actualDeposit + additionalPayment);
+            const remainingBalance = totalPrice - actualDeposit;
+            const eventPayment = lead.eventPayment || remainingBalance; // Default to remaining balance
+            const totalIncome = actualDeposit + eventPayment;
             
             document.getElementById('completed-totalPrice').textContent = totalPrice.toLocaleString('he-IL');
             document.getElementById('completed-depositPaid').textContent = actualDeposit.toLocaleString('he-IL') + ' ₪';
-            document.getElementById('completed-additionalPayment').value = additionalPayment || '';
-            document.getElementById('completed-income').textContent = income.toLocaleString('he-IL');
+            document.getElementById('completed-remainingBalance').textContent = remainingBalance.toLocaleString('he-IL') + ' ₪';
+            document.getElementById('completed-eventPayment').value = eventPayment;
+            document.getElementById('completed-totalIncome').textContent = totalIncome.toLocaleString('he-IL');
             
             openModal('modal-event-completed');
             return false; // Don't complete stage change yet
@@ -2829,29 +2831,25 @@ const StageManager = {
     updateIncomeCalculation() {
         if (!this.pendingLead) return;
         
-        const totalPrice = (this.pendingLead.proposedPrice || 0) + (this.pendingLead.escortPrice || 0) + 
-                          (this.pendingLead.bridesmaids || []).reduce((sum, b) => sum + (b.price || 0), 0);
         const actualDeposit = this.pendingLead.actualDeposit || 0;
-        const additionalPayment = parseFloat(document.getElementById('completed-additionalPayment').value) || 0;
-        const income = totalPrice - (actualDeposit + additionalPayment);
+        const eventPayment = parseFloat(document.getElementById('completed-eventPayment').value) || 0;
+        const totalIncome = actualDeposit + eventPayment;
         
-        document.getElementById('completed-income').textContent = `${income.toLocaleString('he-IL')} ₪`;
+        document.getElementById('completed-totalIncome').textContent = `${totalIncome.toLocaleString('he-IL')} ₪`;
     },
     
     async confirmEventCompleted() {
         if (!this.pendingLead) return;
         
-        const totalPrice = (this.pendingLead.proposedPrice || 0) + (this.pendingLead.escortPrice || 0) + 
-                          (this.pendingLead.bridesmaids || []).reduce((sum, b) => sum + (b.price || 0), 0);
         const actualDeposit = this.pendingLead.actualDeposit || 0;
-        const additionalPayment = parseFloat(document.getElementById('completed-additionalPayment').value) || 0;
+        const eventPayment = parseFloat(document.getElementById('completed-eventPayment').value) || 0;
         const paymentMethod = document.getElementById('completed-paymentMethod').value;
-        const income = totalPrice - (actualDeposit + additionalPayment);
+        const totalIncome = actualDeposit + eventPayment;
         
-        // Save additional payment and calculated income
-        this.pendingLead.additionalPayment = additionalPayment;
-        this.pendingLead.additionalPaymentMethod = paymentMethod;
-        this.pendingLead.income = income;
+        // Save event payment and total income
+        this.pendingLead.eventPayment = eventPayment;
+        this.pendingLead.eventPaymentMethod = paymentMethod;
+        this.pendingLead.income = totalIncome;
         this.pendingLead.completedAt = new Date().toISOString();
         this.pendingLead.status = 'completed';
         
@@ -2860,24 +2858,24 @@ const StageManager = {
         this.pendingLead.stageHistory.push({
             stage: 'completed',
             timestamp: new Date().toISOString(),
-            note: `האירוע הושלם - הכנסה: ${income.toLocaleString('he-IL')} ₪ | תשלום נוסף: ${additionalPayment.toLocaleString('he-IL')} ₪`
+            note: `האירוע הושלם - הכנסה כוללת: ${totalIncome.toLocaleString('he-IL')} ₪`
         });
         
         await API.updateLead(this.pendingLead._id || this.pendingLead.id, this.pendingLead);
         
-        // Create income record for additional payment if amount > 0
-        if (additionalPayment > 0) {
+        // Create income record for event payment if amount > 0
+        if (eventPayment > 0) {
             const incomeRecord = {
                 name: this.pendingLead.fullName || this.pendingLead.name,
                 phone: this.pendingLead.phone || '',
-                amount: additionalPayment,
-                price: additionalPayment,
-                service: `יתרת תשלום - ${this.pendingLead.fullName || this.pendingLead.name}`,
+                amount: eventPayment,
+                price: eventPayment,
+                service: this.pendingLead.service || `אירוע - ${this.pendingLead.fullName || this.pendingLead.name}`,
                 date: new Date().toISOString().split('T')[0],
                 payment: paymentMethod,
                 isBride: this.pendingLead.isBride || false,
-                notes: `יתרת תשלום באירוע - אירוע: ${this.pendingLead.eventDate || ''} | אמצעי תשלום: ${paymentMethod}${this.pendingLead.isBride ? ' | כלה 👰' : ''}`,
-                income: additionalPayment,
+                notes: `תשלום באירוע - אירוע: ${this.pendingLead.eventDate || ''} | אמצעי תשלום: ${paymentMethod}${this.pendingLead.isBride ? ' | כלה 👰' : ''}`,
+                income: eventPayment,
                 leadId: this.pendingLead._id || this.pendingLead.id
             };
             
@@ -2887,8 +2885,7 @@ const StageManager = {
         closeModal('modal-event-completed');
         
         // Show success message
-        const totalReceived = actualDeposit + additionalPayment;
-        alert(`✅ האירוע סומן כהושלם!\n💰 הכשלה כוללת: ${totalReceived.toLocaleString('he-IL')} ₪\n📈 הכנסה נטו: ${income.toLocaleString('he-IL')} ₪`);
+        alert(`✅ האירוע סומן כהושלם!\n💰 סך הכל הכנסה: ${totalIncome.toLocaleString('he-IL')} ₪\n(מקדמה: ${actualDeposit.toLocaleString('he-IL')} ₪ + תשלום באירוע: ${eventPayment.toLocaleString('he-IL')} ₪)`);
         
         // Now continue with WhatsApp automation (if applicable)
         const leadId = this.pendingLead._id || this.pendingLead.id;

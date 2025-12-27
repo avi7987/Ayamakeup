@@ -596,22 +596,26 @@
                     <span class="text-sm text-gray-600">💳 מקדמה ששולמה:</span>
                     <span id="completed-depositPaid" class="text-lg font-bold text-orange-600">0 ₪</span>
                 </div>
+                <div class="flex justify-between items-center mt-2 pt-2 border-t">
+                    <span class="text-sm text-gray-600">📋 יתרה לתשלום:</span>
+                    <span id="completed-remainingBalance" class="text-lg font-bold text-gray-600">0 ₪</span>
+                </div>
             </div>
             
             <div class="mb-4">
-                <label class="block text-sm font-bold text-gray-700 mb-2">💵 סכום נוסף ששולם ביום האירוע (₪):</label>
+                <label class="block text-sm font-bold text-gray-700 mb-2">💵 תשלום ששולם ביום האירוע (₪):</label>
                 <input 
                     type="number" 
-                    id="completed-additionalPayment" 
-                    placeholder="כמה שולם?"
-                    class="w-full p-3 border-2 border-gray-300 rounded-xl text-lg" 
+                    id="completed-eventPayment" 
+                    placeholder="כמה שולם באירוע?"
+                    class="w-full p-3 border-2 border-green-300 rounded-xl text-lg font-bold text-center" 
                     min="0"
                     onchange="StageManager.updateIncomeCalculation()">
-                <p class="text-xs text-gray-500 mt-1">היתרה או סכום נוסף ששולם באירוע</p>
+                <p class="text-xs text-gray-500 mt-1">ניתן לשנות את הסכום במידת הצורך</p>
             </div>
             
             <div class="mb-4">
-                <label class="block text-sm font-bold text-gray-700 mb-2">💳 אמצעי תשלום (לסכום הנוסף):</label>
+                <label class="block text-sm font-bold text-gray-700 mb-2">💳 אמצעי תשלום (ביום האירוע):</label>
                 <select id="completed-paymentMethod" class="w-full p-3 border-2 border-gray-300 rounded-xl text-lg">
                     <option value="מזומן">מזומן</option>
                     <option value="ביט">ביט / פייבוקס</option>
@@ -621,10 +625,10 @@
             
             <div class="bg-green-50 rounded-xl p-3 mb-4">
                 <div class="flex justify-between items-center">
-                    <span class="text-base font-bold text-gray-700">💰 סה"כ הכנסה נטו:</span>
-                    <span id="completed-income" class="text-2xl font-bold text-green-700">0 ₪</span>
+                    <span class="text-base font-bold text-gray-700">💰 סה"כ הכנסה:</span>
+                    <span id="completed-totalIncome" class="text-2xl font-bold text-green-700">0 ₪</span>
                 </div>
-                <p class="text-xs text-gray-500 text-center mt-2">מחיר חוזה - (מקדמה + תשלום נוסף)</p>
+                <p class="text-xs text-gray-500 text-center mt-2">מקדמה + תשלום ביום האירוע</p>
             </div>
             
             <div class="flex gap-3">
