@@ -2816,6 +2816,9 @@ const StageManager = {
             
             await API.updateLead(this.pendingLead._id || this.pendingLead.id, this.pendingLead);
             
+            // Create calendar event
+            this.createCalendarEvent(this.pendingLead, startTime, location, notes);
+            
             closeModal('modal-calendar-date');
             
             // Continue with WhatsApp automation (if applicable)
@@ -2830,6 +2833,67 @@ const StageManager = {
             console.error('Error in confirmCalendarDate:', error);
             alert('אירעה שגיאה בקביעת התאריך ביומן. אנא נסה שוב.');
         }
+    },
+    
+    createCalendarEvent(lead, startTime, location, notes) {
+        // Parse event date and time
+        const eventDateParts = lead.eventDate.split('/');
+        let eventDate;
+        
+        if (eventDateParts.length === 3) {
+            // DD/MM/YYYY format
+            const day = eventDateParts[0].padStart(2, '0');
+            const month = eventDateParts[1].padStart(2, '0');
+            const year = eventDateParts[2];
+            eventDate = `${year}-${month}-${day}`;
+        } else {
+            // Fallback to today
+            eventDate = new Date().toISOString().split('T')[0];
+        }
+        
+        const startDateTime = `${eventDate}T${startTime}:00`;
+        const endTime = this.addHours(startTime, 3); // Default 3 hours duration
+        const endDateTime = `${eventDate}T${endTime}:00`;
+        
+        // Create ICS file content
+        const icsContent = [
+            'BEGIN:VCALENDAR',
+            'VERSION:2.0',
+            'PRODID:-//Ayamakeup CRM//Calendar//HE',
+            'CALSCALE:GREGORIAN',
+            'METHOD:PUBLISH',
+            'BEGIN:VEVENT',
+            `DTSTART:${startDateTime.replace(/[-:]/g, '')}`,
+            `DTEND:${endDateTime.replace(/[-:]/g, '')}`,
+            `SUMMARY:${lead.fullName || lead.name} - איפור ושיער`,
+            `DESCRIPTION:${notes || 'אירוע חתונה'}\\nטלפון: ${lead.phone || ''}`,
+            `LOCATION:${location || ''}`,
+            'STATUS:CONFIRMED',
+            'END:VEVENT',
+            'END:VCALENDAR'
+        ].join('\r\n');
+        
+        // Download ICS file
+        const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${lead.fullName || lead.name}_${eventDate}.ics`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        // Show success message
+        alert('📅 קובץ יומן הורד!\nפתחי את הקובץ כדי להוסיף את האירוע ליומן שלך (Google Calendar, Outlook, וכו\')');
+    },
+    
+    addHours(time, hours) {
+        const [h, m] = time.split(':');
+        const totalMinutes = parseInt(h) * 60 + parseInt(m) + (hours * 60);
+        const newHours = Math.floor(totalMinutes / 60) % 24;
+        const newMinutes = totalMinutes % 60;
+        return `${String(newHours).padStart(2, '0')}:${String(newMinutes).padStart(2, '0')}`;
     },
     
     async skipCalendarDate() {
