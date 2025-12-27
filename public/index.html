@@ -578,6 +578,69 @@
         </div>
     </div>
 
+    <!-- Modal: Set Calendar Date (After Deal Closed) -->
+    <div id="modal-calendar-date" class="modal">
+        <div class="bg-white p-6 rounded-2xl w-full max-w-md shadow-2xl text-right">
+            <div class="text-center mb-4">
+                <div class="text-5xl mb-3">📅</div>
+                <h3 class="text-xl font-bold text-gray-800">קביעת תאריך ביומן</h3>
+                <p class="text-sm text-gray-600 mt-2">בואי נקבע את האירוע ביומן</p>
+            </div>
+            
+            <div class="bg-blue-50 rounded-xl p-4 mb-4">
+                <div class="mb-2">
+                    <span class="text-sm font-bold text-gray-700">👰 שם הלקוחה:</span>
+                    <span id="calendar-clientName" class="text-sm text-gray-600 mr-2">-</span>
+                </div>
+                <div>
+                    <span class="text-sm font-bold text-gray-700">📆 תאריך האירוע:</span>
+                    <span id="calendar-eventDate" class="text-sm text-gray-600 mr-2">-</span>
+                </div>
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-bold text-gray-700 mb-2">🕐 שעת ההתחלה:</label>
+                <input 
+                    type="time" 
+                    id="calendar-startTime" 
+                    class="w-full p-3 border-2 border-gray-300 rounded-xl text-lg text-center" 
+                    value="09:00">
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-bold text-gray-700 mb-2">📍 מיקום:</label>
+                <input 
+                    type="text" 
+                    id="calendar-location" 
+                    placeholder="היכן האירוע?"
+                    class="w-full p-3 border-2 border-gray-300 rounded-xl text-lg">
+                <p class="text-xs text-gray-500 mt-1">כתובת מדויקת או שם אולם</p>
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-bold text-gray-700 mb-2">📝 הערות נוספות (אופציונלי):</label>
+                <textarea 
+                    id="calendar-notes" 
+                    placeholder="הערות חשובות..."
+                    rows="2"
+                    class="w-full p-3 border-2 border-gray-300 rounded-xl text-sm"></textarea>
+            </div>
+            
+            <div class="flex gap-3">
+                <button 
+                    onclick="StageManager.confirmCalendarDate()" 
+                    class="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-xl font-bold transition-all">
+                    ✓ קבע ביומן
+                </button>
+                <button 
+                    onclick="StageManager.skipCalendarDate()" 
+                    class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-3 rounded-xl font-bold transition-all">
+                    דלג
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal: Event Completed (Income Calculation) -->
     <div id="modal-event-completed" class="modal">
         <div class="bg-white p-6 rounded-2xl w-full max-w-md shadow-2xl text-right">

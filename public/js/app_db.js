@@ -2786,6 +2786,38 @@ const StageManager = {
             
             closeModal('modal-deal-closed');
             
+            // Show calendar date modal
+            document.getElementById('calendar-clientName').textContent = this.pendingLead.fullName || this.pendingLead.name;
+            document.getElementById('calendar-eventDate').textContent = this.pendingLead.eventDate || 'לא צוין';
+            document.getElementById('calendar-location').value = this.pendingLead.location || '';
+            document.getElementById('calendar-notes').value = '';
+            
+            openModal('modal-calendar-date');
+            
+        } catch (error) {
+            console.error('Error in confirmDealClosed:', error);
+            alert('אירעה שגיאה בשמירת המקדמה. אנא נסה שוב.');
+        }
+    },
+    
+    async confirmCalendarDate() {
+        if (!this.pendingLead) return;
+        
+        try {
+            const startTime = document.getElementById('calendar-startTime').value;
+            const location = document.getElementById('calendar-location').value;
+            const notes = document.getElementById('calendar-notes').value;
+            
+            // Save calendar information
+            this.pendingLead.calendarStartTime = startTime;
+            this.pendingLead.calendarLocation = location || this.pendingLead.location;
+            this.pendingLead.calendarNotes = notes;
+            this.pendingLead.calendarSet = true;
+            
+            await API.updateLead(this.pendingLead._id || this.pendingLead.id, this.pendingLead);
+            
+            closeModal('modal-calendar-date');
+            
             // Continue with WhatsApp automation (if applicable)
             const leadId = this.pendingLead._id || this.pendingLead.id;
             this.pendingLead = null;
@@ -2795,9 +2827,24 @@ const StageManager = {
             // Refresh view
             HomeView.update();
         } catch (error) {
-            console.error('Error in confirmDealClosed:', error);
-            alert('אירעה שגיאה בשמירת המקדמה. אנא נסה שוב.');
+            console.error('Error in confirmCalendarDate:', error);
+            alert('אירעה שגיאה בקביעת התאריך ביומן. אנא נסה שוב.');
         }
+    },
+    
+    async skipCalendarDate() {
+        if (!this.pendingLead) return;
+        
+        closeModal('modal-calendar-date');
+        
+        // Continue with WhatsApp automation (if applicable)
+        const leadId = this.pendingLead._id || this.pendingLead.id;
+        this.pendingLead = null;
+        
+        await WhatsAppAutomation.checkAndPrompt(leadId, 'closed');
+        
+        // Refresh view
+        HomeView.update();
     },
     
     async skipDealClosed() {

@@ -77,6 +77,11 @@ const leadSchema = new mongoose.Schema({
     eventPaymentMethod: { type: String, default: 'מזומן' }, // Payment method for event payment
     income: { type: Number, default: 0 }, // Total income (actualDeposit + eventPayment)
     completedAt: { type: Date, default: null }, // When event was marked as completed
+    // Calendar fields
+    calendarSet: { type: Boolean, default: false }, // Whether event was added to calendar
+    calendarStartTime: { type: String, default: '' }, // Event start time (HH:MM format)
+    calendarLocation: { type: String, default: '' }, // Event location
+    calendarNotes: { type: String, default: '' }, // Calendar notes
     contractStatus: { type: String, default: 'pending' }, // pending, sent, signed
     // Contract-related fields
     escortType: { type: String, default: 'none' }, // none, short, long
