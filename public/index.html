@@ -100,7 +100,55 @@
             background: #374151 !important;
             border-color: #4b5563 !important;
         }
-    </style>
+        /* Comprehensive text color fixes */
+        body.dark-mode .text-green-800,
+        body.dark-mode .text-pink-800,
+        body.dark-mode .text-green-700,
+        body.dark-mode .text-pink-700 {
+            color: #d1d5db !important;
+        }
+        /* Label colors in forms */
+        body.dark-mode label {
+            color: #e4e4e7 !important;
+        }
+        /* Checkboxes and radio buttons */
+        body.dark-mode input[type="checkbox"],
+        body.dark-mode input[type="radio"] {
+            background-color: #374151;
+            border-color: #4b5563;
+        }
+        /* Stats cards */
+        body.dark-mode .stat-card {
+            background: #374151 !important;
+            border-color: #4b5563 !important;
+        }
+        /* All text colors that need fixing */
+        body.dark-mode .text-gray-500 {
+            color: #9ca3af !important;
+        }
+        body.dark-mode .text-gray-400 {
+            color: #9ca3af !important;
+        }
+        /* Table headers and cells */
+        body.dark-mode table th,
+        body.dark-mode table td {
+            color: #e4e4e7 !important;
+            border-color: #4b5563 !important;
+        }
+        /* Dropdown menus */
+        body.dark-mode select option {
+            background: #374151;
+            color: #e4e4e7;
+        }
+        /* Progress bars background */
+        body.dark-mode .bg-gray-200 {
+            background: #4b5563 !important;
+        }
+        /* All purple/pink text in goals */
+        body.dark-mode .text-purple-700,
+        body.dark-mode .text-purple-600 {
+            color: #c4b5fd !important;
+        }
     </style>
 </head>
 <body>
@@ -259,20 +307,20 @@
                     </button>
 
                     <!-- Reports Card (Future) -->
-                    <button class="group relative bg-gradient-to-br from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white p-8 md:p-10 rounded-2xl shadow-2xl hover:shadow-amber-500/50 transition-all duration-500 transform hover:scale-105 hover:-translate-y-2 overflow-hidden opacity-75 cursor-not-allowed">
+                    <button class="group relative bg-gradient-to-br from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white p-2 rounded-lg shadow-md hover:shadow-amber-500/50 transition-all duration-300 transform hover:scale-105 overflow-hidden opacity-75 cursor-not-allowed">
                         <!-- Background Pattern -->
                         <div class="absolute inset-0 bg-white/5 bg-[radial-gradient(circle_at_70%_50%,rgba(255,255,255,0.1)_0%,transparent_50%)]"></div>
                         
                         <div class="relative z-10">
-                            <div class="text-5xl md:text-6xl mb-4 group-hover:scale-110 transition-transform duration-500">📈</div>
-                            <h3 class="text-2xl md:text-3xl font-black mb-3 tracking-tight">דוחות מתקדמים</h3>
-                            <p class="text-amber-100 text-sm md:text-base leading-relaxed">
-                                בקרוב: ניתוח עמוק ותחזיות
+                            <div class="text-2xl mb-1 group-hover:scale-110 transition-transform duration-300">📈</div>
+                            <h3 class="text-sm font-black mb-0.5 tracking-tight">דוחות מתקדמים</h3>
+                            <p class="text-amber-100 text-xs leading-tight">
+                                בקרוב: ניתוח עמוק
                             </p>
                             
                             <!-- Coming Soon Badge -->
-                            <div class="absolute top-4 left-4">
-                                <span class="bg-white/20 backdrop-blur-sm text-white text-xs font-bold px-3 py-1 rounded-full">
+                            <div class="absolute top-1 left-1">
+                                <span class="bg-white/20 backdrop-blur-sm text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full">
                                     בקרוב
                                 </span>
                             </div>
