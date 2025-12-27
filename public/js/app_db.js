@@ -3239,6 +3239,21 @@ function loadDarkMode() {
     }
 }
 
+// ==================== SETTINGS DROPDOWN ====================
+function toggleSettingsDropdown() {
+    const menu = document.getElementById('settings-menu');
+    menu.classList.toggle('hidden');
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function(event) {
+    const dropdown = document.getElementById('settings-dropdown');
+    const menu = document.getElementById('settings-menu');
+    if (dropdown && menu && !dropdown.contains(event.target)) {
+        menu.classList.add('hidden');
+    }
+});
+
 // Make toggleDarkMode global
 window.toggleDarkMode = toggleDarkMode;
 
