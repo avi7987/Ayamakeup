@@ -3195,13 +3195,23 @@ function toggleDarkMode() {
     const isDark = body.classList.toggle('dark-mode');
     localStorage.setItem('darkMode', isDark ? 'enabled' : 'disabled');
     
-    // Update icon
-    const icon = document.getElementById('dark-mode-icon');
-    if (isDark) {
-        icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>';
-    } else {
-        icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>';
-    }
+    // Update all dark mode icons
+    const icons = [
+        'dark-mode-icon',
+        'dark-mode-icon-entry',
+        'dark-mode-icon-leads',
+        'dark-mode-icon-stats'
+    ];
+    
+    const sunIcon = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>';
+    const moonIcon = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>';
+    
+    icons.forEach(iconId => {
+        const icon = document.getElementById(iconId);
+        if (icon) {
+            icon.innerHTML = isDark ? sunIcon : moonIcon;
+        }
+    });
 }
 
 // Load dark mode preference on init
@@ -3209,10 +3219,23 @@ function loadDarkMode() {
     const darkMode = localStorage.getItem('darkMode');
     if (darkMode === 'enabled') {
         document.body.classList.add('dark-mode');
-        const icon = document.getElementById('dark-mode-icon');
-        if (icon) {
-            icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>';
-        }
+        
+        // Update all icons
+        const icons = [
+            'dark-mode-icon',
+            'dark-mode-icon-entry',
+            'dark-mode-icon-leads',
+            'dark-mode-icon-stats'
+        ];
+        
+        const sunIcon = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>';
+        
+        icons.forEach(iconId => {
+            const icon = document.getElementById(iconId);
+            if (icon) {
+                icon.innerHTML = sunIcon;
+            }
+        });
     }
 }
 

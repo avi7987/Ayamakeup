@@ -98,18 +98,18 @@
                 </div>
                 
                 <!-- Logo - Larger and Centered -->
-                <div class="flex flex-col items-center justify-center py-3">
+                <div class="flex flex-col items-center justify-center py-2">
                     <div class="relative group">
                         <div class="absolute inset-0 bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-500 rounded-2xl blur-xl opacity-75 group-hover:opacity-100 transition-opacity duration-500"></div>
-                        <div class="relative bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-500 text-white px-6 py-3 md:px-10 md:py-4 rounded-2xl shadow-2xl transform hover:scale-105 transition-all duration-300">
-                            <h1 class="text-3xl md:text-5xl lg:text-6xl font-black tracking-tight flex items-center gap-2 md:gap-3">
-                                <span class="text-4xl md:text-6xl lg:text-7xl">🌙</span>
+                        <div class="relative bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-500 text-white px-5 py-2 md:px-8 md:py-3 rounded-2xl shadow-2xl transform hover:scale-105 transition-all duration-300">
+                            <h1 class="text-2xl md:text-4xl lg:text-5xl font-black tracking-tight flex items-center gap-2 md:gap-3">
+                                <span class="text-3xl md:text-5xl lg:text-6xl">🌙</span>
                                 <span class="bg-clip-text text-transparent bg-gradient-to-r from-white to-pink-100">Luna</span>
                             </h1>
                         </div>
                     </div>
-                    <div class="mt-3 text-center">
-                        <p class="text-xs md:text-base lg:text-lg font-medium italic text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 dark:from-indigo-400 dark:via-purple-400 dark:to-pink-400">
+                    <div class="mt-2 text-center">
+                        <p class="text-xs md:text-sm lg:text-base font-medium italic text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 dark:from-indigo-400 dark:via-purple-400 dark:to-pink-400">
                             ✨ Illuminate your business path ✨
                         </p>
                     </div>
@@ -117,8 +117,8 @@
             </div>
 
             <!-- Goals Progress Section - Compact for mobile -->
-            <div id="goals-section" class="max-w-4xl mx-auto mb-2 px-2">
-                <h3 class="text-xs md:text-base font-bold text-gray-800 mb-1.5">🎯 יעדים שנתיים</h3>
+            <div id="goals-section" class="max-w-4xl mx-auto mb-1.5 px-2">
+                <h3 class="text-xs md:text-sm font-bold text-gray-800 dark:text-gray-200 mb-1">🎯 יעדים שנתיים</h3>
                 <div class="grid grid-cols-2 md:grid-cols-2 gap-1.5 md:gap-2">
                     <!-- Income Goal - Compact for mobile -->
                     <div class="bg-gradient-to-br from-green-50 to-emerald-50 p-1.5 md:p-2 rounded-md md:rounded-lg shadow-sm border border-green-200">
@@ -156,11 +156,11 @@
 
             <!-- Main Action Cards - Modern 2x2 Grid -->
             <div class="max-w-6xl mx-auto px-4 md:px-8">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-5">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4">
                     
                     <!-- Row 1: Income & Statistics -->
                     <!-- Income Entry Card -->
-                    <button onclick="switchPage('entry')" class="group relative bg-gradient-to-br from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800 text-white p-5 md:p-7 rounded-2xl shadow-2xl hover:shadow-purple-500/50 transition-all duration-500 transform hover:scale-105 hover:-translate-y-2 overflow-hidden">
+                    <button onclick="switchPage('entry')" class="group relative bg-gradient-to-br from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800 text-white p-4 md:p-6 rounded-2xl shadow-2xl hover:shadow-purple-500/50 transition-all duration-500 transform hover:scale-105 hover:-translate-y-2 overflow-hidden">
                         <!-- Background Pattern -->
                         <div class="absolute inset-0 bg-white/5 bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.1)_0%,transparent_50%)]"></div>
                         
@@ -250,18 +250,30 @@
 
         <!-- Page: Income Entry -->
         <section id="page-entry" class="hidden main-card p-8 max-w-lg mx-auto text-right">
-            <!-- Centered Header -->
-            <div class="text-center mb-6">
-                <div class="inline-block mb-4">
-                    <div class="bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-500 text-white px-6 py-2 rounded-xl shadow-lg">
-                        <span class="text-2xl font-black tracking-tight flex items-center gap-2 justify-center">🌙 Luna</span>
+            <!-- Header with Dark Mode Toggle -->
+            <div class="relative mb-6">
+                <!-- Dark Mode Toggle - Top Right -->
+                <button onclick="toggleDarkMode()" class="absolute top-0 right-0 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 p-2 rounded-full shadow-md transition-all duration-300 hover:scale-110 z-10">
+                    <svg id="dark-mode-icon-entry" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                    </svg>
+                </button>
+                
+                <!-- Centered Logo -->
+                <div class="text-center mb-4">
+                    <div class="inline-block">
+                        <div class="bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-500 text-white px-6 py-2 rounded-xl shadow-lg">
+                            <span class="text-2xl font-black tracking-tight flex items-center gap-2 justify-center">🌙 Luna</span>
+                        </div>
                     </div>
                 </div>
-                <button onclick="switchPage('home')" class="group bg-purple-100 hover:bg-purple-200 text-purple-700 dark:bg-purple-900 dark:text-purple-200 px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all duration-300 shadow-md hover:shadow-lg mx-auto">
-                    <svg class="w-5 h-5 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                
+                <!-- Back Button - Small, Left Side -->
+                <button onclick="switchPage('home')" class="absolute bottom-0 left-0 group bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 px-3 py-1.5 rounded-lg font-medium text-sm flex items-center gap-1 transition-all duration-300 shadow-sm hover:shadow-md border border-gray-200 dark:border-gray-600">
+                    <svg class="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                     </svg>
-                    <span>חזור לדף הבית</span>
+                    <span>חזרה</span>
                 </button>
             </div>
             <h2 class="text-2xl font-bold mb-6 text-purple-800 dark:text-purple-300 text-center">הזנת עסקה חדשה</h2>
@@ -291,18 +303,30 @@
 
         <!-- Page: Leads Management -->
         <section id="page-leads" class="hidden">
-            <!-- Centered Header -->
-            <div class="text-center mb-6">
-                <div class="inline-block mb-4">
-                    <div class="bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-500 text-white px-6 py-2 rounded-xl shadow-lg">
-                        <span class="text-2xl font-black tracking-tight flex items-center gap-2 justify-center">🌙 Luna</span>
+            <!-- Header with Dark Mode Toggle -->
+            <div class="relative mb-6">
+                <!-- Dark Mode Toggle - Top Right -->
+                <button onclick="toggleDarkMode()" class="absolute top-0 right-0 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 p-2 rounded-full shadow-md transition-all duration-300 hover:scale-110 z-10">
+                    <svg id="dark-mode-icon-leads" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                    </svg>
+                </button>
+                
+                <!-- Centered Logo -->
+                <div class="text-center mb-4">
+                    <div class="inline-block">
+                        <div class="bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-500 text-white px-6 py-2 rounded-xl shadow-lg">
+                            <span class="text-2xl font-black tracking-tight flex items-center gap-2 justify-center">🌙 Luna</span>
+                        </div>
                     </div>
                 </div>
-                <button onclick="switchPage('home')" class="group bg-blue-100 hover:bg-blue-200 text-blue-700 dark:bg-blue-900 dark:text-blue-200 px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all duration-300 shadow-md hover:shadow-lg mx-auto">
-                    <svg class="w-5 h-5 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                
+                <!-- Back Button - Small, Left Side -->
+                <button onclick="switchPage('home')" class="absolute bottom-0 left-0 group bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 px-3 py-1.5 rounded-lg font-medium text-sm flex items-center gap-1 transition-all duration-300 shadow-sm hover:shadow-md border border-gray-200 dark:border-gray-600">
+                    <svg class="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                     </svg>
-                    <span>חזור לדף הבית</span>
+                    <span>חזרה</span>
                 </button>
             </div>
             <div class="flex justify-between items-center mb-6 px-2 text-right">
@@ -331,18 +355,30 @@
 
         <!-- Page: Statistics -->
         <section id="page-stats" class="hidden text-right">
-            <!-- Centered Header -->
-            <div class="text-center mb-6">
-                <div class="inline-block mb-4">
-                    <div class="bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-500 text-white px-6 py-2 rounded-xl shadow-lg">
-                        <span class="text-2xl font-black tracking-tight flex items-center gap-2 justify-center">🌙 Luna</span>
+            <!-- Header with Dark Mode Toggle -->
+            <div class="relative mb-6">
+                <!-- Dark Mode Toggle - Top Right -->
+                <button onclick="toggleDarkMode()" class="absolute top-0 right-0 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 p-2 rounded-full shadow-md transition-all duration-300 hover:scale-110 z-10">
+                    <svg id="dark-mode-icon-stats" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                    </svg>
+                </button>
+                
+                <!-- Centered Logo -->
+                <div class="text-center mb-4">
+                    <div class="inline-block">
+                        <div class="bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-500 text-white px-6 py-2 rounded-xl shadow-lg">
+                            <span class="text-2xl font-black tracking-tight flex items-center gap-2 justify-center">🌙 Luna</span>
+                        </div>
                     </div>
                 </div>
-                <button onclick="switchPage('home')" class="group bg-green-100 hover:bg-green-200 text-green-700 dark:bg-green-900 dark:text-green-200 px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all duration-300 shadow-md hover:shadow-lg mx-auto">
-                    <svg class="w-5 h-5 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                
+                <!-- Back Button - Small, Left Side -->
+                <button onclick="switchPage('home')" class="absolute bottom-0 left-0 group bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 px-3 py-1.5 rounded-lg font-medium text-sm flex items-center gap-1 transition-all duration-300 shadow-sm hover:shadow-md border border-gray-200 dark:border-gray-600">
+                    <svg class="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                     </svg>
-                    <span>חזור לדף הבית</span>
+                    <span>חזרה</span>
                 </button>
             </div>
             <div class="main-card p-6">
