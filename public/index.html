@@ -35,11 +35,35 @@
             color: #e4e4e7;
             border-color: #4b5563;
         }
+        body.dark-mode input::placeholder,
+        body.dark-mode textarea::placeholder {
+            color: #9ca3af;
+        }
         body.dark-mode .text-gray-700,
-        body.dark-mode .text-gray-800 {
+        body.dark-mode .text-gray-800,
+        body.dark-mode .text-gray-900,
+        body.dark-mode .text-purple-800,
+        body.dark-mode .text-purple-900 {
             color: #e4e4e7 !important;
         }
+        body.dark-mode .text-gray-600 {
+            color: #d1d5db !important;
+        }
         body.dark-mode .border-gray-300 {
+            border-color: #4b5563 !important;
+        }
+        body.dark-mode .bg-gray-100,
+        body.dark-mode .bg-gray-50 {
+            background: #374151 !important;
+        }
+        body.dark-mode .bg-purple-50 {
+            background: #4c1d95 !important;
+        }
+        body.dark-mode .kanban-column {
+            background: #1f2937 !important;
+        }
+        body.dark-mode .lead-card {
+            background: #374151 !important;
             border-color: #4b5563 !important;
         }
     </style>
@@ -74,18 +98,18 @@
                 </div>
                 
                 <!-- Logo - Larger and Centered -->
-                <div class="flex flex-col items-center justify-center py-4">
+                <div class="flex flex-col items-center justify-center py-3">
                     <div class="relative group">
                         <div class="absolute inset-0 bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-500 rounded-2xl blur-xl opacity-75 group-hover:opacity-100 transition-opacity duration-500"></div>
-                        <div class="relative bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-500 text-white px-8 py-4 md:px-12 md:py-6 rounded-2xl shadow-2xl transform hover:scale-105 transition-all duration-300">
-                            <h1 class="text-4xl md:text-6xl lg:text-7xl font-black tracking-tight flex items-center gap-3 md:gap-4">
-                                <span class="text-5xl md:text-7xl lg:text-8xl">🌙</span>
+                        <div class="relative bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-500 text-white px-6 py-3 md:px-10 md:py-4 rounded-2xl shadow-2xl transform hover:scale-105 transition-all duration-300">
+                            <h1 class="text-3xl md:text-5xl lg:text-6xl font-black tracking-tight flex items-center gap-2 md:gap-3">
+                                <span class="text-4xl md:text-6xl lg:text-7xl">🌙</span>
                                 <span class="bg-clip-text text-transparent bg-gradient-to-r from-white to-pink-100">Luna</span>
                             </h1>
                         </div>
                     </div>
-                    <div class="mt-4 text-center">
-                        <p class="text-sm md:text-lg lg:text-xl font-medium italic text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 dark:from-indigo-400 dark:via-purple-400 dark:to-pink-400">
+                    <div class="mt-3 text-center">
+                        <p class="text-xs md:text-base lg:text-lg font-medium italic text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 dark:from-indigo-400 dark:via-purple-400 dark:to-pink-400">
                             ✨ Illuminate your business path ✨
                         </p>
                     </div>
@@ -132,23 +156,23 @@
 
             <!-- Main Action Cards - Modern 2x2 Grid -->
             <div class="max-w-6xl mx-auto px-4 md:px-8">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-5">
                     
                     <!-- Row 1: Income & Statistics -->
                     <!-- Income Entry Card -->
-                    <button onclick="switchPage('entry')" class="group relative bg-gradient-to-br from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800 text-white p-8 md:p-10 rounded-2xl shadow-2xl hover:shadow-purple-500/50 transition-all duration-500 transform hover:scale-105 hover:-translate-y-2 overflow-hidden">
+                    <button onclick="switchPage('entry')" class="group relative bg-gradient-to-br from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800 text-white p-5 md:p-7 rounded-2xl shadow-2xl hover:shadow-purple-500/50 transition-all duration-500 transform hover:scale-105 hover:-translate-y-2 overflow-hidden">
                         <!-- Background Pattern -->
                         <div class="absolute inset-0 bg-white/5 bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.1)_0%,transparent_50%)]"></div>
                         
                         <div class="relative z-10">
-                            <div class="text-5xl md:text-6xl mb-4 group-hover:scale-110 transition-transform duration-500">💰</div>
-                            <h3 class="text-2xl md:text-3xl font-black mb-3 tracking-tight">הכנסה</h3>
-                            <p class="text-purple-100 text-sm md:text-base leading-relaxed">
+                            <div class="text-4xl md:text-5xl mb-3 group-hover:scale-110 transition-transform duration-500">💰</div>
+                            <h3 class="text-xl md:text-2xl font-black mb-2 tracking-tight">הכנסה</h3>
+                            <p class="text-purple-100 text-xs md:text-sm leading-relaxed">
                                 הזן עסקאות חדשות וניהול הכנסות
                             </p>
                             
                             <!-- Decorative Arrow -->
-                            <div class="absolute bottom-4 left-4 text-white/20 group-hover:text-white/40 transition-colors">
+                            <div class="absolute bottom-3 left-3 text-white/20 group-hover:text-white/40 transition-colors">
                                 <svg class="w-8 h-8 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
                                 </svg>
@@ -226,18 +250,21 @@
 
         <!-- Page: Income Entry -->
         <section id="page-entry" class="hidden main-card p-8 max-w-lg mx-auto text-right">
-            <div class="flex items-center justify-between mb-6">
-                <button onclick="switchPage('home')" class="group bg-purple-100 hover:bg-purple-200 text-purple-700 px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all duration-300 shadow-md hover:shadow-lg">
+            <!-- Centered Header -->
+            <div class="text-center mb-6">
+                <div class="inline-block mb-4">
+                    <div class="bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-500 text-white px-6 py-2 rounded-xl shadow-lg">
+                        <span class="text-2xl font-black tracking-tight flex items-center gap-2 justify-center">🌙 Luna</span>
+                    </div>
+                </div>
+                <button onclick="switchPage('home')" class="group bg-purple-100 hover:bg-purple-200 text-purple-700 dark:bg-purple-900 dark:text-purple-200 px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all duration-300 shadow-md hover:shadow-lg mx-auto">
                     <svg class="w-5 h-5 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                     </svg>
                     <span>חזור לדף הבית</span>
                 </button>
-                <div class="bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-500 text-white px-4 py-1.5 rounded-lg shadow-lg">
-                    <span class="text-xl font-black tracking-tight flex items-center gap-2">🌙 Luna</span>
-                </div>
             </div>
-            <h2 class="text-2xl font-bold mb-6 text-purple-800 text-center">הזנת עסקה חדשה</h2>
+            <h2 class="text-2xl font-bold mb-6 text-purple-800 dark:text-purple-300 text-center">הזנת עסקה חדשה</h2>
             
             <form onsubmit="event.preventDefault(); saveIncome();">
                 <input type="text" id="inc-name" placeholder="שם הלקוחה *" required>
@@ -264,16 +291,19 @@
 
         <!-- Page: Leads Management -->
         <section id="page-leads" class="hidden">
-            <div class="flex items-center justify-between mb-6">
-                <button onclick="switchPage('home')" class="group bg-blue-100 hover:bg-blue-200 text-blue-700 px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all duration-300 shadow-md hover:shadow-lg">
+            <!-- Centered Header -->
+            <div class="text-center mb-6">
+                <div class="inline-block mb-4">
+                    <div class="bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-500 text-white px-6 py-2 rounded-xl shadow-lg">
+                        <span class="text-2xl font-black tracking-tight flex items-center gap-2 justify-center">🌙 Luna</span>
+                    </div>
+                </div>
+                <button onclick="switchPage('home')" class="group bg-blue-100 hover:bg-blue-200 text-blue-700 dark:bg-blue-900 dark:text-blue-200 px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all duration-300 shadow-md hover:shadow-lg mx-auto">
                     <svg class="w-5 h-5 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                     </svg>
                     <span>חזור לדף הבית</span>
                 </button>
-                <div class="bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-500 text-white px-4 py-1.5 rounded-lg shadow-lg">
-                    <span class="text-xl font-black tracking-tight flex items-center gap-2">🌙 Luna</span>
-                </div>
             </div>
             <div class="flex justify-between items-center mb-6 px-2 text-right">
                 <h2 class="text-2xl font-bold text-purple-900">ניהול לידים</h2>
@@ -301,16 +331,19 @@
 
         <!-- Page: Statistics -->
         <section id="page-stats" class="hidden text-right">
-            <div class="flex items-center justify-between mb-6">
-                <button onclick="switchPage('home')" class="group bg-green-100 hover:bg-green-200 text-green-700 px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all duration-300 shadow-md hover:shadow-lg">
+            <!-- Centered Header -->
+            <div class="text-center mb-6">
+                <div class="inline-block mb-4">
+                    <div class="bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-500 text-white px-6 py-2 rounded-xl shadow-lg">
+                        <span class="text-2xl font-black tracking-tight flex items-center gap-2 justify-center">🌙 Luna</span>
+                    </div>
+                </div>
+                <button onclick="switchPage('home')" class="group bg-green-100 hover:bg-green-200 text-green-700 dark:bg-green-900 dark:text-green-200 px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all duration-300 shadow-md hover:shadow-lg mx-auto">
                     <svg class="w-5 h-5 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                     </svg>
                     <span>חזור לדף הבית</span>
                 </button>
-                <div class="bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-500 text-white px-4 py-1.5 rounded-lg shadow-lg">
-                    <span class="text-xl font-black tracking-tight flex items-center gap-2">🌙 Luna</span>
-                </div>
             </div>
             <div class="main-card p-6">
                 <div class="flex flex-wrap justify-between items-center mb-6 gap-4 border-b pb-4">
