@@ -149,18 +149,14 @@
         body.dark-mode .text-purple-600 {
             color: #c4b5fd !important;
         }
-        /* Goals section specific colors */
-        body.dark-mode .text-green-800 {
-            color: #86efac !important;
-        }
-        body.dark-mode .text-pink-800 {
-            color: #f9a8d4 !important;
-        }
-        body.dark-mode .text-green-700 {
-            color: #86efac !important;
-        }
-        body.dark-mode .text-pink-700 {
-            color: #f9a8d4 !important;
+        /* Goals section - override ALL text colors to be visible */
+        body.dark-mode #goals-section .text-green-800,
+        body.dark-mode #goals-section .text-pink-800,
+        body.dark-mode #goals-section .text-green-700,
+        body.dark-mode #goals-section .text-pink-700,
+        body.dark-mode #goals-section .text-gray-700,
+        body.dark-mode #goals-section .text-gray-600 {
+            color: #d1d5db !important;
         }
     </style>
 </head>
@@ -251,25 +247,25 @@
             </div>
 
             <!-- Main Action Cards - Modern 2x2 Grid -->
-            <div class="max-w-6xl mx-auto px-2 mb-4">
-                <div class="grid grid-cols-2 gap-2">
+            <div class="max-w-6xl mx-auto px-2 mb-2">
+                <div class="grid grid-cols-2 gap-1.5">
                     
                     <!-- Row 1: Income & Statistics -->
                     <!-- Income Entry Card -->
-                    <button onclick="switchPage('entry')" class="group relative bg-gradient-to-br from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800 text-white p-4 md:p-5 rounded-xl shadow-lg hover:shadow-purple-500/50 transition-all duration-300 transform hover:scale-105 overflow-hidden aspect-square flex flex-col items-center justify-center">
+                    <button onclick="switchPage('entry')" class="group relative bg-gradient-to-br from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800 text-white p-3 rounded-lg shadow-lg hover:shadow-purple-500/50 transition-all duration-300 transform hover:scale-105 overflow-hidden aspect-square flex flex-col items-center justify-center">
                         <!-- Background Pattern -->
                         <div class="absolute inset-0 bg-white/5 bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.1)_0%,transparent_50%)]"></div>
                         
                         <div class="relative z-10 text-center">
-                            <div class="text-3xl md:text-4xl mb-2 group-hover:scale-110 transition-transform duration-300">💰</div>
-                            <h3 class="text-base md:text-lg font-black mb-1 tracking-tight">הכנסה</h3>
-                            <p class="text-purple-100 text-xs md:text-sm leading-tight">
+                            <div class="text-2xl md:text-3xl mb-1.5 group-hover:scale-110 transition-transform duration-300">💰</div>
+                            <h3 class="text-sm md:text-base font-black mb-0.5 tracking-tight">הכנסה</h3>
+                            <p class="text-purple-100 text-[10px] md:text-xs leading-tight">
                                 הזן עסקאות וניהול
                             </p>
                             
                             <!-- Decorative Arrow -->
-                            <div class="absolute bottom-2 left-2 text-white/20 group-hover:text-white/40 transition-colors">
-                                <svg class="w-5 h-5 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <div class="absolute bottom-1.5 left-1.5 text-white/20 group-hover:text-white/40 transition-colors">
+                                <svg class="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
                                 </svg>
                             </div>
@@ -277,20 +273,20 @@
                     </button>
 
                     <!-- Statistics Card -->
-                    <button onclick="switchPage('stats')" class="group relative bg-gradient-to-br from-emerald-500 to-green-700 hover:from-emerald-600 hover:to-green-800 text-white p-4 md:p-5 rounded-xl shadow-lg hover:shadow-emerald-500/50 transition-all duration-300 transform hover:scale-105 overflow-hidden aspect-square flex flex-col items-center justify-center">
+                    <button onclick="switchPage('stats')" class="group relative bg-gradient-to-br from-emerald-500 to-green-700 hover:from-emerald-600 hover:to-green-800 text-white p-3 rounded-lg shadow-lg hover:shadow-emerald-500/50 transition-all duration-300 transform hover:scale-105 overflow-hidden aspect-square flex flex-col items-center justify-center">
                         <!-- Background Pattern -->
                         <div class="absolute inset-0 bg-white/5 bg-[radial-gradient(circle_at_70%_50%,rgba(255,255,255,0.1)_0%,transparent_50%)]"></div>
                         
                         <div class="relative z-10 text-center">
-                            <div class="text-3xl md:text-4xl mb-2 group-hover:scale-110 transition-transform duration-300">📊</div>
-                            <h3 class="text-base md:text-lg font-black mb-1 tracking-tight">סטטיסטיקות</h3>
-                            <p class="text-green-100 text-xs md:text-sm leading-tight">
+                            <div class="text-2xl md:text-3xl mb-1.5 group-hover:scale-110 transition-transform duration-300">📊</div>
+                            <h3 class="text-sm md:text-base font-black mb-0.5 tracking-tight">סטטיסטיקות</h3>
+                            <p class="text-green-100 text-[10px] md:text-xs leading-tight">
                                 דוחות וניתוח
                             </p>
                             
                             <!-- Decorative Arrow -->
-                            <div class="absolute bottom-2 left-2 text-white/20 group-hover:text-white/40 transition-colors">
-                                <svg class="w-5 h-5 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <div class="absolute bottom-1.5 left-1.5 text-white/20 group-hover:text-white/40 transition-colors">
+                                <svg class="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
                                 </svg>
                             </div>
@@ -299,20 +295,20 @@
 
                     <!-- Row 2: Leads & Reports -->
                     <!-- Leads Card -->
-                    <button onclick="switchPage('leads')" class="group relative bg-gradient-to-br from-blue-500 to-indigo-700 hover:from-blue-600 hover:to-indigo-800 text-white p-4 md:p-5 rounded-xl shadow-lg hover:shadow-blue-500/50 transition-all duration-300 transform hover:scale-105 overflow-hidden aspect-square flex flex-col items-center justify-center">
+                    <button onclick="switchPage('leads')" class="group relative bg-gradient-to-br from-blue-500 to-indigo-700 hover:from-blue-600 hover:to-indigo-800 text-white p-3 rounded-lg shadow-lg hover:shadow-blue-500/50 transition-all duration-300 transform hover:scale-105 overflow-hidden aspect-square flex flex-col items-center justify-center">
                         <!-- Background Pattern -->
                         <div class="absolute inset-0 bg-white/5 bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.1)_0%,transparent_50%)]"></div>
                         
                         <div class="relative z-10 text-center">
-                            <div class="text-3xl md:text-4xl mb-2 group-hover:scale-110 transition-transform duration-300">🎯</div>
-                            <h3 class="text-base md:text-lg font-black mb-1 tracking-tight">לידים</h3>
-                            <p class="text-blue-100 text-xs md:text-sm leading-tight">
+                            <div class="text-2xl md:text-3xl mb-1.5 group-hover:scale-110 transition-transform duration-300">🎯</div>
+                            <h3 class="text-sm md:text-base font-black mb-0.5 tracking-tight">לידים</h3>
+                            <p class="text-blue-100 text-[10px] md:text-xs leading-tight">
                                 נהל לידים וסגור
                             </p>
                             
                             <!-- Decorative Arrow -->
-                            <div class="absolute bottom-2 left-2 text-white/20 group-hover:text-white/40 transition-colors">
-                                <svg class="w-5 h-5 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <div class="absolute bottom-1.5 left-1.5 text-white/20 group-hover:text-white/40 transition-colors">
+                                <svg class="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
                                 </svg>
                             </div>
@@ -320,20 +316,20 @@
                     </button>
 
                     <!-- Reports Card (Future) -->
-                    <button class="group relative bg-gradient-to-br from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white p-4 md:p-5 rounded-xl shadow-lg hover:shadow-amber-500/50 transition-all duration-300 transform hover:scale-105 overflow-hidden opacity-75 cursor-not-allowed aspect-square flex flex-col items-center justify-center">
+                    <button class="group relative bg-gradient-to-br from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white p-3 rounded-lg shadow-lg hover:shadow-amber-500/50 transition-all duration-300 transform hover:scale-105 overflow-hidden opacity-75 cursor-not-allowed aspect-square flex flex-col items-center justify-center">
                         <!-- Background Pattern -->
                         <div class="absolute inset-0 bg-white/5 bg-[radial-gradient(circle_at_70%_50%,rgba(255,255,255,0.1)_0%,transparent_50%)]"></div>
                         
                         <div class="relative z-10 text-center">
-                            <div class="text-3xl md:text-4xl mb-2 group-hover:scale-110 transition-transform duration-300">📈</div>
-                            <h3 class="text-base md:text-lg font-black mb-1 tracking-tight">דוחות מתקדמים</h3>
-                            <p class="text-amber-100 text-xs md:text-sm leading-tight">
+                            <div class="text-2xl md:text-3xl mb-1.5 group-hover:scale-110 transition-transform duration-300">📈</div>
+                            <h3 class="text-sm md:text-base font-black mb-0.5 tracking-tight">דוחות מתקדמים</h3>
+                            <p class="text-amber-100 text-[10px] md:text-xs leading-tight">
                                 בקרוב: ניתוח עמוק
                             </p>
                             
                             <!-- Coming Soon Badge -->
-                            <div class="absolute top-2 left-2">
-                                <span class="bg-white/20 backdrop-blur-sm text-white text-[9px] font-bold px-2 py-0.5 rounded-full">
+                            <div class="absolute top-1.5 left-1.5">
+                                <span class="bg-white/20 backdrop-blur-sm text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full">
                                     בקרוב
                                 </span>
                             </div>
