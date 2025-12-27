@@ -1773,72 +1773,7 @@ const MessageSettings = {
                         </div>
                     </div>
                     
-                    <!-- Follow-up Message -->
-                    <div class="bg-green-50 rounded-xl p-4 border border-green-200">
-                        <div class="flex items-center justify-between mb-3">
-                            <label class="flex items-center gap-2 cursor-pointer">
-                                <input 
-                                    type="checkbox" 
-                                    id="followup-${stage.id}"
-                                    ${stageSettings.followUp.enabled ? 'checked' : ''}
-                                    class="w-5 h-5 text-green-600 rounded"
-                                    onchange="MessageSettings.updateToggle('${stage.id}', 'followUp', this.checked)"
-                                >
-                                <span class="font-bold text-gray-800">⏰ הודעת Follow-up (טיימר)</span>
-                            </label>
-                        </div>
-                        
-                        <div class="flex gap-2 mb-3">
-                            <input 
-                                type="number" 
-                                id="followup-delay-${stage.id}"
-                                value="${stageSettings.followUp.delay || 1}"
-                                min="1"
-                                class="w-20 border-2 border-gray-200 rounded-lg p-2 text-center font-bold"
-                                onchange="MessageSettings.updateDelay('${stage.id}', this.value, document.getElementById('followup-unit-${stage.id}').value)"
-                            >
-                            <select 
-                                id="followup-unit-${stage.id}"
-                                class="flex-1 border-2 border-gray-200 rounded-lg p-2 font-bold"
-                                onchange="MessageSettings.updateDelay('${stage.id}', document.getElementById('followup-delay-${stage.id}').value, this.value)"
-                            >
-                                <option value="hours" ${stageSettings.followUp.unit === 'hours' ? 'selected' : ''}>שעות</option>
-                                <option value="days" ${stageSettings.followUp.unit === 'days' ? 'selected' : ''}>ימים</option>
-                                <option value="weeks" ${stageSettings.followUp.unit === 'weeks' ? 'selected' : ''}>שבועות</option>
-                            </select>
-                        </div>
-                        
-                        <textarea 
-                            id="followup-template-${stage.id}"
-                            rows="3"
-                            class="w-full border-2 border-gray-200 rounded-xl p-3 text-sm font-mono resize-none focus:border-green-400 focus:outline-none"
-                            placeholder="תבנית הודעת follow-up..."
-                            onchange="MessageSettings.updateTemplate('${stage.id}', 'followUp', this.value)"
-                        >${stageSettings.followUp.template || ''}</textarea>
-                    </div>
-                    
-                    <!-- Contract Template Upload (only for contract-sent stage) -->
-                    ${stage.id === 'contract-sent' ? `
-                    <div class="bg-blue-50 rounded-xl p-4 mt-4 border border-blue-200">
-                        <div class="font-bold text-gray-800 mb-3 flex items-center gap-2">
-                            <span>📋</span>
-                            <span>תבנית חוזה (Word)</span>
-                        </div>
-                        <div class="flex flex-col gap-2">
-                            <input 
-                                type="file" 
-                                id="contract-template-upload"
-                                accept=".docx"
-                                class="text-sm"
-                                onchange="ContractManager.uploadTemplate(this.files[0])"
-                            >
-                            <div id="contract-template-status" class="text-sm text-gray-600"></div>
-                            <div class="text-xs text-gray-500 mt-2">
-                                💡 משתנים זמינים: {{firstName}}, {{lastName}}, {{fullName}}, {{phone}}, {{service}}, {{eventDate}}, {{location}}, {{price}}, {{deposit}}, {{balance}}, {{hasEscort}}, {{escortPrice}}, {{hasBridesmaids}}, {{bridesmaidsCount}}, {{bridesmaidsPrice}}, {{date}}
-                            </div>
-                        </div>
-                    </div>
-                    ` : ''}
+
                 </div>
             `;
         }).join('');
@@ -1891,6 +1826,148 @@ const MessageSettings = {
     
     getSettings(stageId) {
         return this.settings[stageId] || CONFIG.DEFAULT_MESSAGE_SETTINGS[stageId];
+    }
+};
+
+// ==================== TIMER SETTINGS ====================
+const TimerSettings = {
+    settings: {},
+    
+    async init() {
+        const saved = localStorage.getItem('timer_settings_v1');
+        if (saved) {
+            this.settings = JSON.parse(saved);
+        } else {
+            // Use defaults from message settings for timers
+            this.settings = {};
+            const allStages = [...CONFIG.LEAD_STAGES, ...CONFIG.LEAD_STAGES_ARCHIVE];
+            allStages.forEach(stage => {
+                const defaults = CONFIG.DEFAULT_MESSAGE_SETTINGS[stage.id];
+                if (defaults && defaults.followUp) {
+                    this.settings[stage.id] = {
+                        enabled: defaults.followUp.enabled,
+                        delay: defaults.followUp.delay,
+                        unit: defaults.followUp.unit,
+                        template: defaults.followUp.template
+                    };
+                }
+            });
+        }
+    },
+    
+    render() {
+        const content = document.getElementById('timer-settings-content');
+        if (!content) {
+            console.error('timer-settings-content not found');
+            return;
+        }
+        
+        const allStages = [...CONFIG.LEAD_STAGES, ...CONFIG.LEAD_STAGES_ARCHIVE];
+        
+        // Filter out stages that shouldn't have timers (new, completed/lost)
+        const timerStages = allStages.filter(stage => 
+            stage.id !== 'new' && stage.id !== 'completed' && stage.id !== 'lost'
+        );
+        
+        content.innerHTML = timerStages.map(stage => {
+            if (!this.settings[stage.id]) {
+                this.settings[stage.id] = {
+                    enabled: false,
+                    delay: 1,
+                    unit: 'days',
+                    template: ''
+                };
+            }
+            
+            const stageSettings = this.settings[stage.id];
+            
+            return `
+                <div class="border-2 border-purple-100 dark:border-gray-700 rounded-2xl p-6 bg-gradient-to-br from-purple-50 to-white dark:from-gray-800 dark:to-gray-900">
+                    <h4 class="text-xl font-bold text-purple-900 dark:text-purple-300 mb-4 flex items-center gap-2">
+                        <span class="text-2xl">${MessageSettings.getStageEmoji(stage.id)}</span>
+                        ${stage.title}
+                    </h4>
+                    
+                    <div class="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-600">
+                        <div class="flex items-center justify-between mb-3">
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input 
+                                    type="checkbox" 
+                                    id="timer-${stage.id}"
+                                    ${stageSettings.enabled ? 'checked' : ''}
+                                    class="w-5 h-5 text-purple-600 rounded"
+                                    onchange="TimerSettings.updateToggle('${stage.id}', this.checked)"
+                                >
+                                <span class="font-bold text-gray-800 dark:text-gray-200">⏰ הפעל טיימר Follow-up</span>
+                            </label>
+                        </div>
+                        
+                        <div class="flex gap-2 mb-3">
+                            <input 
+                                type="number" 
+                                id="timer-delay-${stage.id}"
+                                value="${stageSettings.delay || 1}"
+                                min="1"
+                                class="w-20 border-2 border-gray-200 dark:border-gray-600 rounded-lg p-2 text-center font-bold dark:bg-gray-700 dark:text-gray-200"
+                                onchange="TimerSettings.updateDelay('${stage.id}', this.value, document.getElementById('timer-unit-${stage.id}').value)"
+                            >
+                            <select 
+                                id="timer-unit-${stage.id}"
+                                class="flex-1 border-2 border-gray-200 dark:border-gray-600 rounded-lg p-2 font-bold dark:bg-gray-700 dark:text-gray-200"
+                                onchange="TimerSettings.updateDelay('${stage.id}', document.getElementById('timer-delay-${stage.id}').value, this.value)"
+                            >
+                                <option value="hours" ${stageSettings.unit === 'hours' ? 'selected' : ''}>שעות</option>
+                                <option value="days" ${stageSettings.unit === 'days' ? 'selected' : ''}>ימים</option>
+                                <option value="weeks" ${stageSettings.unit === 'weeks' ? 'selected' : ''}>שבועות</option>
+                            </select>
+                        </div>
+                        
+                        <textarea 
+                            id="timer-template-${stage.id}"
+                            rows="3"
+                            class="w-full border-2 border-gray-200 dark:border-gray-600 rounded-xl p-3 text-sm font-mono resize-none focus:border-purple-400 focus:outline-none dark:bg-gray-700 dark:text-gray-200"
+                            placeholder="תבנית הודעת follow-up..."
+                            onchange="TimerSettings.updateTemplate('${stage.id}', this.value)"
+                        >${stageSettings.template || ''}</textarea>
+                        <div class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                            💡 משתנים זמינים: {{firstName}}, {{service}}, {{date}}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    },
+    
+    updateToggle(stageId, enabled) {
+        if (!this.settings[stageId]) {
+            this.settings[stageId] = {enabled: false, delay: 1, unit: 'days', template: ''};
+        }
+        this.settings[stageId].enabled = enabled;
+    },
+    
+    updateTemplate(stageId, template) {
+        if (!this.settings[stageId]) {
+            this.settings[stageId] = {enabled: false, delay: 1, unit: 'days', template: ''};
+        }
+        this.settings[stageId].template = template;
+    },
+    
+    updateDelay(stageId, delay, unit) {
+        if (!this.settings[stageId]) {
+            this.settings[stageId] = {enabled: false, delay: 1, unit: 'days', template: ''};
+        }
+        this.settings[stageId].delay = parseInt(delay);
+        this.settings[stageId].unit = unit;
+    },
+    
+    save() {
+        localStorage.setItem('timer_settings_v1', JSON.stringify(this.settings));
+        alert('✅ הגדרות הטיימרים נשמרו בהצלחה!');
+        closeModal('modal-timer-settings');
+    },
+    
+    getSettings(stageId) {
+        return this.settings[stageId] || {enabled: false, delay: 1, unit: 'days', template: ''};
     }
 };
 
@@ -2002,9 +2079,13 @@ const WhatsAppAutomation = {
         if (this.pendingStage === 'contract-sent') {
             // lastName already exists from lead creation (required field)
             
+            // Use proposedPrice from previous "in-process" stage if exists
+            const proposedPrice = this.pendingLead.proposedPrice || 0;
+            
             // Update proposed deposit (for contract display)
             this.pendingLead.proposedDeposit = parseInt(document.getElementById('contract-proposedDeposit').value) || 0;
             console.log('💰 Proposed Deposit saved:', this.pendingLead.proposedDeposit);
+            console.log('💰 Using Proposed Price from in-process stage:', proposedPrice);
             
             // Update escort type and price
             this.pendingLead.escortType = document.getElementById('contract-escortType').value;
@@ -2436,7 +2517,12 @@ const FollowUpTimers = {
 
 // Global Functions (for onclick handlers in HTML)
 window.switchPage = async (page) => await Navigation.switchPage(page);
-window.openModal = (id) => ModalManager.open(id);
+window.openModal = (id) => {
+    if (id === 'modal-timer-settings') {
+        TimerSettings.render();
+    }
+    ModalManager.open(id);
+};
 window.closeModal = (id) => ModalManager.close(id);
 window.saveIncome = () => IncomeManager.save();
 window.addLead = () => LeadsManager.add();
@@ -3263,6 +3349,7 @@ async function init() {
     loadDarkMode(); // Load dark mode preference first
     await State.init();
     await MessageSettings.init();
+    await TimerSettings.init();
     FollowUpTimers.init();
     
     const filter = document.getElementById('stats-month-filter');
