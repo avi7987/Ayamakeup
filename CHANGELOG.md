@@ -1,4 +1,8 @@
-# היסטוריית שינויים - Ayamakeup CRM
+# 🌙 Luna - Change History
+
+*Illuminate your business path*
+
+---
 
 ## גרסה 11.0 - שדות שירות דינמיים (28.12.2024)
 

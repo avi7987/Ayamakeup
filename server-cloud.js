@@ -80,6 +80,9 @@ const leadSchema = new mongoose.Schema({
     // Calendar fields
     calendarSet: { type: Boolean, default: false }, // Whether event was added to calendar
     calendarStartTime: { type: String, default: '' }, // Event start time (HH:MM format)
+    calendarDuration: { type: Number, default: 3 }, // Service duration in hours
+    calendarEscortTime: { type: String, default: '' }, // Escort start time (HH:MM format)
+    calendarEscortDuration: { type: Number, default: 4 }, // Escort duration in hours
     calendarLocation: { type: String, default: '' }, // Event location
     calendarNotes: { type: String, default: '' }, // Calendar notes
     contractStatus: { type: String, default: 'pending' }, // pending, sent, signed
@@ -537,8 +540,8 @@ app.get('/api/contract-template-html', async (req, res) => {
 
 <div style="margin-bottom: 25px;">
     <h2 style="font-size: 18px; border-bottom: 1px solid #ccc; padding-bottom: 5px;">פרטי הצדדים</h2>
-    <p><strong>בין:</strong> איה שוסטרמן - איפור ושיער (להלן: "נותן השירות")</p>
-    <p><strong>לבין:</strong> {{fullName}} (להלן: "הלקוחה")</p>
+    <p><strong>בין:</strong> {{businessName}} (להלן: "נותן השירות")</p>
+    <p><strong>לבין:</strong> {{fullName}} (להלן: "הלקוח/ה")</p>
     <p><strong>טלפון:</strong> {{phone}}</p>
 </div>
 
@@ -1145,7 +1148,7 @@ app.post('/api/sign-contract/:leadId', async (req, res) => {
                         <p style="font-size: 11px; color: #666;">תאריך: ${new Date(lead.customerSignedAt).toLocaleDateString('he-IL')}</p>
                     </div>
                     <div style="text-align: center;">
-                        <p style="font-family: 'Brush Script MT', cursive; font-size: 32px; margin: 0; padding: 20px 0;">איה שוסטרמן</p>
+                        <p style="font-family: 'Brush Script MT', cursive; font-size: 32px; margin: 0; padding: 20px 0;">_____________</p>
                         <p style="margin-top: 10px; font-size: 12px;">חתימת נותן השירות</p>
                         <p style="font-size: 11px; color: #666;">תאריך: ${getIsraelDate()}</p>
                     </div>

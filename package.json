@@ -1,5 +1,5 @@
 {
-  "name": "ayamakeup-crm",
+  "name": "luna-crm",
   "version": "9.0.0",
   "description": "CRM system for beauty business with MongoDB",
   "main": "server-cloud.js",

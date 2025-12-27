@@ -6,7 +6,8 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>Stride - Business Management System</title>
+    <title>Luna - Illuminate your business path</title>
+    <meta name="description" content="Luna - Modern business management system to illuminate your business path">
     
     <!-- External Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -38,14 +39,14 @@
                 
                 <!-- Logo -->
                 <div class="inline-block mb-0">
-                    <div class="bg-gradient-to-br from-purple-600 via-purple-700 to-indigo-800 text-white px-4 py-1.5 md:px-6 md:py-2 rounded-lg shadow-lg transform hover:scale-105 transition-all duration-300">
+                    <div class="bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-500 text-white px-4 py-1.5 md:px-6 md:py-2 rounded-lg shadow-lg transform hover:scale-105 transition-all duration-300">
                         <h1 class="text-2xl md:text-4xl font-black tracking-tight">
-                            Stride
+                            🌙 Luna
                         </h1>
                     </div>
                 </div>
-                <p class="text-xs md:text-base text-gray-600 font-light">
-                    Business Management System
+                <p class="text-xs md:text-base text-gray-600 font-light italic">
+                    Illuminate your business path
                 </p>
             </div>
 
@@ -605,6 +606,44 @@
                     id="calendar-startTime" 
                     class="w-full p-3 border-2 border-gray-300 rounded-xl text-lg text-center" 
                     value="09:00">
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-bold text-gray-700 mb-2">⏱️ משך השירות (שעות):</label>
+                <input 
+                    type="number" 
+                    id="calendar-duration" 
+                    class="w-full p-3 border-2 border-gray-300 rounded-xl text-lg text-center" 
+                    value="3"
+                    min="0.5"
+                    max="12"
+                    step="0.5">
+                <p class="text-xs text-gray-500 mt-1">כמה זמן העבודה לוקחת?</p>
+            </div>
+            
+            <div id="escort-time-section" class="mb-4" style="display: none;">
+                <div class="bg-purple-50 p-4 rounded-xl border-2 border-purple-200">
+                    <h4 class="font-semibold text-purple-800 mb-3 text-center">💃 ליווי לאירוע</h4>
+                    <div class="mb-3">
+                        <label class="block text-sm font-bold text-gray-700 mb-2">🕐 שעת התחלת ליווי:</label>
+                        <input 
+                            type="time" 
+                            id="calendar-escortTime" 
+                            class="w-full p-3 border-2 border-purple-300 rounded-xl text-lg text-center" 
+                            value="18:00">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">⏱️ משך הליווי (שעות):</label>
+                        <input 
+                            type="number" 
+                            id="calendar-escortDuration" 
+                            class="w-full p-3 border-2 border-purple-300 rounded-xl text-lg text-center" 
+                            value="4"
+                            min="1"
+                            max="12"
+                            step="0.5">
+                    </div>
+                </div>
             </div>
             
             <div class="mb-4">

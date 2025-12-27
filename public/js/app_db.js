@@ -2792,6 +2792,13 @@ const StageManager = {
             document.getElementById('calendar-location').value = this.pendingLead.location || '';
             document.getElementById('calendar-notes').value = '';
             
+            // Show/hide escort section based on lead's escort type
+            const hasEscort = this.pendingLead.escortType && this.pendingLead.escortType !== 'none';
+            const escortSection = document.getElementById('escort-time-section');
+            if (escortSection) {
+                escortSection.style.display = hasEscort ? 'block' : 'none';
+            }
+            
             openModal('modal-calendar-date');
             
         } catch (error) {
@@ -2805,19 +2812,40 @@ const StageManager = {
         
         try {
             const startTime = document.getElementById('calendar-startTime').value;
+            const duration = parseFloat(document.getElementById('calendar-duration').value) || 3;
             const location = document.getElementById('calendar-location').value;
             const notes = document.getElementById('calendar-notes').value;
             
+            // Get escort details if applicable
+            const hasEscort = this.pendingLead.escortType && this.pendingLead.escortType !== 'none';
+            let escortTime = null;
+            let escortDuration = null;
+            
+            if (hasEscort) {
+                escortTime = document.getElementById('calendar-escortTime').value;
+                escortDuration = parseFloat(document.getElementById('calendar-escortDuration').value) || 4;
+            }
+            
             // Save calendar information
             this.pendingLead.calendarStartTime = startTime;
+            this.pendingLead.calendarDuration = duration;
             this.pendingLead.calendarLocation = location || this.pendingLead.location;
             this.pendingLead.calendarNotes = notes;
+            if (hasEscort) {
+                this.pendingLead.calendarEscortTime = escortTime;
+                this.pendingLead.calendarEscortDuration = escortDuration;
+            }
             this.pendingLead.calendarSet = true;
             
             await API.updateLead(this.pendingLead._id || this.pendingLead.id, this.pendingLead);
             
-            // Create calendar event
-            this.createCalendarEvent(this.pendingLead, startTime, location, notes);
+            // Create calendar event(s)
+            this.createCalendarEvent(this.pendingLead, startTime, duration, location, notes);
+            
+            // Create escort event if applicable
+            if (hasEscort && escortTime) {
+                this.createEscortCalendarEvent(this.pendingLead, escortTime, escortDuration, location, notes);
+            }
             
             closeModal('modal-calendar-date');
             
@@ -2835,7 +2863,7 @@ const StageManager = {
         }
     },
     
-    createCalendarEvent(lead, startTime, location, notes) {
+    createCalendarEvent(lead, startTime, duration, location, notes) {
         // Parse event date and time
         const eventDateParts = lead.eventDate.split('/');
         let eventDate;
@@ -2852,7 +2880,7 @@ const StageManager = {
         }
         
         const startDateTime = `${eventDate}T${startTime}:00`;
-        const endTime = this.addHours(startTime, 3); // Default 3 hours duration
+        const endTime = this.addHours(startTime, duration);
         const endDateTime = `${eventDate}T${endTime}:00`;
         
         // Create ICS file content
@@ -2885,7 +2913,63 @@ const StageManager = {
         URL.revokeObjectURL(url);
         
         // Show success message
-        alert('📅 קובץ יומן הורד!\nפתחי את הקובץ כדי להוסיף את האירוע ליומן שלך (Google Calendar, Outlook, וכו\')');
+        const escortMessage = (lead.escortType && lead.escortType !== 'none') ? '\n\n💃 קובץ נוסף ליווי יורד כעת...' : '';
+        alert(`📅 קובץ יומן הורד!${escortMessage}\nפתחי את הקבצים כדי להוסיף את האירועים ליומן שלך (Google Calendar, Outlook, וכו\')`);
+    },
+    
+    createEscortCalendarEvent(lead, escortTime, escortDuration, location, notes) {
+        // Parse event date and time
+        const eventDateParts = lead.eventDate.split('/');
+        let eventDate;
+        
+        if (eventDateParts.length === 3) {
+            // DD/MM/YYYY format
+            const day = eventDateParts[0].padStart(2, '0');
+            const month = eventDateParts[1].padStart(2, '0');
+            const year = eventDateParts[2];
+            eventDate = `${year}-${month}-${day}`;
+        } else {
+            // Fallback to today
+            eventDate = new Date().toISOString().split('T')[0];
+        }
+        
+        const startDateTime = `${eventDate}T${escortTime}:00`;
+        const endTime = this.addHours(escortTime, escortDuration);
+        const endDateTime = `${eventDate}T${endTime}:00`;
+        
+        const escortTypeHebrew = {
+            'short': 'ליווי קצר',
+            'long': 'ליווי ארוך'
+        };
+        
+        // Create ICS file content for escort
+        const icsContent = [
+            'BEGIN:VCALENDAR',
+            'VERSION:2.0',
+            'PRODID:-//Luna//Calendar//HE',
+            'CALSCALE:GREGORIAN',
+            'METHOD:PUBLISH',
+            'BEGIN:VEVENT',
+            `DTSTART:${startDateTime.replace(/[-:]/g, '')}`,
+            `DTEND:${endDateTime.replace(/[-:]/g, '')}`,
+            `SUMMARY:${lead.fullName || lead.name} - ${escortTypeHebrew[lead.escortType] || 'ליווי'}`,
+            `DESCRIPTION:ליווי לאירוע\\n${notes || ''}\\nטלפון: ${lead.phone || ''}`,
+            `LOCATION:${location || ''}`,
+            'STATUS:CONFIRMED',
+            'END:VEVENT',
+            'END:VCALENDAR'
+        ].join('\r\n');
+        
+        // Download ICS file
+        const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${lead.fullName || lead.name}_ליווי_${eventDate}.ics`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
     },
     
     addHours(time, hours) {
