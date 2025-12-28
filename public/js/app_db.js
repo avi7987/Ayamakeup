@@ -2918,12 +2918,20 @@ const StageManager = {
         // Save to proposedPrice (this is the price for the contract)
         this.pendingLead.proposedPrice = price;
         
+        console.log('💰 Confirm Price - Saving:', {
+            leadId: this.pendingLead._id || this.pendingLead.id,
+            proposedPrice: this.pendingLead.proposedPrice,
+            fullLead: this.pendingLead
+        });
+        
         // Ensure required fields exist
         if (!this.pendingLead.lastName || this.pendingLead.lastName.trim() === '') {
             this.pendingLead.lastName = this.pendingLead.name.split(' ').slice(1).join(' ') || 'לא צוין';
         }
         
         await API.updateLead(this.pendingLead._id || this.pendingLead.id, this.pendingLead);
+        
+        console.log('✅ Price saved to database');
         
         closeModal('modal-set-price');
         
