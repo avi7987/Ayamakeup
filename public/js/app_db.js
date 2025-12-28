@@ -2843,8 +2843,8 @@ const StageManager = {
         const lead = State.leads.find(l => (l._id || l.id) === leadId);
         if (!lead) return;
         
-        // Check if moving to "in-process" and price is 0
-        if (newStage === 'in-process' && (!lead.price || lead.price === 0)) {
+        // Check if moving to "in-process" and proposedPrice is not set
+        if (newStage === 'in-process' && (!lead.proposedPrice || lead.proposedPrice === 0)) {
             this.pendingLead = lead;
             document.getElementById('price-input').value = lead.proposedPrice || lead.price || '';
             openModal('modal-set-price');
