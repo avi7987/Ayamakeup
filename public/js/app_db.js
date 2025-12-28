@@ -2933,6 +2933,14 @@ const StageManager = {
         
         console.log('✅ Price saved to database');
         
+        // CRITICAL: Update State.leads with the new price
+        const leadInState = State.leads.find(l => (l._id || l.id) === (this.pendingLead._id || this.pendingLead.id));
+        if (leadInState) {
+            leadInState.proposedPrice = price;
+            leadInState.lastName = this.pendingLead.lastName;
+            console.log('✅ State.leads updated with proposedPrice:', price);
+        }
+        
         closeModal('modal-set-price');
         
         // Now complete the stage change
@@ -2957,6 +2965,14 @@ const StageManager = {
         
         // Save to database before closing
         await API.updateLead(this.pendingLead._id || this.pendingLead.id, this.pendingLead);
+        
+        // CRITICAL: Update State.leads with the new price
+        const leadInState = State.leads.find(l => (l._id || l.id) === (this.pendingLead._id || this.pendingLead.id));
+        if (leadInState) {
+            if (price > 0) leadInState.proposedPrice = price;
+            leadInState.lastName = this.pendingLead.lastName;
+            console.log('✅ State.leads updated (skip) with proposedPrice:', price);
+        }
         
         closeModal('modal-set-price');
         
