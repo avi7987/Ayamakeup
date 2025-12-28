@@ -2846,8 +2846,19 @@ const StageManager = {
         // Check if moving to "in-process" and price is 0
         if (newStage === 'in-process' && (!lead.price || lead.price === 0)) {
             this.pendingLead = lead;
-            document.getElementById('price-input').value = lead.price || '';
+            document.getElementById('price-input').value = lead.proposedPrice || lead.price || '';
             openModal('modal-set-price');
+            
+            // Add auto-save on input change
+            const priceInput = document.getElementById('price-input');
+            priceInput.addEventListener('input', async () => {
+                const price = parseInt(priceInput.value) || 0;
+                if (this.pendingLead) {
+                    this.pendingLead.proposedPrice = price;
+                    console.log('💰 Auto-saving proposed price:', price);
+                }
+            });
+            
             return false; // Don't complete stage change yet
         }
         
@@ -2912,6 +2923,12 @@ const StageManager = {
     
     async skipPrice() {
         if (!this.pendingLead) return;
+        
+        // Save the price even when skipping (if user entered something)
+        const price = parseInt(document.getElementById('price-input').value) || 0;
+        if (price > 0) {
+            this.pendingLead.proposedPrice = price;
+        }
         
         // Ensure required fields exist
         if (!this.pendingLead.lastName || this.pendingLead.lastName.trim() === '') {
