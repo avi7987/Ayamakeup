@@ -832,7 +832,7 @@
     </div>
 
     <!-- Modal: Contract Preview -->
-    <div id="modal-contract-preview" class="modal">
+    <div id="modal-contract-preview" class="modal" onclick="if(event.target === this) closeModal('modal-contract-preview')">
         <div class="bg-white p-6 rounded-2xl w-full max-w-4xl shadow-2xl text-right max-h-[90vh] flex flex-col">
             <div class="flex justify-between items-center mb-4 pb-4 border-b">
                 <h3 class="text-xl font-bold text-gray-800">👁️ תצוגה מקדימה - חוזה</h3>
@@ -1038,7 +1038,7 @@
     </div>
 
     <!-- Modal: Event Completed (Income Calculation) -->
-    <div id="modal-event-completed" class="modal">
+    <div id="modal-event-completed" class="modal" onclick="if(event.target === this) StageManager.skipEventCompleted()">
         <div class="bg-white p-6 rounded-2xl w-full max-w-md shadow-2xl text-right">
             <div class="text-center mb-4">
                 <div class="text-5xl mb-3">🎉</div>
