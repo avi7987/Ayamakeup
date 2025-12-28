@@ -186,6 +186,14 @@ const State = {
                 this.clients = await clientsRes.json();
                 this.leads = await leadsRes.json();
                 
+                console.log('✅ Loaded', this.leads.length, 'leads from database');
+                // Debug: Log proposedPrice values
+                this.leads.forEach(lead => {
+                    if (lead.proposedPrice) {
+                        console.log('💰 Lead', lead._id, 'has proposedPrice:', lead.proposedPrice);
+                    }
+                });
+                
                 // Convert to booleans and add missing fields for backward compatibility
                 this.clients = this.clients.map(c => ({...c, isBride: Boolean(c.isBride)}));
                 this.leads = this.leads.map(l => ({
