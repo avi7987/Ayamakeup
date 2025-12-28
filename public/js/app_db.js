@@ -118,7 +118,7 @@ if (!document.getElementById('motivational-styles')) {
 
 // Configuration
 const CONFIG = {
-    API_BASE_URL: 'https://ayamakeup-production.up.railway.app/api',
+    API_BASE_URL: 'https://lunabusiness.up.railway.app/api',
     STORAGE_KEYS: {
         CLIENTS: 'crm_clients_v3',
         LEADS: 'crm_leads_v3',
