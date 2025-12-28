@@ -326,6 +326,7 @@ const API = {
     
     async updateLead(id, data) {
         console.log('📤 Updating lead:', id, 'proposedPrice in data:', data.proposedPrice);
+        console.trace('📍 Called from:');
         const result = await this.request(`/leads/${id}`, {
             method: 'PUT',
             body: JSON.stringify(data)
