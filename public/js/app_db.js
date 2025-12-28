@@ -351,11 +351,6 @@ const Navigation = {
         const selectedPage = document.getElementById('page-' + pageName);
         if (selectedPage) selectedPage.classList.remove('hidden');
         
-        // Scroll to top - use setTimeout to ensure page is rendered
-        setTimeout(() => {
-            window.scrollTo({ top: 0, behavior: 'instant' });
-        }, 0);
-        
         // Trigger page-specific initialization
         if (pageName === 'home') {
             // Reload data from MongoDB to sync across devices
@@ -364,6 +359,13 @@ const Navigation = {
         }
         if (pageName === 'leads') LeadsView.render();
         if (pageName === 'stats') StatsView.update();
+        
+        // Scroll to top AFTER page content is loaded
+        requestAnimationFrame(() => {
+            window.scrollTo({ top: 0, behavior: 'instant' });
+            document.body.scrollTop = 0; // For Safari
+            document.documentElement.scrollTop = 0; // For Chrome, Firefox, IE and Opera
+        });
     }
 };
 
