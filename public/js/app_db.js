@@ -317,10 +317,13 @@ const API = {
     },
     
     async updateLead(id, data) {
-        return await this.request(`/leads/${id}`, {
+        console.log('📤 Updating lead:', id, 'Data:', data);
+        const result = await this.request(`/leads/${id}`, {
             method: 'PUT',
             body: JSON.stringify(data)
         });
+        console.log('📥 Lead updated, response:', result);
+        return result;
     },
     
     async deleteLead(id) {
@@ -2844,6 +2847,13 @@ const StageManager = {
         if (!lead) return;
         
         // Check if moving to "in-process" and proposedPrice is not set
+        console.log('🔍 Checking in-process condition:', {
+            newStage,
+            leadId,
+            proposedPrice: lead.proposedPrice,
+            shouldShowModal: newStage === 'in-process' && (!lead.proposedPrice || lead.proposedPrice === 0)
+        });
+        
         if (newStage === 'in-process' && (!lead.proposedPrice || lead.proposedPrice === 0)) {
             this.pendingLead = lead;
             document.getElementById('price-input').value = lead.proposedPrice || lead.price || '';
@@ -2917,6 +2927,9 @@ const StageManager = {
             leadInState.proposedPrice = price;
             leadInState.lastName = this.pendingLead.lastName;
             console.log('✅ State.leads updated with proposedPrice:', price);
+            console.log('📊 Lead in State now:', leadInState);
+        } else {
+            console.error('❌ Lead not found in State.leads!');
         }
         
         closeModal('modal-set-price');
