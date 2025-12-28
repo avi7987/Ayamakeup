@@ -323,6 +323,14 @@ const API = {
             body: JSON.stringify(data)
         });
         console.log('📥 Lead updated, response:', result);
+        
+        // CRITICAL: Update State.leads with the returned data
+        const leadIndex = State.leads.findIndex(l => (l._id || l.id) === id);
+        if (leadIndex !== -1 && result) {
+            State.leads[leadIndex] = result;
+            console.log('✅ State.leads[' + leadIndex + '] updated with server response');
+        }
+        
         return result;
     },
     
