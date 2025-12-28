@@ -275,18 +275,17 @@
                 </div>
                 
                 <!-- Welcome Message -->
-                <div class="max-w-7xl mx-auto text-center text-white relative z-10 mb-8 fade-in">
-                    <h1 class="text-3xl md:text-4xl lg:text-5xl font-bold mb-3" id="welcome-message">שלום, ברוכה השובה ל-Luna</h1>
-                    <p class="text-lg md:text-xl text-white/90 font-medium">הניהול העסקי שלך, פשוט ויעיל</p>
+                <div class="max-w-7xl mx-auto text-center text-white relative z-10 mb-6 fade-in">
+                    <h1 class="text-xl md:text-2xl font-bold" id="welcome-message">שלום, ברוכה השובה ל-Luna</h1>
                 </div>
             </div>
             
             <!-- Main Content Area -->
-            <div class="max-w-7xl mx-auto px-4 -mt-8 pb-8">
+            <div class="max-w-7xl mx-auto px-4 -mt-6 pb-6">
                 
-                <!-- Quick Actions Grid - Moved to top -->
-                <div class="mb-4 fade-in fade-in-delay-1">
-                    <h2 class="text-lg md:text-xl font-bold text-gray-900 dark:text-white mb-3">פעולות מהירות</h2>
+                <!-- Quick Actions Grid - Top priority -->
+                <div class="mb-3 fade-in fade-in-delay-1">
+                    <h2 class="text-base md:text-lg font-bold text-gray-900 dark:text-white mb-2">פעולות מהירות</h2>
                     
                     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
                         <!-- Income Entry Card -->
@@ -335,8 +334,57 @@
                     </div>
                 </div>
                 
-                <!-- Quick Stats Cards - Compact -->
-                <div class="grid grid-cols-3 gap-3 mb-4 fade-in fade-in-delay-2">
+                <!-- Annual Goals Section - Moved before stats -->
+                <div class="bg-white dark:bg-slate-800 rounded-xl shadow-md p-3 mb-3 fade-in fade-in-delay-2">
+                    <h2 class="text-base md:text-lg font-bold text-gray-900 dark:text-white mb-2">יעדים שנתיים</h2>
+                    
+                    <div class="space-y-2.5">
+                        <!-- Income Goal -->
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-7 h-7 bg-gradient-to-br from-emerald-400 to-green-500 rounded-lg flex items-center justify-center">
+                                        <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-xs md:text-sm font-semibold text-gray-900 dark:text-white">הכנסות</h3>
+                                        <p class="text-xs text-gray-600 dark:text-gray-400"><span id="income-goal-current">₪0</span> / <span id="income-goal-target">₪0</span></p>
+                                    </div>
+                                </div>
+                                <p class="text-sm font-bold text-emerald-600 dark:text-emerald-400" id="income-goal-percentage">0%</p>
+                            </div>
+                            <div class="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                <div id="income-goal-bar" class="h-full bg-gradient-to-r from-emerald-400 to-green-500 rounded-full progress-animate" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Brides Goal -->
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-7 h-7 bg-gradient-to-br from-pink-400 to-rose-500 rounded-lg flex items-center justify-center">
+                                        <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-xs md:text-sm font-semibold text-gray-900 dark:text-white">כלות</h3>
+                                        <p class="text-xs text-gray-600 dark:text-gray-400"><span id="brides-goal-current">0</span> / <span id="brides-goal-target">0</span></p>
+                                    </div>
+                                </div>
+                                <p class="text-sm font-bold text-pink-600 dark:text-pink-400" id="brides-goal-percentage">0%</p>
+                            </div>
+                            <div class="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                <div id="brides-goal-bar" class="h-full bg-gradient-to-r from-pink-400 to-rose-500 rounded-full progress-animate" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Quick Stats Cards -->
+                <div class="grid grid-cols-3 gap-3 fade-in fade-in-delay-3">
                     <!-- Monthly Revenue Card -->
                     <div class="bg-white dark:bg-slate-800 rounded-xl shadow-md p-3 card-hover">
                         <div class="flex flex-col">
@@ -391,58 +439,6 @@
                         </div>
                     </div>
                 </div>
-                
-                <!-- Annual Goals Section - Compact -->
-                <div class="bg-white dark:bg-slate-800 rounded-xl shadow-md p-4 fade-in fade-in-delay-3">
-                    <h2 class="text-base md:text-lg font-bold text-gray-900 dark:text-white mb-3">יעדים שנתיים</h2>
-                    
-                    <div class="space-y-3">
-                        <!-- Income Goal -->
-                        <div>
-                            <div class="flex justify-between items-center mb-1.5">
-                                <div class="flex items-center gap-2">
-                                    <div class="w-8 h-8 bg-gradient-to-br from-emerald-400 to-green-500 rounded-lg flex items-center justify-center">
-                                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                        </svg>
-                                    </div>
-                                    <div>
-                                        <h3 class="text-sm font-semibold text-gray-900 dark:text-white">הכנסות</h3>
-                                        <p class="text-xs text-gray-600 dark:text-gray-400"><span id="income-goal-current">₪0</span> / <span id="income-goal-target">₪0</span></p>
-                                    </div>
-                                </div>
-                                <p class="text-base font-bold text-emerald-600 dark:text-emerald-400" id="income-goal-percentage">0%</p>
-                            </div>
-                            <div class="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                                <div id="income-goal-bar" class="h-full bg-gradient-to-r from-emerald-400 to-green-500 rounded-full progress-animate flex items-center justify-end px-2 md:px-3" style="width: 0%">
-                                    <span class="text-[10px] md:text-xs font-bold text-white" id="income-goal-bar-text"></span>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Brides Goal -->
-                        <div>
-                            <div class="flex justify-between items-center mb-1.5">
-                                <div class="flex items-center gap-2">
-                                    <div class="w-8 h-8 bg-gradient-to-br from-pink-400 to-rose-500 rounded-lg flex items-center justify-center">
-                                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
-                                        </svg>
-                                    </div>
-                                    <div>
-                                        <h3 class="text-sm font-semibold text-gray-900 dark:text-white">כלות</h3>
-                                        <p class="text-xs text-gray-600 dark:text-gray-400"><span id="brides-goal-current">0</span> / <span id="brides-goal-target">0</span></p>
-                                    </div>
-                                </div>
-                                <p class="text-base font-bold text-pink-600 dark:text-pink-400" id="brides-goal-percentage">0%</p>
-                            </div>
-                            <div class="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                                <div id="brides-goal-bar" class="h-full bg-gradient-to-r from-pink-400 to-rose-500 rounded-full progress-animate" style="width: 0%"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
                 
             </div>
         </section>
