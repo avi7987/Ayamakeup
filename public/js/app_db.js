@@ -2105,12 +2105,10 @@ const WhatsAppAutomation = {
             const contractActions = document.getElementById('contract-actions');
             
             if (newStage === 'in-process') {
-                if (inProcessFields) inProcessFields.classList.remove('hidden');
+                // No need to show price field again - price was already entered in modal-set-price
+                if (inProcessFields) inProcessFields.classList.add('hidden');
                 if (additionalFields) additionalFields.classList.add('hidden');
                 if (contractActions) contractActions.classList.add('hidden');
-                
-                // Pre-fill proposed price
-                document.getElementById('inprocess-proposedPrice').value = lead.proposedPrice || '';
             } else if (newStage === 'contract-sent') {
                 if (inProcessFields) inProcessFields.classList.add('hidden');
                 if (additionalFields) additionalFields.classList.remove('hidden');
@@ -2175,11 +2173,8 @@ const WhatsAppAutomation = {
     async sendConfirmed() {
         if (!this.pendingLead || !this.pendingStage) return;
         
-        // If in-process stage, update proposed price
-        if (this.pendingStage === 'in-process') {
-            const proposedPrice = parseFloat(document.getElementById('inprocess-proposedPrice').value) || 0;
-            this.pendingLead.proposedPrice = proposedPrice;
-        }
+        // For in-process stage, proposedPrice was already saved in StageManager.confirmPrice()
+        // No need to update it again here
         
         // If closed stage, update actual deposit (real payment)
         if (this.pendingStage === 'closed') {
@@ -2897,7 +2892,8 @@ const StageManager = {
         
         const price = parseInt(document.getElementById('price-input').value) || 0;
         
-        this.pendingLead.price = price;
+        // Save to proposedPrice (this is the price for the contract)
+        this.pendingLead.proposedPrice = price;
         await API.updateLead(this.pendingLead._id || this.pendingLead.id, this.pendingLead);
         
         closeModal('modal-set-price');
