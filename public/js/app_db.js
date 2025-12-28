@@ -2664,28 +2664,6 @@ window.toggleBridesmaidsFields = () => {
 };
 
 // Initialize Application
-window.onload = async () => {
-    // Show loading indicator
-    console.log('מאתחל CRM...');
-    
-    await State.init();
-    
-    // Initialize month filter
-    const filter = document.getElementById('stats-month-filter');
-    const currentMonth = CONFIG.MONTHS[new Date().getMonth()];
-    filter.innerHTML = CONFIG.MONTHS
-        .map(month => `<option value="${month}" ${month === currentMonth ? 'selected' : ''}>${month}</option>`)
-        .join('') + `<option value="ALL">הכל (שנתי)</option>`;
-    
-    // Set today's date
-    document.getElementById('inc-date').valueAsDate = new Date();
-    
-    // Initial render - Show home page by default
-    switchPage('home');
-    
-    console.log('✅ CRM Ready!');
-};
-
 // ==================== CONTRACT MANAGER ====================
 const ContractManager = {
     async uploadTemplate(file) {
@@ -3405,7 +3383,9 @@ async function init() {
         .join('') + `<option value="ALL">הצג הכל</option>`;
     
     document.getElementById('inc-date').valueAsDate = new Date();
-    LeadsView.render();
+    
+    // Initial render - Show home page by default
+    await switchPage('home');
     console.log(' CRM Ready!');
 }
 
