@@ -341,6 +341,11 @@ const API = {
 // UI Controllers
 const Navigation = {
     async switchPage(pageName) {
+        // Scroll to top FIRST - before hiding/showing pages
+        window.scrollTo(0, 0);
+        document.body.scrollTop = 0;
+        document.documentElement.scrollTop = 0;
+        
         // Hide all pages
         ['home', 'entry', 'leads', 'stats'].forEach(id => {
             const page = document.getElementById('page-' + id);
@@ -360,12 +365,12 @@ const Navigation = {
         if (pageName === 'leads') LeadsView.render();
         if (pageName === 'stats') StatsView.update();
         
-        // Scroll to top with slight delay to ensure rendering is complete
+        // Scroll to top again to ensure it worked
         setTimeout(() => {
             window.scrollTo(0, 0);
             document.body.scrollTop = 0;
             document.documentElement.scrollTop = 0;
-        }, 50);
+        }, 10);
     }
 };
 
