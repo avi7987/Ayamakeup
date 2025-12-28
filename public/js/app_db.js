@@ -360,12 +360,12 @@ const Navigation = {
         if (pageName === 'leads') LeadsView.render();
         if (pageName === 'stats') StatsView.update();
         
-        // Scroll to top AFTER page content is loaded
-        requestAnimationFrame(() => {
-            window.scrollTo({ top: 0, behavior: 'instant' });
-            document.body.scrollTop = 0; // For Safari
-            document.documentElement.scrollTop = 0; // For Chrome, Firefox, IE and Opera
-        });
+        // Scroll to top with slight delay to ensure rendering is complete
+        setTimeout(() => {
+            window.scrollTo(0, 0);
+            document.body.scrollTop = 0;
+            document.documentElement.scrollTop = 0;
+        }, 50);
     }
 };
 
