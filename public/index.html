@@ -734,7 +734,7 @@
     </div>
 
     <!-- Modal: WhatsApp Confirmation -->
-    <div id="modal-whatsapp-confirm" class="modal">
+    <div id="modal-whatsapp-confirm" class="modal" onclick="if(event.target === this) WhatsAppAutomation.skipMessage()">
         <div class="bg-white p-6 rounded-2xl w-full max-w-md shadow-2xl text-right max-h-[90vh] overflow-y-auto">
             <div class="text-center mb-4">
                 <div class="text-5xl mb-3">💬</div>
@@ -859,7 +859,7 @@
     </div>
 
     <!-- Modal: Set Price (In-Process Stage) -->
-    <div id="modal-set-price" class="modal">
+    <div id="modal-set-price" class="modal" onclick="if(event.target === this) StageManager.skipPrice()">
         <div class="bg-white p-6 rounded-2xl w-full max-w-md shadow-2xl text-right">
             <div class="text-center mb-4">
                 <div class="text-5xl mb-3">💰</div>
@@ -887,7 +887,7 @@
     </div>
 
     <!-- Modal: Deal Closed (Deposit Recording) -->
-    <div id="modal-deal-closed" class="modal">
+    <div id="modal-deal-closed" class="modal" onclick="if(event.target === this) StageManager.skipDealClosed()">
         <div class="bg-white p-6 rounded-2xl w-full max-w-md shadow-2xl text-right">
             <div class="text-center mb-4">
                 <div class="text-5xl mb-3">🤝</div>
@@ -937,7 +937,7 @@
     </div>
 
     <!-- Modal: Set Calendar Date (After Deal Closed) -->
-    <div id="modal-calendar-date" class="modal">
+    <div id="modal-calendar-date" class="modal" onclick="if(event.target === this) StageManager.skipCalendarDate()">
         <div class="bg-white p-6 rounded-2xl w-full max-w-md shadow-2xl text-right">
             <div class="text-center mb-4">
                 <div class="text-5xl mb-3">📅</div>
