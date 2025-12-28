@@ -2849,13 +2849,25 @@ const StageManager = {
             document.getElementById('price-input').value = lead.proposedPrice || lead.price || '';
             openModal('modal-set-price');
             
-            // Add auto-save on input change
+            // Add auto-save on input change - save to database immediately
             const priceInput = document.getElementById('price-input');
+            let saveTimeout;
             priceInput.addEventListener('input', async () => {
                 const price = parseInt(priceInput.value) || 0;
                 if (this.pendingLead) {
                     this.pendingLead.proposedPrice = price;
                     console.log('💰 Auto-saving proposed price:', price);
+                    
+                    // Clear previous timeout and set new one (debounce)
+                    clearTimeout(saveTimeout);
+                    saveTimeout = setTimeout(async () => {
+                        try {
+                            await API.updateLead(this.pendingLead._id || this.pendingLead.id, this.pendingLead);
+                            console.log('✅ Price saved to database:', price);
+                        } catch (error) {
+                            console.error('❌ Error saving price:', error);
+                        }
+                    }, 1000); // Save after 1 second of no typing
                 }
             });
             
@@ -2934,6 +2946,9 @@ const StageManager = {
         if (!this.pendingLead.lastName || this.pendingLead.lastName.trim() === '') {
             this.pendingLead.lastName = this.pendingLead.name.split(' ').slice(1).join(' ') || 'לא צוין';
         }
+        
+        // Save to database before closing
+        await API.updateLead(this.pendingLead._id || this.pendingLead.id, this.pendingLead);
         
         closeModal('modal-set-price');
         
