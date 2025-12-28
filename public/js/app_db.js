@@ -317,18 +317,18 @@ const API = {
     },
     
     async updateLead(id, data) {
-        console.log('📤 Updating lead:', id, 'Data:', data);
+        console.log('📤 Updating lead:', id, 'proposedPrice in data:', data.proposedPrice);
         const result = await this.request(`/leads/${id}`, {
             method: 'PUT',
             body: JSON.stringify(data)
         });
-        console.log('📥 Lead updated, response:', result);
+        console.log('📥 Lead updated, proposedPrice in response:', result?.proposedPrice);
         
         // CRITICAL: Update State.leads with the returned data
         const leadIndex = State.leads.findIndex(l => (l._id || l.id) === id);
         if (leadIndex !== -1 && result) {
             State.leads[leadIndex] = result;
-            console.log('✅ State.leads[' + leadIndex + '] updated with server response');
+            console.log('✅ State.leads[' + leadIndex + '] updated, proposedPrice now:', State.leads[leadIndex].proposedPrice);
         }
         
         return result;
