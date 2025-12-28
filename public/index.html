@@ -235,6 +235,31 @@
         body.dark-mode .text-purple-600 {
             color: #c4b5fd !important;
         }
+        /* Pink backgrounds in dark mode */
+        body.dark-mode .bg-pink-50 {
+            background: rgba(219, 39, 119, 0.2) !important;
+            border-color: #be185d !important;
+        }
+        body.dark-mode .bg-pink-50 * {
+            color: #fda4af !important;
+        }
+        /* Input date and time styling */
+        body.dark-mode input[type="date"],
+        body.dark-mode input[type="time"],
+        body.dark-mode input[type="datetime-local"] {
+            color-scheme: dark;
+        }
+        /* Ensure all modal titles are visible */
+        body.dark-mode h3,
+        body.dark-mode h2,
+        body.dark-mode h1 {
+            color: #e4e4e7 !important;
+        }
+        /* Number input arrows visible */
+        body.dark-mode input[type="number"]::-webkit-inner-spin-button,
+        body.dark-mode input[type="number"]::-webkit-outer-spin-button {
+            filter: invert(1);
+        }
     </style>
 </head>
 <body>
@@ -479,7 +504,7 @@
                 <input type="text" id="inc-service" placeholder="סוג השירות (הקלדה חופשית)">
                 <input type="date" id="inc-date" required>
                 
-                <select id="inc-payment">
+                <select id="inc-payment" class="dark:bg-slate-700 dark:text-white dark:border-slate-600">
                     <option value="מזומן">מזומן</option>
                     <option value="ביט">ביט / פייבוקס</option>
                     <option value="העברה">העברה בנקאית</option>
@@ -648,7 +673,7 @@
             <input type="text" id="lead-last-name" placeholder="שם משפחה *">
             <input type="tel" id="lead-phone" placeholder="מספר טלפון *">
             
-            <select id="lead-source" class="mb-4">
+            <select id="lead-source" class="mb-4 dark:bg-slate-700 dark:text-white dark:border-slate-600">
                 <option value="">בחרי מקור הגעה</option>
                 <option value="אינסטגרם">אינסטגרם</option>
                 <option value="פייסבוק">פייסבוק</option>
@@ -661,9 +686,9 @@
             <input type="date" id="lead-event-date">
             <input type="text" id="lead-location" placeholder="מיקום / אולם">
             
-            <label class="flex items-center gap-2 p-3 bg-pink-50 rounded-xl mb-4 cursor-pointer">
+            <label class="flex items-center gap-2 p-3 bg-pink-50 dark:bg-pink-900/30 dark:border dark:border-pink-700 rounded-xl mb-4 cursor-pointer">
                 <input type="checkbox" id="lead-is-bride" class="w-5 h-5">
-                <span class="font-bold">זו כלה 👰</span>
+                <span class="font-bold dark:text-pink-200">זו כלה 👰</span>
             </label>
             
             <div class="flex gap-2">
@@ -737,7 +762,7 @@
                     <div class="mb-3">
                         <label class="block text-sm font-bold text-gray-700 mb-2">💵 מקדמה עקרונית (תופיע בחוזה):</label>
                         <input type="number" id="contract-proposedDeposit" placeholder="מקדמה מוצעת (₪)" 
-                               class="w-full p-2 border-2 border-gray-300 rounded-lg text-sm"
+                               class="w-full p-2 border-2 border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-lg text-sm"
                                onchange="WhatsAppAutomation.saveProposedDeposit()">
                         <p class="text-xs text-gray-500 mt-1">⚠️ זהו ערך עקרוני בלבד - התשלום בפועל יוזן בשלב "סגורה"</p>
                     </div>
@@ -745,7 +770,7 @@
                     <!-- Escort Type Selection -->
                     <div class="mb-3">
                         <label class="block text-sm font-bold text-gray-700 mb-2">ליווי:</label>
-                        <select id="contract-escortType" class="w-full p-2 border-2 border-gray-300 rounded-lg text-sm" onchange="toggleEscortPrice()">
+                        <select id="contract-escortType" class="w-full p-2 border-2 border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-lg text-sm" onchange="toggleEscortPrice()">
                             <option value="none">ללא ליווי</option>
                             <option value="short">ליווי קצר</option>
                             <option value="long">ליווי ארוך</option>
@@ -753,13 +778,13 @@
                     </div>
                     
                     <div id="escort-price-field" class="hidden mb-3">
-                        <input type="number" id="contract-escortPrice" placeholder="מחיר ליווי (₪)" class="w-full p-2 border-2 border-gray-300 rounded-lg text-sm">
+                        <input type="number" id="contract-escortPrice" placeholder="מחיר ליווי (₪)" class="w-full p-2 border-2 border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-lg text-sm">
                     </div>
                     
                     <!-- Bridesmaids Section -->
                     <div class="mb-3">
                         <label class="block text-sm font-bold text-gray-700 mb-2">מלוות:</label>
-                        <input type="number" id="contract-bridesmaidsCount" placeholder="כמות מלוות (0 אם אין)" min="0" class="w-full p-2 border-2 border-gray-300 rounded-lg text-sm" onchange="updateBridesmaidsFields()">
+                        <input type="number" id="contract-bridesmaidsCount" placeholder="כמות מלוות (0 אם אין)" min="0" class="w-full p-2 border-2 border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-lg text-sm" onchange="updateBridesmaidsFields()">
                     </div>
                     
                     <div id="bridesmaids-list" class="space-y-2">
@@ -843,7 +868,7 @@
             
             <div class="mb-4">
                 <label class="block text-sm font-bold text-gray-700 mb-2">מחיר מוצע ללקוחה (₪):</label>
-                <input type="number" id="price-input" placeholder="לדוגמה: 3500" class="w-full p-3 border-2 border-gray-300 rounded-xl text-lg" min="0">
+                <input type="number" id="price-input" placeholder="לדוגמה: 3500" class="w-full p-3 border-2 border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-xl text-lg" min="0">
             </div>
             
             <div class="flex gap-3">
@@ -883,13 +908,13 @@
             
             <div class="mb-4">
                 <label class="block text-sm font-bold text-gray-700 mb-2">💰 מקדמה ששולמה בפועל (₪):</label>
-                <input type="number" id="closed-actualDeposit" placeholder="כמה שולם?" class="w-full p-3 border-2 border-gray-300 rounded-xl text-lg" min="0">
+                <input type="number" id="closed-actualDeposit" placeholder="כמה שולם?" class="w-full p-3 border-2 border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-xl text-lg" min="0">
                 <p class="text-xs text-gray-500 mt-1">זה הסכום שבאמת קיבלת כמקדמה</p>
             </div>
             
             <div class="mb-4">
                 <label class="block text-sm font-bold text-gray-700 mb-2">💳 אמצעי תשלום:</label>
-                <select id="closed-paymentMethod" class="w-full p-3 border-2 border-gray-300 rounded-xl text-lg">
+                <select id="closed-paymentMethod" class="w-full p-3 border-2 border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-xl text-lg">
                     <option value="מזומן">מזומן</option>
                     <option value="ביט">ביט / פייבוקס</option>
                     <option value="העברה">העברה בנקאית</option>
@@ -1050,7 +1075,7 @@
             
             <div class="mb-4">
                 <label class="block text-sm font-bold text-gray-700 mb-2">💳 אמצעי תשלום (ביום האירוע):</label>
-                <select id="completed-paymentMethod" class="w-full p-3 border-2 border-gray-300 rounded-xl text-lg">
+                <select id="completed-paymentMethod" class="w-full p-3 border-2 border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-xl text-lg">
                     <option value="מזומן">מזומן</option>
                     <option value="ביט">ביט / פייבוקס</option>
                     <option value="העברה">העברה בנקאית</option>
@@ -1091,12 +1116,12 @@
             <div class="space-y-6">
                 <div>
                     <label class="block text-sm font-bold text-gray-700 mb-2">💰 יעד הכנסות שנתי (₪)</label>
-                    <input type="number" id="goal-income" placeholder="לדוגמה: 500000" class="w-full p-3 border-2 border-gray-300 rounded-xl focus:border-purple-500 focus:outline-none">
+                    <input type="number" id="goal-income" placeholder="לדוגמה: 500000" class="w-full p-3 border-2 border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-xl focus:border-purple-500 focus:outline-none">
                 </div>
                 
                 <div>
                     <label class="block text-sm font-bold text-gray-700 mb-2">👰 יעד כמות כלות שנתי</label>
-                    <input type="number" id="goal-brides" placeholder="לדוגמה: 50" class="w-full p-3 border-2 border-gray-300 rounded-xl focus:border-purple-500 focus:outline-none">
+                    <input type="number" id="goal-brides" placeholder="לדוגמה: 50" class="w-full p-3 border-2 border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-xl focus:border-purple-500 focus:outline-none">
                 </div>
                 
                 <div class="bg-blue-50 p-4 rounded-xl border border-blue-200">
@@ -1156,7 +1181,7 @@
             <input type="text" id="edit-service" placeholder="סוג שירות">
             <input type="date" id="edit-date">
             
-            <select id="edit-payment" class="mb-4">
+            <select id="edit-payment" class="mb-4 dark:bg-slate-700 dark:text-white dark:border-slate-600">
                 <option value="מזומן">מזומן</option>
                 <option value="ביט">ביט / פייבוקס</option>
                 <option value="העברה">העברה בנקאית</option>
