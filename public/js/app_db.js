@@ -1191,110 +1191,156 @@ const HomeView = {
         const goals = await GoalsManager.load();
         console.log('🎯 יעדים מ-MongoDB:', goals);
         
-        // Always show goals section
-        document.getElementById('goals-section').classList.remove('hidden');
-        
-        // Calculate current brides count for comparison
+        // Calculate current period data
         const now = new Date();
         const thisYear = now.getFullYear();
+        const thisMonth = now.getMonth();
+        
+        // Yearly clients
         const yearlyClients = State.clients.filter(c => {
             const date = new Date(c.date);
             return date.getFullYear() === thisYear;
         });
-        const currentBrides = yearlyClients.filter(c => c.isBride || c.notes?.includes('כלה')).length;
         
-        console.log(`👰 ספירה נוכחית: ${currentBrides}, ספירה קודמת: ${MotivationalMessages.previousBridesCount}, showMessages: ${showMessages}`);
+        // Monthly clients
+        const monthlyClients = yearlyClients.filter(c => {
+            const date = new Date(c.date);
+            return date.getMonth() === thisMonth;
+        });
         
-        // Check if brides count increased BEFORE updating previous count
-        const shouldShowMessage = showMessages && 
-                                  MotivationalMessages.previousBridesCount > 0 && 
-                                  currentBrides > MotivationalMessages.previousBridesCount;
+        // Previous month for trend calculation
+        const prevMonth = thisMonth === 0 ? 11 : thisMonth - 1;
+        const prevMonthYear = thisMonth === 0 ? thisYear - 1 : thisYear;
+        const prevMonthClients = State.clients.filter(c => {
+            const date = new Date(c.date);
+            return date.getMonth() === prevMonth && date.getFullYear() === prevMonthYear;
+        });
         
-        // Update previous count ONLY when navigating to home page (showMessages=true)
-        // This ensures the message shows when returning to home after adding a bride
-        if (showMessages) {
-            MotivationalMessages.previousBridesCount = currentBrides;
+        // Calculate stats
+        const monthlyRevenue = monthlyClients.reduce((sum, c) => sum + (c.income || c.price || c.amount || 0), 0);
+        const prevMonthRevenue = prevMonthClients.reduce((sum, c) => sum + (c.income || c.price || c.amount || 0), 0);
+        const revenueTrend = prevMonthRevenue > 0 
+            ? Math.round(((monthlyRevenue - prevMonthRevenue) / prevMonthRevenue) * 100)
+            : monthlyRevenue > 0 ? 100 : 0;
+        
+        // Active leads count (new + contact + quoted + in-process)
+        const activeLeads = State.leads.filter(l => 
+            ['new', 'contact', 'quoted', 'in-process'].includes(l.stage)
+        ).length;
+        
+        // Upcoming events (next 7 days)
+        const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+        const upcomingEvents = State.leads.filter(l => {
+            if (!l.eventDate) return false;
+            const eventDate = new Date(l.eventDate);
+            return eventDate >= now && eventDate <= nextWeek;
+        }).length;
+        
+        // Update Quick Stats Cards
+        const monthlyRevenueEl = document.getElementById('monthly-revenue');
+        if (monthlyRevenueEl) {
+            monthlyRevenueEl.innerText = `₪${monthlyRevenue.toLocaleString()}`;
         }
         
-        // If no goals set, show zeros
-        if (goals.income || goals.brides) {
-            // Calculate yearly totals
-            const now = new Date();
-            const thisYear = now.getFullYear();
-            const yearlyClients = State.clients.filter(c => {
-                const date = new Date(c.date);
-                return date.getFullYear() === thisYear;
-            });
-            
-            console.log(`📊 לקוחות השנה: ${yearlyClients.length}`);
-            
-            // Income progress
-            const totalIncome = yearlyClients.reduce((sum, c) => sum + (c.income || c.price || c.amount || 0), 0);
-            const incomeGoal = goals.income || 0;
-            const incomePercent = incomeGoal > 0 ? Math.min(100, Math.round((totalIncome / incomeGoal) * 100)) : 0;
-            const incomeRemaining = Math.max(0, incomeGoal - totalIncome);
-            
-            document.getElementById('income-current').innerText = `₪${totalIncome.toLocaleString()}`;
-            document.getElementById('income-goal').innerText = `₪${incomeGoal.toLocaleString()}`;
-            document.getElementById('income-percentage').innerText = `${incomePercent}%`;
-            const incomeBar = document.getElementById('income-progress');
-            incomeBar.style.width = `${incomePercent}%`;
-            // Trigger animation
+        const revenueTrendEl = document.getElementById('revenue-trend');
+        if (revenueTrendEl) {
+            const trendSign = revenueTrend >= 0 ? '+' : '';
+            revenueTrendEl.innerText = `${trendSign}${revenueTrend}%`;
+            revenueTrendEl.className = revenueTrend >= 0 
+                ? 'text-xs md:text-sm font-semibold text-green-600 dark:text-green-400'
+                : 'text-xs md:text-sm font-semibold text-red-600 dark:text-red-400';
+        }
+        
+        const activeLeadsEl = document.getElementById('active-leads-count');
+        if (activeLeadsEl) {
+            activeLeadsEl.innerText = activeLeads;
+        }
+        
+        const upcomingEventsEl = document.getElementById('upcoming-events-count');
+        if (upcomingEventsEl) {
+            upcomingEventsEl.innerText = upcomingEvents;
+        }
+        
+        // Update Annual Goals with new IDs
+        const totalIncome = yearlyClients.reduce((sum, c) => sum + (c.income || c.price || c.amount || 0), 0);
+        const totalBrides = yearlyClients.filter(c => c.isBride || c.notes?.includes('כלה')).length;
+        
+        const incomeGoal = goals.income || 0;
+        const bridesGoal = goals.brides || 0;
+        
+        const incomePercent = incomeGoal > 0 ? Math.min(100, Math.round((totalIncome / incomeGoal) * 100)) : 0;
+        const bridesPercent = bridesGoal > 0 ? Math.min(100, Math.round((totalBrides / bridesGoal) * 100)) : 0;
+        
+        // Update income goal elements
+        const incomeGoalCurrent = document.getElementById('income-goal-current');
+        const incomeGoalTarget = document.getElementById('income-goal-target');
+        const incomeGoalPercentage = document.getElementById('income-goal-percentage');
+        const incomeGoalBar = document.getElementById('income-goal-bar');
+        const incomeGoalBarText = document.getElementById('income-goal-bar-text');
+        
+        if (incomeGoalCurrent) incomeGoalCurrent.innerText = `₪${totalIncome.toLocaleString()}`;
+        if (incomeGoalTarget) incomeGoalTarget.innerText = incomeGoal > 0 ? `₪${incomeGoal.toLocaleString()}` : 'לא הוגדר';
+        if (incomeGoalPercentage) incomeGoalPercentage.innerText = `${incomePercent}%`;
+        if (incomeGoalBar) {
+            incomeGoalBar.style.width = `${incomePercent}%`;
             if (showMessages && incomePercent > 0) {
-                incomeBar.style.transform = 'scaleY(1.1)';
-                setTimeout(() => incomeBar.style.transform = 'scaleY(1)', 400);
+                incomeGoalBar.style.transform = 'scaleY(1.1)';
+                setTimeout(() => incomeGoalBar.style.transform = 'scaleY(1)', 400);
             }
-            
-            if (incomePercent >= 100) {
-                document.getElementById('income-remaining').innerHTML = '🎉 <strong>יעד הושג!</strong> מזל טוב!';
-            } else {
-                document.getElementById('income-remaining').innerHTML = `נותרו <strong>₪${incomeRemaining.toLocaleString()}</strong> להשגת היעד`;
+        }
+        if (incomeGoalBarText && incomePercent >= 20) {
+            incomeGoalBarText.innerText = `${incomePercent}%`;
+        }
+        
+        // Update brides goal elements
+        const bridesGoalCurrent = document.getElementById('brides-goal-current');
+        const bridesGoalTarget = document.getElementById('brides-goal-target');
+        const bridesGoalPercentage = document.getElementById('brides-goal-percentage');
+        const bridesGoalBar = document.getElementById('brides-goal-bar');
+        const bridesGoalBarText = document.getElementById('brides-goal-bar-text');
+        
+        if (bridesGoalCurrent) bridesGoalCurrent.innerText = totalBrides;
+        if (bridesGoalTarget) bridesGoalTarget.innerText = bridesGoal > 0 ? bridesGoal : 'לא הוגדר';
+        if (bridesGoalPercentage) bridesGoalPercentage.innerText = `${bridesPercent}%`;
+        if (bridesGoalBar) {
+            bridesGoalBar.style.width = `${bridesPercent}%`;
+            if (showMessages && bridesPercent > 0) {
+                bridesGoalBar.style.transform = 'scaleY(1.1)';
+                setTimeout(() => bridesGoalBar.style.transform = 'scaleY(1)', 400);
             }
+        }
+        if (bridesGoalBarText && bridesPercent >= 20) {
+            bridesGoalBarText.innerText = `${bridesPercent}%`;
+        }
+        
+        // Keep old IDs for compatibility (if they exist)
+        if (document.getElementById('income-current')) {
+            document.getElementById('income-current').innerText = `₪${totalIncome.toLocaleString()}`;
+            document.getElementById('income-goal').innerText = incomeGoal > 0 ? `₪${incomeGoal.toLocaleString()}` : 'לא הוגדר';
+            document.getElementById('income-percentage').innerText = `${incomePercent}%`;
+            document.getElementById('income-progress').style.width = `${incomePercent}%`;
+        }
+        
+        if (document.getElementById('brides-current')) {
+            document.getElementById('brides-current').innerText = totalBrides;
+            document.getElementById('brides-goal').innerText = bridesGoal > 0 ? bridesGoal : 'לא הוגדר';
+            document.getElementById('brides-percentage').innerText = `${bridesPercent}%`;
+            document.getElementById('brides-progress').style.width = `${bridesPercent}%`;
+        }
+        
+        // Show motivational message for brides milestone
+        if (showMessages) {
+            const currentBrides = totalBrides;
+            const shouldShowMessage = MotivationalMessages.previousBridesCount > 0 && 
+                                      currentBrides > MotivationalMessages.previousBridesCount;
             
-            // Brides progress - check both isBride field AND notes
-            const totalBrides = yearlyClients.filter(c => c.isBride || c.notes?.includes('כלה')).length;
-            console.log(`👰 כלות השנה: ${totalBrides} (מתוך ${yearlyClients.length} לקוחות)`);
-            
-            // Show motivational message if count increased (checked earlier in function)
             if (shouldShowMessage) {
                 const message = MotivationalMessages.getRandomMessage();
                 MotivationalMessages.showMessage(message);
                 console.log('🎊 הצגת הודעת עידוד:', message);
             }
             
-            const bridesGoal = goals.brides || 0;
-            const bridesPercent = bridesGoal > 0 ? Math.min(100, Math.round((totalBrides / bridesGoal) * 100)) : 0;
-            const bridesRemaining = Math.max(0, bridesGoal - totalBrides);
-            
-            document.getElementById('brides-current').innerText = totalBrides;
-            document.getElementById('brides-goal').innerText = bridesGoal;
-            document.getElementById('brides-percentage').innerText = `${bridesPercent}%`;
-            const bridesBar = document.getElementById('brides-progress');
-            bridesBar.style.width = `${bridesPercent}%`;
-            // Trigger animation when returning to home page
-            if (showMessages && bridesPercent > 0) {
-                bridesBar.style.transform = 'scaleY(1.1)';
-                setTimeout(() => bridesBar.style.transform = 'scaleY(1)', 400);
-            }
-            
-            if (bridesPercent >= 100) {
-                document.getElementById('brides-remaining').innerHTML = '🎉 <strong>יעד הושג!</strong> מזל טוב!';
-            } else {
-                document.getElementById('brides-remaining').innerHTML = `נותרו <strong>${bridesRemaining} כלות</strong> להשגת היעד`;
-            }
-        } else {
-            // No goals set - show message to set goals
-            document.getElementById('income-current').innerText = '₪0';
-            document.getElementById('income-goal').innerText = 'לא הוגדר';
-            document.getElementById('income-percentage').innerText = '0%';
-            document.getElementById('income-progress').style.width = '0%';
-            document.getElementById('income-remaining').innerHTML = 'הגדר יעד בהגדרות ⚙️';
-            
-            document.getElementById('brides-current').innerText = '0';
-            document.getElementById('brides-goal').innerText = 'לא הוגדר';
-            document.getElementById('brides-percentage').innerText = '0%';
-            document.getElementById('brides-progress').style.width = '0%';
-            document.getElementById('brides-remaining').innerHTML = 'הגדר יעד בהגדרות ⚙️';
+            MotivationalMessages.previousBridesCount = currentBrides;
         }
     }
 };
