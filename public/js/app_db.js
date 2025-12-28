@@ -1184,9 +1184,66 @@ const LeadsView = {
     }
 };
 
+const GreetingMessages = {
+    morning: [
+        'בוקר טוב מהממת! הגיע הזמן לעבוד על העסק שלך 🌟',
+        'בוקר טוב! יום חדש מלא הזדמנויות ממתין לך ✨',
+        'שבוע טוב! בואי נעשה את היום מדהים 🚀',
+        'בוקר של הצלחה! היום את עושה צעד נוסף ליעדים שלך 🎯',
+        'בוקר מושלם! את יכולה להשיג כל דבר שתרצי 💪'
+    ],
+    afternoon: [
+        'שלום! את עושה עבודה מעולה 👏',
+        'אחרי צהריים טובים! המשיכי בקצב המדהים הזה 🚀',
+        'את בדרך להצלחה גדולה! כל הכבוד ❤️',
+        'שלום! העסק שלך מתפתח וצומח 🌱',
+        'היי, יופי! המשיכי להאיר את הדרך 💡'
+    ],
+    evening: [
+        'ערב טוב! את עושה עבודה מנצחת 🌟',
+        'ערב של השגים! כל יום את מתקדמת 🎆',
+        'שלום! היום היה מלא בהצלחות 🎉',
+        'ערב טוב! העסק שלך עולה למדרגה הבאה 🚀',
+        'היי! את יוצרת משהו מדהים כאן ✨'
+    ],
+    night: [
+        'לילה טוב! את עובדת קשה וזה נראה 🌙',
+        'עוד עבודה בשעה הזו? את משהו מדהים! 🌟',
+        'לילה טוב! המחויבות שלך בטוחות ידיים 💪',
+        'שלום! העבודה המקצועית שלך משלמת! 🎯',
+        'לילה פרודוקטיבי! את משיגה דברים גדולים 🚀'
+    ],
+    
+    get() {
+        const hour = new Date().getHours();
+        let timeCategory;
+        
+        if (hour >= 5 && hour < 12) {
+            timeCategory = this.morning;
+        } else if (hour >= 12 && hour < 17) {
+            timeCategory = this.afternoon;
+        } else if (hour >= 17 && hour < 21) {
+            timeCategory = this.evening;
+        } else {
+            timeCategory = this.night;
+        }
+        
+        // Pick a random message from the time category
+        const randomIndex = Math.floor(Math.random() * timeCategory.length);
+        return timeCategory[randomIndex];
+    }
+};
+
 const HomeView = {
     async update(showMessages = false) {
         console.log('🏠 מעדכן דף הבית - סה"כ לקוחות:', State.clients.length);
+        
+        // Update greeting message with dynamic text
+        const greetingEl = document.getElementById('welcome-message');
+        if (greetingEl) {
+            greetingEl.textContent = GreetingMessages.get();
+        }
+        
         // Load goals from MongoDB
         const goals = await GoalsManager.load();
         console.log('🎯 יעדים מ-MongoDB:', goals);
