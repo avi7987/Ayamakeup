@@ -2452,12 +2452,8 @@ const WhatsAppAutomation = {
     async skipMessage() {
         if (!this.pendingLead || !this.pendingStage) return;
         
-        // If in-process stage, update proposed price even if skipping
-        if (this.pendingStage === 'in-process') {
-            const proposedPrice = parseFloat(document.getElementById('inprocess-proposedPrice').value) || 0;
-            this.pendingLead.proposedPrice = proposedPrice;
-            await API.updateLead(this.pendingLead._id || this.pendingLead.id, this.pendingLead);
-        }
+        // DON'T update proposedPrice here - it was already saved in confirmPrice()
+        // The in-process-fields are now hidden, so we can't read from them anyway
         
         // If contract-sent stage, save deposit and other fields before skipping
         if (this.pendingStage === 'contract-sent') {
