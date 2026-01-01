@@ -245,6 +245,14 @@ app.get('/contract-sign/:leadId', (req, res) => {
 
 // ==================== API ROUTES ====================
 
+// Debug endpoint - test auth
+app.get('/api/debug/user', requireAuth, (req, res) => {
+    res.json({ 
+        user: req.user,
+        isAuthenticated: req.isAuthenticated ? req.isAuthenticated() : false
+    });
+});
+
 // Health Check
 app.get('/api/health', (req, res) => {
     res.json({ 
