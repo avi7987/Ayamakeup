@@ -262,15 +262,19 @@ app.get('/api/health', (req, res) => {
 app.get('/api/clients', requireAuth, async (req, res) => {
     try {
         const userId = req.user._id;
-        // Support multiple userId formats for backward compatibility
-        const clients = await Client.find({ 
-            $or: [
-                { userId: userId },
-                { userId: userId.toString() },
-                { userId: { $exists: false } }, // Old data without userId
-                { userId: null } // Old data with null userId
-            ]
-        }).sort({ date: -1 });
+        let query = {};
+        
+        // In fallback mode (default-user-id), query all data for backward compatibility
+        if (userId !== 'default-user-id') {
+            query = { 
+                $or: [
+                    { userId: userId },
+                    { userId: userId.toString() }
+                ]
+            };
+        }
+        
+        const clients = await Client.find(query).sort({ date: -1 });
         res.json(clients);
     } catch (error) {
         console.error('Error fetching clients:', error);
@@ -370,15 +374,19 @@ app.delete('/api/clients/:id', requireAuth, async (req, res) => {
 app.get('/api/leads', requireAuth, async (req, res) => {
     try {
         const userId = req.user._id;
-        // Support multiple userId formats for backward compatibility
-        const leads = await Lead.find({ 
-            $or: [
-                { userId: userId },
-                { userId: userId.toString() },
-                { userId: { $exists: false } }, // Old data without userId
-                { userId: null } // Old data with null userId
-            ]
-        }).sort({ contactDate: -1 });
+        let query = {};
+        
+        // In fallback mode (default-user-id), query all data for backward compatibility
+        if (userId !== 'default-user-id') {
+            query = { 
+                $or: [
+                    { userId: userId },
+                    { userId: userId.toString() }
+                ]
+            };
+        }
+        
+        const leads = await Lead.find(query).sort({ contactDate: -1 });
         res.json(leads);
     } catch (error) {
         console.error('Error fetching leads:', error);
@@ -592,16 +600,20 @@ app.get('/api/goals', requireAuth, async (req, res) => {
     try {
         const userId = req.user._id;
         const currentYear = new Date().getFullYear();
-        // Support multiple userId formats for backward compatibility
-        let goals = await Goals.findOne({ 
-            $or: [
-                { userId: userId },
-                { userId: userId.toString() },
-                { userId: { $exists: false } },
-                { userId: null }
-            ],
-            year: currentYear 
-        });
+        let query = { year: currentYear };
+        
+        // In fallback mode (default-user-id), query all data for backward compatibility
+        if (userId !== 'default-user-id') {
+            query = { 
+                $or: [
+                    { userId: userId },
+                    { userId: userId.toString() }
+                ],
+                year: currentYear 
+            };
+        }
+        
+        let goals = await Goals.findOne(query);
         
         if (!goals) {
             // Create default goals if not exists
