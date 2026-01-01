@@ -202,6 +202,27 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
     console.warn('   Using default user for all requests');
     console.warn('   Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in Railway Variables to enable auth');
     
+    // Fallback routes for when OAuth is not configured
+    app.get('/login', (req, res) => {
+        res.redirect('/'); // Just redirect to main page in fallback mode
+    });
+    
+    app.get('/auth/google', (req, res) => {
+        res.redirect('/'); // Redirect to main page
+    });
+    
+    app.get('/auth/google/callback', (req, res) => {
+        res.redirect('/');
+    });
+    
+    app.post('/logout', (req, res) => {
+        res.redirect('/');
+    });
+    
+    app.get('/logout', (req, res) => {
+        res.redirect('/');
+    });
+    
     // Ensure default user exists in DB for fallback mode
     (async () => {
         try {
@@ -244,6 +265,20 @@ app.get('/contract-sign/:leadId', (req, res) => {
 });
 
 // ==================== API ROUTES ====================
+
+// Get current user info
+app.get('/api/user', requireAuth, (req, res) => {
+    res.json({
+        user: {
+            _id: req.user._id,
+            email: req.user.email,
+            name: req.user.name,
+            picture: req.user.picture || ''
+        },
+        isAuthenticated: req.isAuthenticated ? req.isAuthenticated() : false,
+        isFallbackMode: !process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET
+    });
+});
 
 // Debug endpoint - test auth
 app.get('/api/debug/user', requireAuth, (req, res) => {
