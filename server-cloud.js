@@ -64,7 +64,7 @@ const userSchema = new mongoose.Schema({
 });
 
 const clientSchema = new mongoose.Schema({
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    userId: { type: mongoose.Schema.Types.Mixed, required: true }, // Support both ObjectId and String
     name: { type: String, required: true },
     phone: { type: String, required: false },
     service: { type: String, required: true },
@@ -75,7 +75,7 @@ const clientSchema = new mongoose.Schema({
 });
 
 const leadSchema = new mongoose.Schema({
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    userId: { type: mongoose.Schema.Types.Mixed, required: true }, // Support both ObjectId and String
     name: { type: String, required: true },
     lastName: { type: String, required: true }, // Changed to required
     phone: { type: String, required: true },
@@ -137,7 +137,7 @@ const leadSchema = new mongoose.Schema({
 });
 
 const goalsSchema = new mongoose.Schema({
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    userId: { type: mongoose.Schema.Types.Mixed, required: true }, // Support both ObjectId and String
     year: { type: Number, required: true },
     income: { type: Number, default: 0 },
     brides: { type: Number, default: 0 },
@@ -146,7 +146,7 @@ const goalsSchema = new mongoose.Schema({
 
 // Contract Template Schema - stores the custom HTML template
 const contractTemplateSchema = new mongoose.Schema({
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    userId: { type: mongoose.Schema.Types.Mixed, required: true }, // Support both ObjectId and String
     templateHTML: { type: String, required: true },
     logoUrl: { type: String, default: '' },
     createdAt: { type: Date, default: Date.now },
@@ -196,10 +196,29 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
     console.log('🔐 Initializing authentication system...');
     setupAuth(app, mongoose, User);
     setupAuthRoutes(app);
-    console.log('✅ Authentication enabled');
+    console.log('✅ Authentication enabled - Multi-user mode');
 } else {
-    console.warn('⚠️  Authentication disabled - Google OAuth credentials not configured');
-    console.warn('   Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in .env to enable');
+    console.warn('⚠️  Authentication disabled - Running in FALLBACK mode');
+    console.warn('   Using default user for all requests');
+    console.warn('   Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in Railway Variables to enable auth');
+    
+    // Ensure default user exists in DB for fallback mode
+    (async () => {
+        try {
+            let defaultUser = await User.findOne({ email: 'default@ayamakeup.com' });
+            if (!defaultUser) {
+                defaultUser = await User.create({
+                    googleId: 'default-google-id',
+                    email: 'default@ayamakeup.com',
+                    name: 'Default User',
+                    picture: ''
+                });
+                console.log('✅ Created default user for fallback mode');
+            }
+        } catch (err) {
+            console.log('⚠️  Default user setup:', err.message);
+        }
+    })();
 }
 
 // ==================== STATIC FILES ====================
@@ -243,7 +262,13 @@ app.get('/api/health', (req, res) => {
 app.get('/api/clients', requireAuth, async (req, res) => {
     try {
         const userId = req.user._id;
-        const clients = await Client.find({ userId }).sort({ date: -1 });
+        // Support both ObjectId and string (for fallback mode)
+        const clients = await Client.find({ 
+            $or: [
+                { userId: userId },
+                { userId: userId.toString() }
+            ]
+        }).sort({ date: -1 });
         res.json(clients);
     } catch (error) {
         res.status(500).json({ error: error.message });
