@@ -128,10 +128,6 @@ function setupAuth(app, mongoose, User) {
  * תומך ב-fallback mode אם אימות לא מוגדר
  */
 function requireAuth(req, res, next) {
-    if (req.isAuthenticated()) {
-        return next();
-    }
-    
     // FALLBACK MODE: אם אימות לא מוגדר, השתמש ב-user ברירת מחדל
     if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
         // Mode ללא אימות - צור mock user
@@ -140,6 +136,11 @@ function requireAuth(req, res, next) {
             email: 'default@ayamakeup.com',
             name: 'Default User'
         };
+        return next();
+    }
+    
+    // רק אם אימות מוגדר, בדוק אם המשתמש מאומת
+    if (req.isAuthenticated && req.isAuthenticated()) {
         return next();
     }
     
