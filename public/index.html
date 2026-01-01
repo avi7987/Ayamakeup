@@ -77,6 +77,17 @@
             animation: progressFill 1.5s ease-out forwards;
         }
         
+        /* Moon floating animation */
+        @keyframes moonFloat {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .moon-float {
+            animation: moonFloat 3s ease-in-out infinite;
+            display: inline-block;
+        }
+        
         /* Card hover effects */
         .card-hover {
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -273,7 +284,7 @@
             <div class="mesh-background relative pb-8 pt-6 px-4">
                 <!-- Top Controls -->
                 <div class="max-w-7xl mx-auto flex justify-between items-center mb-6">
-                    <!-- Settings Button -->
+                    <!-- Left: Settings Button -->
                     <button onclick="openModal('modal-settings')" class="bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white p-3 rounded-full shadow-lg transition-all duration-300 hover:scale-110">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
@@ -281,22 +292,70 @@
                         </svg>
                     </button>
                     
-                    <!-- Luna Logo -->
+                    <!-- Center: Luna Logo -->
                     <div class="text-center">
                         <div class="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-6 py-3 rounded-2xl shadow-lg">
-                            <span class="text-4xl">🌙</span>
+                            <span class="text-4xl moon-float">🌙</span>
                             <span class="text-3xl font-bold text-white">Luna</span>
                         </div>
                         <!-- Slogan below logo -->
                         <p class="mt-2 text-sm text-white/80 italic">✨ Illuminate your business path ✨</p>
                     </div>
                     
-                    <!-- Dark Mode Toggle -->
-                    <button onclick="toggleDarkMode()" class="bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white p-3 rounded-full shadow-lg transition-all duration-300 hover:scale-110">
-                        <svg id="dark-mode-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
-                        </svg>
-                    </button>
+                    <!-- Right: User Profile & Dark Mode -->
+                    <div class="flex items-center gap-3">
+                        <!-- User Profile Section -->
+                        <div id="user-section" class="flex items-center gap-2">
+                            <!-- Not Logged In - Show Login Button -->
+                            <button id="login-button" onclick="window.location.href='/auth/google'" class="bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white px-4 py-2 rounded-full shadow-lg transition-all duration-300 hover:scale-105 flex items-center gap-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                </svg>
+                                <span class="text-sm font-medium">התחבר</span>
+                            </button>
+                            
+                            <!-- Logged In - Show User Menu -->
+                            <div id="user-menu" class="hidden relative">
+                                <button onclick="toggleUserDropdown()" class="bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white px-4 py-2 rounded-full shadow-lg transition-all duration-300 hover:scale-105 flex items-center gap-2">
+                                    <!-- User Avatar Container - will be filled dynamically -->
+                                    <div id="user-avatar-container" class="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center overflow-hidden">
+                                        <!-- Default SVG icon -->
+                                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                        </svg>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="text-xs opacity-80">ברוך הבא</div>
+                                        <div id="user-name" class="text-sm font-medium"></div>
+                                    </div>
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                    </svg>
+                                </button>
+                                
+                                <!-- Dropdown Menu -->
+                                <div id="user-dropdown" class="hidden absolute left-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 z-50">
+                                    <div class="p-3 border-b border-gray-200 dark:border-gray-700">
+                                        <div class="text-sm font-medium text-gray-900 dark:text-white" id="dropdown-user-name"></div>
+                                        <div class="text-xs text-gray-500 dark:text-gray-400" id="dropdown-user-email"></div>
+                                    </div>
+                                    <button onclick="logout()" class="w-full text-right px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-b-xl transition-colors flex items-center gap-2">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                                        </svg>
+                                        התנתק
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Dark Mode Toggle -->
+                        <button onclick="toggleDarkMode()" class="bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white p-3 rounded-full shadow-lg transition-all duration-300 hover:scale-110">
+                            <svg id="dark-mode-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
                 
                 <!-- Welcome Message -->
@@ -346,22 +405,22 @@
                             <p class="text-xs md:text-sm text-gray-600 dark:text-gray-400">דוחות וניתוח</p>
                         </button>
                         
-                        <!-- Calendar Card -->
-                        <button onclick="alert('היומן בפיתוח')" class="group bg-white dark:bg-slate-800 rounded-xl shadow-md p-4 md:p-6 text-right card-hover border-2 border-transparent hover:border-amber-500 transition-all">
+                        <!-- Business Insights Card -->
+                        <button onclick="switchPage('insights')" class="group bg-white dark:bg-slate-800 rounded-xl shadow-md p-4 md:p-6 text-right card-hover border-2 border-transparent hover:border-amber-500 transition-all">
                             <div class="w-10 h-10 md:w-14 md:h-14 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center mb-2 md:mb-3 group-hover:scale-110 transition-transform">
                                 <svg class="w-5 h-5 md:w-7 md:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
                                 </svg>
                             </div>
-                            <h3 class="text-sm md:text-lg font-bold text-gray-900 dark:text-white mb-1">היומן שלי</h3>
-                            <p class="text-xs md:text-sm text-gray-600 dark:text-gray-400">אירועים קרובים</p>
+                            <h3 class="text-sm md:text-lg font-bold text-gray-900 dark:text-white mb-1">📊 תובנות עסקיות</h3>
+                            <p class="text-xs md:text-sm text-gray-600 dark:text-gray-400">ניתוח וביצועים</p>
                         </button>
                     </div>
                 </div>
                 
                 <!-- Annual Goals Section - Moved before stats -->
                 <div class="bg-white dark:bg-slate-800 rounded-xl shadow-md p-3 mb-3 fade-in fade-in-delay-2">
-                    <h2 class="text-base md:text-lg font-bold text-gray-900 dark:text-white mb-2">יעדים שנתיים</h2>
+                    <h2 class="text-base md:text-lg font-bold text-gray-900 dark:text-white mb-2" id="annual-goals-title">יעדים שנתיים</h2>
                     
                     <div class="space-y-2.5">
                         <!-- Income Goal -->
@@ -625,32 +684,33 @@
                 </button>
             </div>
             <div class="main-card p-6">
-                <div class="flex flex-wrap justify-between items-center mb-6 gap-4 border-b pb-4">
-                    <h2 class="text-2xl font-bold text-purple-800">ביצועים וניהול</h2>
+                <div class="flex flex-wrap justify-between items-center mb-6 gap-4 border-b border-gray-200 dark:border-gray-700 pb-4">
+                    <h2 class="text-2xl font-bold text-purple-800 dark:text-purple-300">ביצועים וניהול</h2>
                     <div class="flex gap-2 flex-wrap">
-                        <button onclick="exportToExcel()" class="bg-green-100 text-green-700 px-4 py-2 rounded-xl font-bold text-sm">
+                        <button onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl font-bold text-sm transition-all shadow-lg hover:shadow-xl">
                             📥 הורד דוח Excel
                         </button>
-                        <button onclick="openManageModal()" class="bg-purple-100 text-purple-700 px-4 py-2 rounded-xl font-bold">
+                        <button onclick="openManageModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl font-bold transition-all shadow-lg hover:shadow-xl">
                             ⚙️ ניהול שורות
                         </button>
-                        <select id="stats-month-filter" onchange="updateStats()" class="!w-44 !mb-0 font-bold"></select>
+                        <select id="stats-year-filter" onchange="updateStats()" class="!w-28 !mb-0 font-bold dark:bg-gray-700 dark:text-white dark:border-gray-600"></select>
+                        <select id="stats-month-filter" onchange="updateStats()" class="!w-44 !mb-0 font-bold dark:bg-gray-700 dark:text-white dark:border-gray-600"></select>
                     </div>
                 </div>
                 
                 <!-- Summary Cards -->
                 <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
-                    <div class="bg-purple-50 p-6 rounded-2xl text-center">
-                        <div class="text-gray-500 text-xs">הכנסות</div>
-                        <div id="sum-total" class="text-2xl font-bold text-purple-700">0</div>
+                    <div class="bg-gradient-to-br from-purple-600 to-purple-800 p-6 rounded-2xl text-center shadow-lg">
+                        <div class="text-purple-200 text-sm font-semibold">הכנסות</div>
+                        <div id="sum-total" class="text-3xl font-bold text-white">0</div>
                     </div>
-                    <div class="bg-pink-50 p-6 rounded-2xl text-center">
-                        <div class="text-gray-500 text-xs">כלות</div>
-                        <div id="sum-brides" class="text-2xl font-bold text-pink-600">0</div>
+                    <div class="bg-gradient-to-br from-pink-600 to-rose-700 p-6 rounded-2xl text-center shadow-lg">
+                        <div class="text-pink-100 text-sm font-semibold">כלות</div>
+                        <div id="sum-brides" class="text-3xl font-bold text-white">0</div>
                     </div>
-                    <div class="bg-blue-50 p-6 rounded-2xl text-center hidden md:block">
-                        <div class="text-gray-500 text-xs">עסקאות</div>
-                        <div id="sum-count" class="text-2xl font-bold text-blue-600">0</div>
+                    <div class="bg-gradient-to-br from-cyan-600 to-blue-700 p-6 rounded-2xl text-center shadow-lg hidden md:block">
+                        <div class="text-cyan-100 text-sm font-semibold">עסקאות</div>
+                        <div id="sum-count" class="text-3xl font-bold text-white">0</div>
                     </div>
                 </div>
                 
@@ -658,6 +718,254 @@
                 <div class="h-80">
                     <canvas id="incomeChart"></canvas>
                 </div>
+            </div>
+        </section>
+
+        <!-- Page: Business Insights -->
+        <section id="page-insights" class="hidden pt-6">
+            <!-- Header with Dark Mode Toggle -->
+            <div class="relative mb-6">
+                <!-- Dark Mode Toggle - Top Right -->
+                <button onclick="toggleDarkMode()" class="absolute top-0 right-0 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 p-2 rounded-full shadow-md transition-all duration-300 hover:scale-110 z-10">
+                    <svg id="dark-mode-icon-insights" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                    </svg>
+                </button>
+                
+                <!-- Centered Logo -->
+                <div class="text-center mb-4">
+                    <div class="inline-block">
+                        <div class="bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-500 text-white px-6 py-2 rounded-xl shadow-lg">
+                            <span class="text-2xl font-black tracking-tight flex items-center gap-2 justify-center">🌙 Luna</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Back Button - Small, Left Side -->
+                <button onclick="switchPage('home')" class="absolute bottom-0 left-0 group bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 px-3 py-1.5 rounded-lg font-medium text-sm flex items-center gap-1 transition-all duration-300 shadow-sm hover:shadow-md border border-gray-200 dark:border-gray-600">
+                    <svg class="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    </svg>
+                    <span>חזרה</span>
+                </button>
+            </div>
+
+            <!-- Page Title -->
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">📊 תובנות עסקיות</h2>
+                <p class="text-sm text-gray-600 dark:text-gray-400">גלו מהיכן מגיעים הלקוחות שלכם, אילו ערוצים מניבים הכנסה ואיפה אתם יכולים להשתפר</p>
+            </div>
+
+            <!-- Filters -->
+            <div class="bg-white dark:bg-slate-800 rounded-xl shadow-md p-4 mb-6">
+                <div class="flex flex-wrap gap-3 items-center">
+                    <div class="flex-1 min-w-[200px]">
+                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">טווח תאריכים</label>
+                        <select id="insights-period" onchange="InsightsView.refresh()" class="w-full p-2 border-2 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl text-sm">
+                            <option value="month">חודש אחרון</option>
+                            <option value="3months">3 חודשים אחרונים</option>
+                            <option value="6months">6 חודשים אחרונים</option>
+                            <option value="year" selected>שנה אחרונה</option>
+                            <option value="all">כל הזמן</option>
+                        </select>
+                    </div>
+                    <div class="flex-1 min-w-[200px]">
+                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">מקור (אופציונלי)</label>
+                        <select id="insights-source-filter" onchange="InsightsView.refresh()" class="w-full p-2 border-2 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl text-sm">
+                            <option value="all">הכל</option>
+                            <!-- Will be populated dynamically -->
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 1: High-Level Overview (KPI Cards) -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <!-- Total Leads Card -->
+                <div class="bg-white dark:bg-slate-800 rounded-xl shadow-md p-6 text-center">
+                    <div class="flex items-center justify-center gap-2 mb-2">
+                        <h3 class="text-sm font-bold text-gray-700 dark:text-gray-300">סה"כ לידים</h3>
+                        <button onclick="showTooltip('tooltip-total-leads')" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <div id="kpi-total-leads" class="text-4xl font-bold text-purple-600 dark:text-purple-400">0</div>
+                    <div id="tooltip-total-leads" class="hidden text-xs text-gray-500 dark:text-gray-400 mt-2">מספר הלידים שהתקבלו בתקופה שנבחרה</div>
+                </div>
+
+                <!-- Conversion Rate Card -->
+                <div class="bg-white dark:bg-slate-800 rounded-xl shadow-md p-6 text-center">
+                    <div class="flex items-center justify-center gap-2 mb-2">
+                        <h3 class="text-sm font-bold text-gray-700 dark:text-gray-300">אחוז המרה</h3>
+                        <button onclick="showTooltip('tooltip-conversion')" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <div id="kpi-conversion-rate" class="text-4xl font-bold text-green-600 dark:text-green-400">0%</div>
+                    <div id="tooltip-conversion" class="hidden text-xs text-gray-500 dark:text-gray-400 mt-2">אחוז הלידים שהפכו ללקוחות משלמים</div>
+                </div>
+
+                <!-- Total Revenue Card -->
+                <div class="bg-white dark:bg-slate-800 rounded-xl shadow-md p-6 text-center">
+                    <div class="flex items-center justify-center gap-2 mb-2">
+                        <h3 class="text-sm font-bold text-gray-700 dark:text-gray-300">הכנסות כוללות</h3>
+                        <button onclick="showTooltip('tooltip-revenue')" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <div id="kpi-total-revenue" class="text-4xl font-bold text-blue-600 dark:text-blue-400">0 ₪</div>
+                    <div id="tooltip-revenue" class="hidden text-xs text-gray-500 dark:text-gray-400 mt-2">סכום ההכנסות מעסקאות שנסגרו</div>
+                </div>
+
+                <!-- Average Time to Close Card -->
+                <div class="bg-white dark:bg-slate-800 rounded-xl shadow-md p-6 text-center">
+                    <div class="flex items-center justify-center gap-2 mb-2">
+                        <h3 class="text-sm font-bold text-gray-700 dark:text-gray-300">זמן ממוצע לסגירה</h3>
+                        <button onclick="showTooltip('tooltip-time-to-close')" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <div id="kpi-avg-time" class="text-4xl font-bold text-amber-600 dark:text-amber-400">0</div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400">ימים</div>
+                    <div id="tooltip-time-to-close" class="hidden text-xs text-gray-500 dark:text-gray-400 mt-2">כמה זמן בממוצע לוקח עד שליד הופך ללקוח</div>
+                </div>
+            </div>
+
+            <!-- Section 2: Marketing & Channel Insights -->
+            <div class="bg-white dark:bg-slate-800 rounded-xl shadow-md p-6 mb-6">
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">📢 ניתוח ערוצי שיווק</h3>
+                
+                <div class="grid lg:grid-cols-2 gap-6">
+                    <!-- Lead Sources Distribution -->
+                    <div>
+                        <h4 class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-3">התפלגות לידים לפי מקור</h4>
+                        <div class="h-64">
+                            <canvas id="chart-sources-pie"></canvas>
+                        </div>
+                        <p id="sources-insight" class="text-sm text-gray-600 dark:text-gray-400 mt-3 text-center italic"></p>
+                    </div>
+
+                    <!-- Conversion Rate by Source -->
+                    <div>
+                        <h4 class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-3">אחוז המרה לפי מקור</h4>
+                        <div class="h-64">
+                            <canvas id="chart-conversion-bar"></canvas>
+                        </div>
+                        <p id="conversion-insight" class="text-sm text-gray-600 dark:text-gray-400 mt-3 text-center italic"></p>
+                    </div>
+                </div>
+
+                <!-- Revenue by Source Table -->
+                <div class="mt-6">
+                    <h4 class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-3">הכנסות לפי מקור</h4>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="border-b-2 border-gray-200 dark:border-gray-700">
+                                    <th class="text-right p-3 font-bold">מקור</th>
+                                    <th class="text-center p-3 font-bold">לידים</th>
+                                    <th class="text-center p-3 font-bold">נסגרו</th>
+                                    <th class="text-center p-3 font-bold">המרה</th>
+                                    <th class="text-right p-3 font-bold">הכנסות</th>
+                                    <th class="text-right p-3 font-bold">ממוצע לעסקה</th>
+                                </tr>
+                            </thead>
+                            <tbody id="revenue-by-source-table">
+                                <!-- Will be populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 3: Process & Performance Insights -->
+            <div class="bg-white dark:bg-slate-800 rounded-xl shadow-md p-6 mb-6">
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">📈 ביצועים ותהליך מכירה</h3>
+                
+                <div class="grid lg:grid-cols-2 gap-6">
+                    <!-- Lead Drop-Off Funnel -->
+                    <div>
+                        <h4 class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-3">משפך המרה - היכן לידים נופלים?</h4>
+                        <div class="space-y-3">
+                            <div class="funnel-stage" data-stage="new">
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="text-sm font-bold">ליד חדש</span>
+                                    <span class="text-sm font-bold" id="funnel-new-count">0</span>
+                                </div>
+                                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-8">
+                                    <div id="funnel-new-bar" class="bg-purple-600 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold" style="width: 100%">100%</div>
+                                </div>
+                            </div>
+
+                            <div class="funnel-stage" data-stage="in-progress">
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="text-sm font-bold">בתהליך</span>
+                                    <span class="text-sm font-bold" id="funnel-progress-count">0</span>
+                                </div>
+                                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-8">
+                                    <div id="funnel-progress-bar" class="bg-blue-600 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold" style="width: 0%"></div>
+                                </div>
+                            </div>
+
+                            <div class="funnel-stage" data-stage="contract-sent">
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="text-sm font-bold">חוזה נשלח</span>
+                                    <span class="text-sm font-bold" id="funnel-contract-count">0</span>
+                                </div>
+                                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-8">
+                                    <div id="funnel-contract-bar" class="bg-indigo-600 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold" style="width: 0%"></div>
+                                </div>
+                            </div>
+
+                            <div class="funnel-stage" data-stage="closed">
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="text-sm font-bold">✅ נסגר</span>
+                                    <span class="text-sm font-bold" id="funnel-closed-count">0</span>
+                                </div>
+                                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-8">
+                                    <div id="funnel-closed-bar" class="bg-green-600 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold" style="width: 0%"></div>
+                                </div>
+                            </div>
+
+                            <div class="funnel-stage" data-stage="not-closed">
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="text-sm font-bold">❌ לא נסגר</span>
+                                    <span class="text-sm font-bold" id="funnel-not-closed-count">0</span>
+                                </div>
+                                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-8">
+                                    <div id="funnel-not-closed-bar" class="bg-red-600 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <p id="funnel-insight" class="text-sm text-gray-600 dark:text-gray-400 mt-4 text-center italic"></p>
+                    </div>
+
+                    <!-- Average Deal Size -->
+                    <div>
+                        <h4 class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-3">גודל עסקה ממוצע</h4>
+                        <div class="h-64">
+                            <canvas id="chart-deal-size"></canvas>
+                        </div>
+                        <p id="deal-size-insight" class="text-sm text-gray-600 dark:text-gray-400 mt-3 text-center italic"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Empty State (shown when no data) -->
+            <div id="insights-empty-state" class="hidden bg-white dark:bg-slate-800 rounded-xl shadow-md p-12 text-center">
+                <svg class="w-24 h-24 mx-auto text-gray-300 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                </svg>
+                <h3 class="text-xl font-bold text-gray-700 dark:text-gray-300 mb-2">אין מספיק נתונים</h3>
+                <p class="text-gray-600 dark:text-gray-400">התחילו להוסיף לידים ולסגור עסקאות כדי לראות תובנות</p>
             </div>
         </section>
     
@@ -978,6 +1286,16 @@
                 <p class="text-xs text-gray-500 mt-1">כמה זמן העבודה לוקחת?</p>
             </div>
             
+            <div class="mb-4">
+                <label class="block text-sm font-bold text-gray-700 mb-2">📍 מיקום:</label>
+                <input 
+                    type="text" 
+                    id="calendar-location" 
+                    placeholder="היכן האירוע?"
+                    class="w-full p-3 border-2 border-gray-300 rounded-xl text-lg">
+                <p class="text-xs text-gray-500 mt-1">כתובת מדויקת או שם אולם</p>
+            </div>
+            
             <div id="escort-time-section" class="mb-4" style="display: none;">
                 <div class="bg-purple-50 p-4 rounded-xl border-2 border-purple-200">
                     <h4 class="font-semibold text-purple-800 mb-3 text-center">💃 ליווי לאירוע</h4>
@@ -989,7 +1307,7 @@
                             class="w-full p-3 border-2 border-purple-300 rounded-xl text-lg text-center" 
                             value="18:00">
                     </div>
-                    <div>
+                    <div class="mb-3">
                         <label class="block text-sm font-bold text-gray-700 mb-2">⏱️ משך הליווי (שעות):</label>
                         <input 
                             type="number" 
@@ -1000,17 +1318,16 @@
                             max="12"
                             step="0.5">
                     </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">📍 מיקום ליווי:</label>
+                        <input 
+                            type="text" 
+                            id="calendar-escortLocation" 
+                            placeholder="מיקום הליווי (אם שונה מהשירות הראשי)"
+                            class="w-full p-3 border-2 border-purple-300 rounded-xl text-sm">
+                        <p class="text-xs text-gray-500 mt-1">אם ריק - יושתמש אותו מיקום</p>
+                    </div>
                 </div>
-            </div>
-            
-            <div class="mb-4">
-                <label class="block text-sm font-bold text-gray-700 mb-2">📍 מיקום:</label>
-                <input 
-                    type="text" 
-                    id="calendar-location" 
-                    placeholder="היכן האירוע?"
-                    class="w-full p-3 border-2 border-gray-300 rounded-xl text-lg">
-                <p class="text-xs text-gray-500 mt-1">כתובת מדויקת או שם אולם</p>
             </div>
             
             <div class="mb-4">
@@ -1022,16 +1339,34 @@
                     class="w-full p-3 border-2 border-gray-300 rounded-xl text-sm"></textarea>
             </div>
             
-            <div class="flex gap-3">
+            <div class="border-t-2 border-gray-200 pt-4 mt-4">
+                <h4 class="font-bold text-gray-800 mb-3 text-center">📅 שמירה ביומן</h4>
+                <div id="calendar-buttons-container" class="space-y-2">
+                    <!-- Buttons will be added dynamically -->
+                </div>
+            </div>
+            
+            <div class="border-t-2 border-gray-200 pt-4 mt-4">
+                <h4 class="font-bold text-gray-800 mb-3 text-center">💬 הודעת WhatsApp</h4>
+                <p class="text-xs text-gray-500 mb-2 text-center">ניתן לערוך את ההודעה לפני השליחה</p>
+                <textarea 
+                    id="whatsapp-message-text" 
+                    rows="6"
+                    class="w-full p-3 border-2 border-gray-300 rounded-xl text-sm mb-3 font-mono"
+                    placeholder="ההודעה תיטען אוטומטית..."></textarea>
                 <button 
-                    onclick="StageManager.confirmCalendarDate()" 
-                    class="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-xl font-bold transition-all">
-                    📅 הוסף ליומן
+                    onclick="StageManager.sendWhatsAppMessage()" 
+                    class="w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl font-bold transition-all flex items-center justify-center gap-2">
+                    <span>📤</span>
+                    <span>שלח ב-WhatsApp</span>
                 </button>
+            </div>
+            
+            <div class="mt-4">
                 <button 
-                    onclick="StageManager.skipCalendarDate()" 
-                    class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-3 rounded-xl font-bold transition-all">
-                    דלג
+                    onclick="StageManager.finishCalendarFlow()" 
+                    class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 py-3 rounded-xl font-bold transition-all">
+                    ✅ סיום
                 </button>
             </div>
         </div>
@@ -1139,29 +1474,29 @@
 
     <!-- Modal: Manage Income Rows -->
     <div id="modal-manage" class="modal">
-        <div class="bg-white rounded-3xl w-full max-w-5xl max-h-[85vh] overflow-hidden flex flex-col p-6 shadow-2xl">
+        <div class="bg-gray-800 dark:bg-gray-900 text-white rounded-3xl w-full max-w-5xl max-h-[85vh] overflow-hidden flex flex-col p-6 shadow-2xl">
             <div class="flex justify-between items-center mb-4">
-                <button id="bulk-del-btn" onclick="bulkDelete()" class="hidden bg-red-500 text-white px-4 py-1 rounded-lg text-sm font-bold">
+                <button id="bulk-del-btn" onclick="bulkDelete()" class="hidden bg-red-500 hover:bg-red-600 text-white px-4 py-1 rounded-lg text-sm font-bold">
                     מחק מסומנים
                 </button>
-                <h3 class="text-xl font-bold">ניהול נתוני הכנסות</h3>
-                <button onclick="closeModal('modal-manage')" class="text-2xl">&times;</button>
+                <h3 class="text-xl font-bold text-white">ניהול נתוני הכנסות</h3>
+                <button onclick="closeModal('modal-manage')" class="text-3xl text-gray-300 hover:text-white">&times;</button>
             </div>
             
             <div class="overflow-x-auto overflow-y-auto flex-1">
                 <table>
-                    <thead class="sticky-thead">
-                        <tr class="text-right border-b">
-                            <th class="p-3">
-                                <input type="checkbox" id="master-check" onclick="toggleSelectAll(this)">
+                    <thead class="sticky-thead bg-gray-700">
+                        <tr class="text-right border-b border-gray-600">
+                            <th class="p-3 text-gray-200">
+                                <input type="checkbox" id="master-check" onclick="toggleSelectAll(this)" class="cursor-pointer">
                             </th>
-                            <th class="p-3">תאריך</th>
-                            <th class="p-3">שם</th>
-                            <th class="p-3">שירות</th>
-                            <th class="p-3">סכום</th>
-                            <th class="p-3">תשלום</th>
-                            <th class="p-3">כלה</th>
-                            <th class="p-3">פעולות</th>
+                            <th class="p-3 text-gray-200">תאריך</th>
+                            <th class="p-3 text-gray-200">שם</th>
+                            <th class="p-3 text-gray-200">שירות</th>
+                            <th class="p-3 text-gray-200">סכום</th>
+                            <th class="p-3 text-gray-200">תשלום</th>
+                            <th class="p-3 text-gray-200">כלה</th>
+                            <th class="p-3 text-gray-200">פעולות</th>
                         </tr>
                     </thead>
                     <tbody id="manage-tbody"></tbody>
@@ -1172,16 +1507,16 @@
 
     <!-- Modal: Edit Income Row -->
     <div id="modal-edit-row" class="modal">
-        <div class="bg-white p-6 rounded-3xl w-full max-w-sm shadow-2xl text-right">
-            <h3 class="text-xl font-bold mb-4">עריכת עסקה</h3>
+        <div class="bg-gray-800 dark:bg-gray-900 text-white p-6 rounded-3xl w-full max-w-sm shadow-2xl text-right">
+            <h3 class="text-xl font-bold mb-4 text-white">עריכת עסקה</h3>
             
             <input type="hidden" id="edit-id">
-            <input type="text" id="edit-name" placeholder="שם הלקוחה">
-            <input type="number" id="edit-amount" placeholder="סכום">
-            <input type="text" id="edit-service" placeholder="סוג שירות">
-            <input type="date" id="edit-date">
+            <input type="text" id="edit-name" placeholder="שם הלקוחה" class="bg-gray-700 text-white border-gray-600 placeholder-gray-400">
+            <input type="number" id="edit-amount" placeholder="סכום" class="bg-gray-700 text-white border-gray-600 placeholder-gray-400">
+            <input type="text" id="edit-service" placeholder="סוג שירות" class="bg-gray-700 text-white border-gray-600 placeholder-gray-400">
+            <input type="date" id="edit-date" class="bg-gray-700 text-white border-gray-600">
             
-            <select id="edit-payment" class="mb-4 dark:bg-slate-700 dark:text-white dark:border-slate-600">
+            <select id="edit-payment" class="mb-4 bg-gray-700 text-white border-gray-600">
                 <option value="מזומן">מזומן</option>
                 <option value="ביט">ביט / פייבוקס</option>
                 <option value="העברה">העברה בנקאית</option>
@@ -1189,15 +1524,15 @@
                 <option value="המחאה">המחאה</option>
             </select>
             
-            <label class="flex items-center gap-2 p-3 bg-pink-50 rounded-xl mb-4">
-                <input type="checkbox" id="edit-isbride">
-                <span class="font-bold">עסקת כלה</span>
+            <label class="flex items-center gap-2 p-3 bg-purple-900/30 border border-purple-700 rounded-xl mb-4">
+                <input type="checkbox" id="edit-isbride" class="cursor-pointer">
+                <span class="font-bold text-purple-200">עסקת כלה</span>
             </label>
             
-            <button onclick="submitEdit()" id="btn-edit-save" class="w-full bg-purple-600 text-white py-3 rounded-xl font-bold">
+            <button onclick="submitEdit()" id="btn-edit-save" class="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-xl font-bold transition-all">
                 שמור שינויים
             </button>
-            <button onclick="closeModal('modal-edit-row')" class="w-full text-gray-400 mt-2">
+            <button onclick="closeModal('modal-edit-row')" class="w-full text-gray-400 hover:text-gray-200 mt-2 transition-all">
                 ביטול
             </button>
         </div>

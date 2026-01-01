@@ -1,8 +1,127 @@
 ﻿/**
  * CRM System for Beauty Business
- * Version: 9.0 - Database Edition
- * Date: 25.12.2025
+ * Version: 9.0 - Database Edition with Authentication
+ * Date: 29.12.2025
  */
+
+// ==================== AUTHENTICATION ====================
+let currentUser = null;
+let isAuthenticated = false;
+
+// Check authentication status on page load
+async function checkAuthStatus() {
+    try {
+        const response = await fetch('/api/auth/status');
+        const data = await response.json();
+        
+        if (data.authenticated) {
+            isAuthenticated = true;
+            currentUser = data.user;
+            showUserProfile(data.user);
+            // Load user data
+            await loadAllData();
+        } else {
+            isAuthenticated = false;
+            currentUser = null;
+            showLoginButton();
+            // Show empty dashboard
+            showEmptyDashboard();
+        }
+    } catch (error) {
+        console.error('❌ Error checking auth status:', error);
+        isAuthenticated = false;
+        showLoginButton();
+        showEmptyDashboard();
+    }
+}
+
+// Show user profile in header
+function showUserProfile(user) {
+    document.getElementById('login-button').classList.add('hidden');
+    document.getElementById('user-menu').classList.remove('hidden');
+    document.getElementById('user-name').textContent = user.name.split(' ')[0]; // First name only
+    
+    // Set avatar - replace entire container content
+    const avatarContainer = document.getElementById('user-avatar-container');
+    
+    if (user.picture && user.picture.trim() !== '') {
+        // Has picture - show image
+        avatarContainer.innerHTML = `<img src="${user.picture}" alt="User" class="w-full h-full object-cover rounded-full">`;
+    } else {
+        // No picture - show default SVG icon
+        avatarContainer.innerHTML = `<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+        </svg>`;
+    }
+    
+    document.getElementById('dropdown-user-name').textContent = user.name;
+    document.getElementById('dropdown-user-email').textContent = user.email;
+}
+
+// Show login button
+function showLoginButton() {
+    document.getElementById('login-button').classList.remove('hidden');
+    document.getElementById('user-menu').classList.add('hidden');
+}
+
+// Toggle user dropdown
+function toggleUserDropdown() {
+    const dropdown = document.getElementById('user-dropdown');
+    dropdown.classList.toggle('hidden');
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', (e) => {
+    const userMenu = document.getElementById('user-menu');
+    const dropdown = document.getElementById('user-dropdown');
+    if (userMenu && !userMenu.contains(e.target)) {
+        dropdown.classList.add('hidden');
+    }
+});
+
+// Logout function
+async function logout() {
+    try {
+        const response = await fetch('/auth/logout', { 
+            method: 'POST',
+            credentials: 'include' // Important for cookies
+        });
+        
+        if (response.ok) {
+            console.log('✅ התנתקת בהצלחה');
+            window.location.href = '/'; // Force redirect to home
+        } else {
+            throw new Error('Logout failed');
+        }
+    } catch (error) {
+        console.error('❌ Error logging out:', error);
+        // Force reload anyway
+        window.location.href = '/';
+    }
+}
+
+// Show empty dashboard for non-authenticated users
+function showEmptyDashboard() {
+    // Clear all stats
+    document.getElementById('stat-monthly-income').textContent = '0 ₪';
+    document.getElementById('stat-yearly-income').textContent = '0 ₪';
+    document.getElementById('stat-monthly-brides').textContent = '0';
+    document.getElementById('stat-yearly-brides').textContent = '0';
+    
+    // Show message to login
+    const welcomeMsg = document.getElementById('welcome-message');
+    if (welcomeMsg) {
+        welcomeMsg.innerHTML = '🌙 התחבר כדי לראות את הנתונים שלך';
+    }
+}
+
+// Load all user data after authentication
+async function loadAllData() {
+    await State.loadFromDatabase();
+    // Trigger a refresh of the current page to show data
+    const currentPage = document.querySelector('section:not(.hidden)').id;
+    await switchPage(currentPage.replace('page-', ''));
+}
 
 // ==================== SOUND EFFECTS ====================
 const SoundEffects = {
@@ -174,6 +293,14 @@ const State = {
     },
     
     async loadFromDatabase() {
+        // Don't load data if user is not authenticated
+        if (!isAuthenticated) {
+            console.log('ℹ️ משתמש לא מחובר - לא טוען נתונים');
+            this.clients = [];
+            this.leads = [];
+            return;
+        }
+        
         try {
             console.log('🔄 טוען נתונים מ-MongoDB...');
             // Always load from database
@@ -228,15 +355,20 @@ const State = {
     // Remove localStorage functions - use MongoDB only
     // Goals are still saved in localStorage in separate functions
     
-    getFilteredClients(monthName) {
-        if (monthName === 'ALL') return this.clients;
+    getFilteredClients(monthName, year = new Date().getFullYear()) {
+        if (monthName === 'ALL') {
+            return this.clients.filter(c => {
+                const date = new Date(c.date);
+                return date.getFullYear() === year;
+            });
+        }
         const months = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
         const monthIndex = months.indexOf(monthName);
         if (monthIndex === -1) return this.clients;
         
         return this.clients.filter(c => {
             const date = new Date(c.date);
-            return date.getMonth() === monthIndex;
+            return date.getMonth() === monthIndex && date.getFullYear() === year;
         });
     }
 };
@@ -367,7 +499,7 @@ const Navigation = {
         document.documentElement.scrollTop = 0;
         
         // Hide all pages
-        ['home', 'entry', 'leads', 'stats'].forEach(id => {
+        ['home', 'entry', 'leads', 'stats', 'insights'].forEach(id => {
             const page = document.getElementById('page-' + id);
             if (page) page.classList.add('hidden');
         });
@@ -384,6 +516,7 @@ const Navigation = {
         }
         if (pageName === 'leads') LeadsView.render();
         if (pageName === 'stats') StatsView.update();
+        if (pageName === 'insights') InsightsView.render();
         
         // Scroll to top again to ensure it worked
         setTimeout(() => {
@@ -1282,13 +1415,13 @@ const HomeView = {
         const thisYear = now.getFullYear();
         const thisMonth = now.getMonth();
         
-        // Yearly clients
+        // Yearly clients for current year
         const yearlyClients = State.clients.filter(c => {
             const date = new Date(c.date);
             return date.getFullYear() === thisYear;
         });
         
-        // Monthly clients
+        // Monthly clients for current month
         const monthlyClients = yearlyClients.filter(c => {
             const date = new Date(c.date);
             return date.getMonth() === thisMonth;
@@ -1345,6 +1478,12 @@ const HomeView = {
         const upcomingEventsEl = document.getElementById('upcoming-events-count');
         if (upcomingEventsEl) {
             upcomingEventsEl.innerText = upcomingEvents;
+        }
+        
+        // Update annual goals title with current year
+        const annualGoalsTitleEl = document.getElementById('annual-goals-title');
+        if (annualGoalsTitleEl) {
+            annualGoalsTitleEl.innerText = `יעדים שנתיים ${thisYear}`;
         }
         
         // Update Annual Goals with new IDs
@@ -1438,24 +1577,25 @@ const StatsView = {
     
     update() {
         const filterVal = document.getElementById('stats-month-filter').value;
-        const filtered = State.getFilteredClients(filterVal);
+        const yearVal = parseInt(document.getElementById('stats-year-filter').value);
+        const filtered = State.getFilteredClients(filterVal, yearVal);
         
-        this.updateSummary(filtered, filterVal);
-        this.updateChart(filterVal, filtered);
+        this.updateSummary(filtered, filterVal, yearVal);
+        this.updateChart(filterVal, yearVal, filtered);
     },
     
-    updateSummary(filtered, filterVal) {
+    updateSummary(filtered, filterVal, yearVal) {
         const totalIncome = filtered.reduce((sum, client) => sum + (client.income || client.price || client.amount || 0), 0);
         const bridesCount = filtered.filter(c => c.isBride || c.notes?.includes('כלה')).length;
         const totalCount = filtered.length;
         
-        const periodText = filterVal === 'ALL' ? 'סה"כ שנתי' : `חודש ${filterVal}`;
-        document.getElementById('sum-total').innerHTML = `<div class="text-3xl font-bold text-purple-700">${totalIncome.toLocaleString()} ₪</div><div class="text-xs text-gray-500 mt-1">${periodText}</div>`;
-        document.getElementById('sum-brides').innerHTML = `<div class="text-3xl font-bold text-pink-600">${bridesCount}</div><div class="text-xs text-gray-500 mt-1">כלות ${filterVal === 'ALL' ? 'בשנה' : 'בחודש'}</div>`;
-        document.getElementById('sum-count').innerHTML = `<div class="text-3xl font-bold text-blue-600">${totalCount}</div><div class="text-xs text-gray-500 mt-1">עסקאות ${filterVal === 'ALL' ? 'בשנה' : 'בחודש'}</div>`;
+        const periodText = filterVal === 'ALL' ? `סה"כ ${yearVal}` : `${filterVal} ${yearVal}`;
+        document.getElementById('sum-total').innerHTML = `<div class="text-3xl font-bold text-white">${totalIncome.toLocaleString()} ₪</div><div class="text-sm text-purple-200 mt-1">${periodText}</div>`;
+        document.getElementById('sum-brides').innerHTML = `<div class="text-3xl font-bold text-white">${bridesCount}</div><div class="text-sm text-pink-100 mt-1">כלות ${filterVal === 'ALL' ? 'בשנה' : 'בחודש'}</div>`;
+        document.getElementById('sum-count').innerHTML = `<div class="text-3xl font-bold text-white">${totalCount}</div><div class="text-sm text-cyan-100 mt-1">עסקאות ${filterVal === 'ALL' ? 'בשנה' : 'בחודש'}</div>`;
     },
     
-    updateChart(filterVal, filtered) {
+    updateChart(filterVal, yearVal, filtered) {
         const isYearView = filterVal === 'ALL';
         const months = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
         
@@ -1467,7 +1607,7 @@ const StatsView = {
                 return State.clients
                     .filter(c => {
                         const date = new Date(c.date);
-                        return date.getMonth() === idx;
+                        return date.getMonth() === idx && date.getFullYear() === yearVal;
                     })
                     .reduce((sum, c) => sum + (c.income || c.price || c.amount || 0), 0);
             });
@@ -1475,7 +1615,7 @@ const StatsView = {
                 return State.clients
                     .filter(c => {
                         const date = new Date(c.date);
-                        return date.getMonth() === idx && (c.isBride || c.notes?.includes('כלה'));
+                        return date.getMonth() === idx && date.getFullYear() === yearVal && (c.isBride || c.notes?.includes('כלה'));
                     })
                     .length;
             });
@@ -1494,8 +1634,8 @@ const StatsView = {
                 type: 'bar',
                 label: 'הכנסות (₪)', 
                 data: incomeData,
-                backgroundColor: 'rgba(147, 51, 234, 0.7)',
-                borderColor: '#9333ea',
+                backgroundColor: 'rgba(168, 85, 247, 0.8)',
+                borderColor: '#a855f7',
                 borderWidth: 2,
                 borderRadius: 8,
                 yAxisID: 'y'
@@ -1508,8 +1648,8 @@ const StatsView = {
                 type: 'line',
                 label: 'מגמה',
                 data: incomeData,
-                borderColor: '#db2777',
-                backgroundColor: 'rgba(219, 39, 119, 0.1)',
+                borderColor: '#f472b6',
+                backgroundColor: 'rgba(244, 114, 182, 0.1)',
                 borderWidth: 3,
                 tension: 0.4,
                 pointRadius: 0,
@@ -1534,13 +1674,27 @@ const StatsView = {
                     title: {
                         display: true,
                         text: isYearView ? 'סטטיסטיקות שנתיות - הכנסות ומגמה' : `סטטיסטיקות חודש ${filterVal}`,
-                        font: { size: 16, weight: 'bold' }
+                        font: { size: 18, weight: 'bold' },
+                        color: '#e9d5ff',
+                        padding: { bottom: 20 }
                     },
                     legend: {
                         display: true,
-                        position: 'top'
+                        position: 'top',
+                        labels: {
+                            color: '#e9d5ff',
+                            font: { size: 13, weight: '600' },
+                            padding: 15
+                        }
                     },
                     tooltip: {
+                        backgroundColor: 'rgba(17, 24, 39, 0.95)',
+                        titleColor: '#f9fafb',
+                        bodyColor: '#e5e7eb',
+                        borderColor: '#a855f7',
+                        borderWidth: 1,
+                        padding: 12,
+                        displayColors: true,
                         callbacks: {
                             afterLabel: function(context) {
                                 if (context.datasetIndex === 0) {
@@ -1556,15 +1710,33 @@ const StatsView = {
                     }
                 },
                 scales: {
+                    x: {
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.05)',
+                            drawBorder: false
+                        },
+                        ticks: {
+                            color: '#d8b4fe',
+                            font: { size: 12, weight: '600' }
+                        }
+                    },
                     y: {
                         type: 'linear',
                         display: true,
                         position: 'right',
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)',
+                            drawBorder: false
+                        },
                         title: {
                             display: true,
-                            text: 'הכנסות (₪)'
+                            text: 'הכנסות (₪)',
+                            color: '#e9d5ff',
+                            font: { size: 14, weight: 'bold' }
                         },
                         ticks: {
+                            color: '#d8b4fe',
+                            font: { size: 12, weight: '600' },
                             callback: function(value) {
                                 return value.toLocaleString() + ' ₪';
                             }
@@ -1579,7 +1751,8 @@ const StatsView = {
 const ManageView = {
     open() {
         const filterVal = document.getElementById('stats-month-filter').value;
-        const filtered = State.getFilteredClients(filterVal);
+        const yearVal = parseInt(document.getElementById('stats-year-filter').value);
+        const filtered = State.getFilteredClients(filterVal, yearVal);
         const tbody = document.getElementById('manage-tbody');
         
         tbody.innerHTML = filtered
@@ -1589,19 +1762,19 @@ const ManageView = {
                 const dateOnly = client.date ? client.date.split('T')[0] : client.date;
                 const brideIcon = client.isBride ? '👰' : '-';
                 return `
-                <tr class="border-b hover:bg-gray-50 text-right">
+                <tr class="border-b border-gray-700 hover:bg-gray-700 text-right bg-gray-800">
                     <td class="p-3">
-                        <input type="checkbox" class="row-sel" data-id="${clientId}" onchange="checkBulkVisibility()">
+                        <input type="checkbox" class="row-sel cursor-pointer" data-id="${clientId}" onchange="checkBulkVisibility()">
                     </td>
-                    <td class="p-3 text-xs text-gray-500">${dateOnly}</td>
-                    <td class="p-3 font-bold">${client.name}</td>
-                    <td class="p-3 text-sm text-gray-600">${client.service || '-'}</td>
-                    <td class="p-3 text-purple-600 font-bold">${client.income || client.price || client.amount} ₪</td>
-                    <td class="p-3 text-xs text-gray-600">${client.payment || 'מזומן'}</td>
+                    <td class="p-3 text-xs text-gray-400">${dateOnly}</td>
+                    <td class="p-3 font-bold text-white">${client.name}</td>
+                    <td class="p-3 text-sm text-gray-300">${client.service || '-'}</td>
+                    <td class="p-3 text-purple-400 font-bold">${client.income || client.price || client.amount} ₪</td>
+                    <td class="p-3 text-xs text-gray-300">${client.payment || 'מזומן'}</td>
                     <td class="p-3 text-center">${brideIcon}</td>
                     <td class="p-3 flex gap-2">
-                        <button onclick="startEdit('${clientId}')" class="text-blue-500 font-bold text-xs bg-blue-50 px-2 py-1 rounded">ערוך</button>
-                        <button onclick="deleteRow('${clientId}')" class="text-red-500 font-bold text-xs bg-red-50 px-2 py-1 rounded">מחק</button>
+                        <button onclick="startEdit('${clientId}')" class="text-blue-300 hover:text-blue-200 font-bold text-xs bg-blue-900/40 hover:bg-blue-900/60 px-2 py-1 rounded transition-all">ערוך</button>
+                        <button onclick="deleteRow('${clientId}')" class="text-red-300 hover:text-red-200 font-bold text-xs bg-red-900/40 hover:bg-red-900/60 px-2 py-1 rounded transition-all">מחק</button>
                     </td>
                 </tr>
             `}).join('');
@@ -1625,18 +1798,18 @@ const ManageView = {
     },
     
     async bulkDelete() {
-        if (!confirm('?£???ק?ץ?? ?נ?¬ ?¢?£ ?פ???ץ?¿?ץ?¬ ?????ס?ק?¿?ץ?')) return;
+        if (!confirm('האם למחוק את כל הרשומות המסומנות?')) return;
         
         const ids = Array.from(document.querySelectorAll('.row-sel:checked'))
-            .map(cb => parseInt(cb.dataset.id));
+            .map(cb => cb.dataset.id); // Keep as string for MongoDB _id
         
         try {
             await API.bulkDeleteClients(ids);
-            State.clients = State.clients.filter(c => !ids.includes(c.id));
+            State.clients = State.clients.filter(c => !ids.includes(c._id || c.id));
             this.open();
             StatsView.update();
         } catch (error) {
-            alert("???ע?ש?נ?פ ?ס???ק?ש???פ: " + error.message);
+            alert("המחיקה נכשלה: " + error.message);
         }
     }
 };
@@ -1664,7 +1837,8 @@ const ExcelExporter = {
             });
         } else {
             // Single month export
-            const monthData = State.getFilteredClients(filterVal);
+            const yearVal = parseInt(document.getElementById('stats-year-filter').value);
+            const monthData = State.getFilteredClients(filterVal, yearVal);
             this.createMonthSheet(workbook, filterVal, monthData);
         }
         
@@ -2990,8 +3164,23 @@ const StageManager = {
         if (!this.pendingLead) return;
         
         try {
+            // Reload lead from server to get latest data
+            const leadId = this.pendingLead._id || this.pendingLead.id;
+            const response = await fetch(`${CONFIG.API_BASE_URL}/leads/${leadId}`);
+            if (response.ok) {
+                const freshLead = await response.json();
+                this.pendingLead = freshLead; // Update with fresh data
+            }
+            
             const actualDeposit = parseInt(document.getElementById('closed-actualDeposit').value) || 0;
             const paymentMethod = document.getElementById('closed-paymentMethod').value;
+            
+            // Check if deposit income was already recorded - BEFORE any processing
+            if (actualDeposit > 0 && this.pendingLead.depositIncomeRecorded) {
+                alert('⚠️ הכנסת המקדמה כבר נרשמה במערכת הכנסות.\nלא נוסף רישום כפול.');
+                closeModal('modal-deal-closed');
+                return; // Stop here - don't process anything
+            }
             
             // Save actual deposit
             this.pendingLead.actualDeposit = actualDeposit;
@@ -3006,6 +3195,7 @@ const StageManager = {
                 note: `עסקה נסגרה - מקדמה: ${actualDeposit.toLocaleString('he-IL')} ₪ (תשלום: ${paymentMethod})`
             });
             
+            // Save lead WITHOUT the flag first
             await API.updateLead(this.pendingLead._id || this.pendingLead.id, this.pendingLead);
             
             // Create income record for deposit if amount > 0
@@ -3018,18 +3208,23 @@ const StageManager = {
                     service: `מקדמה - ${this.pendingLead.fullName || this.pendingLead.name}`,
                     date: new Date().toISOString().split('T')[0],
                     payment: paymentMethod,
-                    isBride: false, // Deposits don't count as bride events
+                    isBride: false,
                     notes: `מקדמה - אירוע: ${this.pendingLead.eventDate || ''} | אמצעי תשלום: ${paymentMethod}`,
                     income: actualDeposit,
                     leadId: this.pendingLead._id || this.pendingLead.id
                 };
                 
                 await API.addClient(incomeRecord);
+                
+                // Mark as recorded ONLY AFTER income was successfully created
+                this.pendingLead.depositIncomeRecorded = true;
+                this.pendingLead.depositIncomeRecordedAt = new Date().toISOString();
+                await API.updateLead(this.pendingLead._id || this.pendingLead.id, this.pendingLead);
             }
             
             closeModal('modal-deal-closed');
             
-            // Show calendar date modal
+            // Show combined calendar + whatsapp modal
             document.getElementById('calendar-clientName').textContent = this.pendingLead.fullName || this.pendingLead.name;
             document.getElementById('calendar-eventDate').textContent = this.pendingLead.eventDate || 'לא צוין';
             document.getElementById('calendar-location').value = this.pendingLead.location || '';
@@ -3042,12 +3237,175 @@ const StageManager = {
                 escortSection.style.display = hasEscort ? 'block' : 'none';
             }
             
+            // Initialize calendar buttons
+            this.initializeCalendarButtons();
+            
             openModal('modal-calendar-date');
+            
+            // Show WhatsApp message preview automatically
+            setTimeout(async () => {
+                await this.sendWhatsAppFromCalendar();
+            }, 300);
             
         } catch (error) {
             console.error('Error in confirmDealClosed:', error);
             alert('אירעה שגיאה בשמירת המקדמה. אנא נסה שוב.');
         }
+    },
+    
+    initializeCalendarButtons() {
+        if (!this.pendingLead) return;
+        
+        const container = document.getElementById('calendar-buttons-container');
+        if (!container) return;
+        
+        container.innerHTML = '';
+        
+        const hasEscort = this.pendingLead.escortType && this.pendingLead.escortType !== 'none';
+        
+        // Main service button
+        const mainBtn = document.createElement('button');
+        mainBtn.onclick = () => this.saveMainCalendarEvent();
+        mainBtn.className = 'w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-xl font-bold transition-all';
+        mainBtn.innerHTML = '📅 שמור אירוע ביומן (שירות ראשי)';
+        container.appendChild(mainBtn);
+        
+        // Escort button if exists
+        if (hasEscort) {
+            const escortBtn = document.createElement('button');
+            escortBtn.onclick = () => this.saveEscortCalendarEvent();
+            escortBtn.className = 'w-full bg-purple-500 hover:bg-purple-600 text-white py-3 rounded-xl font-bold transition-all';
+            escortBtn.innerHTML = ' שמור אירוע ליווי ביומן';
+            container.appendChild(escortBtn);
+        }
+    },
+    
+    saveMainCalendarEvent() {
+        if (!this.pendingLead) return;
+        
+        const startTime = document.getElementById('calendar-startTime').value;
+        const duration = parseFloat(document.getElementById('calendar-duration').value) || 3;
+        const location = document.getElementById('calendar-location').value;
+        const notes = document.getElementById('calendar-notes').value;
+        
+        // Save to lead
+        this.pendingLead.calendarStartTime = startTime;
+        this.pendingLead.calendarDuration = duration;
+        this.pendingLead.calendarLocation = location || this.pendingLead.location;
+        this.pendingLead.calendarNotes = notes;
+        
+        API.updateLead(this.pendingLead._id || this.pendingLead.id, this.pendingLead);
+        
+        // Open Google Calendar immediately
+        this.openGoogleCalendar(this.pendingLead, startTime, duration, location, notes);
+    },
+    
+    saveEscortCalendarEvent() {
+        if (!this.pendingLead) return;
+        
+        const escortTime = document.getElementById('calendar-escortTime').value;
+        const escortDuration = parseFloat(document.getElementById('calendar-escortDuration').value) || 4;
+        const escortLocation = document.getElementById('calendar-escortLocation').value;
+        const location = document.getElementById('calendar-location').value;
+        const notes = document.getElementById('calendar-notes').value;
+        
+        // Save to lead
+        this.pendingLead.calendarEscortTime = escortTime;
+        this.pendingLead.calendarEscortDuration = escortDuration;
+        this.pendingLead.calendarEscortLocation = escortLocation || location;
+        
+        API.updateLead(this.pendingLead._id || this.pendingLead.id, this.pendingLead);
+        
+        // Open Google Calendar for escort immediately
+        this.openGoogleCalendarEscort(this.pendingLead, escortTime, escortDuration, escortLocation || location, notes);
+    },
+    
+    async sendWhatsAppFromCalendar() {
+        if (!this.pendingLead) {
+            console.warn('⚠️ No pending lead');
+            return;
+        }
+        
+        const stage = 'closed';
+        
+        console.log('📱 Loading WhatsApp message for stage:', stage);
+        console.log('📋 MessageSettings object:', MessageSettings);
+        console.log('📋 MessageSettings.settings:', MessageSettings.settings);
+        
+        // Get WhatsApp settings for this stage
+        const stageSettings = MessageSettings.getSettings(stage);
+        
+        console.log('📋 Stage settings for closed:', stageSettings);
+        
+        if (!stageSettings) {
+            console.error('❌ No settings found for stage:', stage);
+            alert('לא נמצאו הגדרות עבור שלב "סגורה"');
+            return;
+        }
+        
+        if (!stageSettings.immediate) {
+            console.error('❌ No immediate settings found');
+            alert('לא נמצאו הגדרות הודעה מיידית');
+            return;
+        }
+        
+        if (!stageSettings.immediate.template) {
+            console.error('❌ No template found');
+            alert('לא הוגדר תבנית הודעה עבור שלב "סגורה".\nנא להגדיר הודעה בהגדרות > הודעות WhatsApp');
+            return;
+        }
+        
+        console.log('📝 Template:', stageSettings.immediate.template);
+        console.log('👤 Lead data:', this.pendingLead);
+        
+        // Replace variables in template using WhatsAppAutomation.fillTemplate
+        const message = WhatsAppAutomation.fillTemplate(stageSettings.immediate.template, this.pendingLead);
+        
+        console.log('✅ Final message:', message);
+        
+        // Load message into textarea
+        const textarea = document.getElementById('whatsapp-message-text');
+        if (textarea) {
+            textarea.value = message;
+            console.log('✅ Message loaded into textarea');
+        } else {
+            console.error('❌ Textarea not found');
+        }
+    },
+    
+    sendWhatsAppMessage() {
+        if (!this.pendingLead) return;
+        
+        const phone = this.pendingLead.phone?.replace(/[^0-9]/g, '').replace(/^0/, '');
+        const textarea = document.getElementById('whatsapp-message-text');
+        const message = textarea?.value;
+        
+        console.log('📱 Sending WhatsApp:', { phone, message });
+        
+        if (!phone) {
+            alert('לא נמצא מספר טלפון ללקוחה');
+            return;
+        }
+        
+        if (!message || message.trim() === '') {
+            alert('ההודעה ריקה');
+            return;
+        }
+        
+        this.openWhatsApp(phone, message);
+    },
+    
+    openWhatsApp(phone, message) {
+        const whatsappUrl = `https://wa.me/972${phone}?text=${encodeURIComponent(message)}`;
+        console.log('🔗 Opening WhatsApp URL:', whatsappUrl);
+        window.open(whatsappUrl, '_blank');
+    },
+    
+    finishCalendarFlow() {
+        // Just close the modal and refresh view
+        closeModal('modal-calendar-date');
+        this.pendingLead = null;
+        HomeView.update();
     },
     
     async confirmCalendarDate() {
@@ -3063,10 +3421,12 @@ const StageManager = {
             const hasEscort = this.pendingLead.escortType && this.pendingLead.escortType !== 'none';
             let escortTime = null;
             let escortDuration = null;
+            let escortLocation = null;
             
             if (hasEscort) {
                 escortTime = document.getElementById('calendar-escortTime').value;
                 escortDuration = parseFloat(document.getElementById('calendar-escortDuration').value) || 4;
+                escortLocation = document.getElementById('calendar-escortLocation').value;
             }
             
             // Save calendar information
@@ -3077,17 +3437,21 @@ const StageManager = {
             if (hasEscort) {
                 this.pendingLead.calendarEscortTime = escortTime;
                 this.pendingLead.calendarEscortDuration = escortDuration;
+                this.pendingLead.calendarEscortLocation = escortLocation || location; // Use escort location or fallback to main location
             }
             this.pendingLead.calendarSet = true;
             
             await API.updateLead(this.pendingLead._id || this.pendingLead.id, this.pendingLead);
             
-            // Create calendar event(s)
-            this.createCalendarEvent(this.pendingLead, startTime, duration, location, notes);
+            // Open Google Calendar directly (no ICS download)
+            this.openGoogleCalendar(this.pendingLead, startTime, duration, location, notes);
             
-            // Create escort event if applicable
+            // Open escort calendar event if applicable
             if (hasEscort && escortTime) {
-                this.createEscortCalendarEvent(this.pendingLead, escortTime, escortDuration, location, notes);
+                // Small delay to ensure both windows open
+                setTimeout(() => {
+                    this.openGoogleCalendarEscort(this.pendingLead, escortTime, escortDuration, escortLocation || location, notes);
+                }, 500);
             }
             
             closeModal('modal-calendar-date');
@@ -3106,113 +3470,152 @@ const StageManager = {
         }
     },
     
-    createCalendarEvent(lead, startTime, duration, location, notes) {
-        // Parse event date and time
+    openGoogleCalendar(lead, startTime, duration, location, notes) {
+        // Parse event date
         const eventDateParts = lead.eventDate.split('/');
         let eventDate;
         
         if (eventDateParts.length === 3) {
-            // DD/MM/YYYY format
             const day = eventDateParts[0].padStart(2, '0');
             const month = eventDateParts[1].padStart(2, '0');
             const year = eventDateParts[2];
-            eventDate = `${year}-${month}-${day}`;
+            eventDate = `${year}${month}${day}`;
         } else {
-            // Fallback to today
-            eventDate = new Date().toISOString().split('T')[0];
+            eventDate = new Date().toISOString().split('T')[0].replace(/-/g, '');
         }
         
-        const startDateTime = `${eventDate}T${startTime}:00`;
+        // Calculate times in format YYYYMMDDTHHMMSS
+        const [startHour, startMin] = startTime.split(':');
+        const startDateTime = `${eventDate}T${startHour}${startMin}00`;
+        
         const endTime = this.addHours(startTime, duration);
-        const endDateTime = `${eventDate}T${endTime}:00`;
+        const [endHour, endMin] = endTime.split(':');
+        const endDateTime = `${eventDate}T${endHour}${endMin}00`;
         
-        // Create ICS file content
-        const icsContent = [
-            'BEGIN:VCALENDAR',
-            'VERSION:2.0',
-            'PRODID:-//Ayamakeup CRM//Calendar//HE',
-            'CALSCALE:GREGORIAN',
-            'METHOD:PUBLISH',
-            'BEGIN:VEVENT',
-            `DTSTART:${startDateTime.replace(/[-:]/g, '')}`,
-            `DTEND:${endDateTime.replace(/[-:]/g, '')}`,
-            `SUMMARY:${lead.fullName || lead.name} - איפור ושיער`,
-            `DESCRIPTION:${notes || 'אירוע חתונה'}\\nטלפון: ${lead.phone || ''}`,
-            `LOCATION:${location || ''}`,
-            'STATUS:CONFIRMED',
-            'END:VEVENT',
-            'END:VCALENDAR'
-        ].join('\r\n');
+        // Build full name (first + last)
+        const firstName = lead.name || '';
+        const lastName = lead.lastName || '';
+        const fullName = `${firstName} ${lastName}`.trim() || lead.fullName || lead.name;
         
-        // Download ICS file
-        const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `${lead.fullName || lead.name}_${eventDate}.ics`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
+        // Build event title with full name
+        const eventTitle = `${fullName} - ${location || 'מיקום לא צוין'}`;
         
-        // Show success message
-        const escortMessage = (lead.escortType && lead.escortType !== 'none') ? '\n\n💃 קובץ נוסף ליווי יורד כעת...' : '';
-        alert(`📅 קובץ יומן הורד!${escortMessage}\nפתחי את הקבצים כדי להוסיף את האירועים ליומן שלך (Google Calendar, Outlook, וכו\')`);
+        // Build complete services list with prices (WITHOUT escort for main event)
+        const servicesList = [];
+        if (lead.service) {
+            const mainPrice = lead.proposedPrice || lead.price || 0;
+            servicesList.push(`${lead.service} (₪${mainPrice.toLocaleString('he-IL')})`);
+        }
+        // Don't include escort in main event - it has its own calendar entry
+        if (lead.bridesmaids && lead.bridesmaids.length > 0) {
+            lead.bridesmaids.forEach((bridesmaid, i) => {
+                const bridesmaidPrice = bridesmaid.price || 0;
+                servicesList.push(`מלווה ${i + 1}: ${bridesmaid.service || 'שירות מלווה'} (₪${bridesmaidPrice.toLocaleString('he-IL')})`);
+            });
+        }
+        const allServices = servicesList.join(' + ');
+        
+        // Build detailed description
+        const descriptionParts = [];
+        descriptionParts.push(`לקוחה: ${fullName}`);
+        descriptionParts.push(`טלפון: ${lead.phone || 'לא צוין'}`);
+        if (lead.actualDeposit) {
+            descriptionParts.push(`\nמקדמה ששולמה: ₪${lead.actualDeposit.toLocaleString('he-IL')}`);
+            if (lead.stageHistory && lead.stageHistory.length > 0) {
+                const closedStage = lead.stageHistory.find(h => h.stage === 'closed');
+                if (closedStage) {
+                    const depositDate = new Date(closedStage.timestamp).toLocaleDateString('he-IL');
+                    descriptionParts.push(`תאריך תשלום מקדמה: ${depositDate}`);
+                }
+            }
+        }
+        if (allServices) {
+            descriptionParts.push(`\nשירותים: ${allServices}`);
+        }
+        if (notes && notes.trim()) {
+            descriptionParts.push(`\nהערות: ${notes}`);
+        }
+        if (lead.notes && lead.notes.trim()) {
+            descriptionParts.push(`הערות נוספות: ${lead.notes}`);
+        }
+        
+        const eventDescription = descriptionParts.join('\n');
+        
+        // Create Google Calendar URL
+        const calendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE` +
+            `&text=${encodeURIComponent(eventTitle)}` +
+            `&dates=${startDateTime}/${endDateTime}` +
+            `&details=${encodeURIComponent(eventDescription)}` +
+            `&location=${encodeURIComponent(location || '')}` +
+            `&ctz=Asia/Jerusalem`;
+        
+        // Open in new window
+        window.open(calendarUrl, '_blank');
     },
     
-    createEscortCalendarEvent(lead, escortTime, escortDuration, location, notes) {
-        // Parse event date and time
+    openGoogleCalendarEscort(lead, escortTime, escortDuration, escortLocation, notes) {
+        // Parse event date
         const eventDateParts = lead.eventDate.split('/');
         let eventDate;
         
         if (eventDateParts.length === 3) {
-            // DD/MM/YYYY format
             const day = eventDateParts[0].padStart(2, '0');
             const month = eventDateParts[1].padStart(2, '0');
             const year = eventDateParts[2];
-            eventDate = `${year}-${month}-${day}`;
+            eventDate = `${year}${month}${day}`;
         } else {
-            // Fallback to today
-            eventDate = new Date().toISOString().split('T')[0];
+            eventDate = new Date().toISOString().split('T')[0].replace(/-/g, '');
         }
         
-        const startDateTime = `${eventDate}T${escortTime}:00`;
+        // Calculate times
+        const [startHour, startMin] = escortTime.split(':');
+        const startDateTime = `${eventDate}T${startHour}${startMin}00`;
+        
         const endTime = this.addHours(escortTime, escortDuration);
-        const endDateTime = `${eventDate}T${endTime}:00`;
+        const [endHour, endMin] = endTime.split(':');
+        const endDateTime = `${eventDate}T${endHour}${endMin}00`;
         
         const escortTypeHebrew = {
             'short': 'ליווי קצר',
             'long': 'ליווי ארוך'
         };
         
-        // Create ICS file content for escort
-        const icsContent = [
-            'BEGIN:VCALENDAR',
-            'VERSION:2.0',
-            'PRODID:-//Luna//Calendar//HE',
-            'CALSCALE:GREGORIAN',
-            'METHOD:PUBLISH',
-            'BEGIN:VEVENT',
-            `DTSTART:${startDateTime.replace(/[-:]/g, '')}`,
-            `DTEND:${endDateTime.replace(/[-:]/g, '')}`,
-            `SUMMARY:${lead.fullName || lead.name} - ${escortTypeHebrew[lead.escortType] || 'ליווי'}`,
-            `DESCRIPTION:ליווי לאירוע\\n${notes || ''}\\nטלפון: ${lead.phone || ''}`,
-            `LOCATION:${location || ''}`,
-            'STATUS:CONFIRMED',
-            'END:VEVENT',
-            'END:VCALENDAR'
-        ].join('\r\n');
+        // Build full name (first + last)
+        const firstName = lead.name || '';
+        const lastName = lead.lastName || '';
+        const fullName = `${firstName} ${lastName}`.trim() || lead.fullName || lead.name;
         
-        // Download ICS file
-        const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `${lead.fullName || lead.name}_ליווי_${eventDate}.ics`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
+        // Build event title with full name
+        const eventTitle = `${fullName} - ${escortTypeHebrew[lead.escortType] || 'ליווי'} - ${escortLocation || 'מיקום לא צוין'}`;
+        
+        // Build description
+        const descriptionParts = [];
+        descriptionParts.push(`ליווי לאירוע`);
+        descriptionParts.push(`לקוחה: ${fullName}`);
+        descriptionParts.push(`טלפון: ${lead.phone || 'לא צוין'}`);
+        
+        // Add escort price in notes
+        const escortPrice = lead.escortPrice || 0;
+        if (escortPrice > 0) {
+            descriptionParts.push(`\nעלות ליווי: ₪${escortPrice.toLocaleString('he-IL')}`);
+        }
+        
+        if (notes && notes.trim()) {
+            descriptionParts.push(`\nהערות: ${notes}`);
+        }
+        
+        const eventDescription = descriptionParts.join('\n');
+        
+        // Create Google Calendar URL
+        const calendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE` +
+            `&text=${encodeURIComponent(eventTitle)}` +
+            `&dates=${startDateTime}/${endDateTime}` +
+            `&details=${encodeURIComponent(eventDescription)}` +
+            `&location=${encodeURIComponent(escortLocation || '')}` +
+            `&ctz=Asia/Jerusalem`;
+        
+        // Open in new window
+        window.open(calendarUrl, '_blank');
     },
     
     addHours(time, hours) {
@@ -3279,10 +3682,25 @@ const StageManager = {
     async confirmEventCompleted() {
         if (!this.pendingLead) return;
         
+        // Reload lead from server to get latest data
+        const currentLeadId = this.pendingLead._id || this.pendingLead.id;
+        const response = await fetch(`${CONFIG.API_BASE_URL}/leads/${currentLeadId}`);
+        if (response.ok) {
+            const freshLead = await response.json();
+            this.pendingLead = freshLead; // Update with fresh data
+        }
+        
         const actualDeposit = this.pendingLead.actualDeposit || 0;
         const eventPayment = parseFloat(document.getElementById('completed-eventPayment').value) || 0;
         const paymentMethod = document.getElementById('completed-paymentMethod').value;
         const totalIncome = actualDeposit + eventPayment;
+        
+        // Check if event payment income was already recorded - BEFORE any processing
+        if (eventPayment > 0 && this.pendingLead.eventPaymentIncomeRecorded) {
+            alert('⚠️ הכנסת התשלום באירוע כבר נרשמה במערכת הכנסות.\nלא נוסף רישום כפול.');
+            closeModal('modal-event-completed');
+            return; // Stop here - don't process anything
+        }
         
         // Save event payment and total income
         this.pendingLead.eventPayment = eventPayment;
@@ -3299,6 +3717,7 @@ const StageManager = {
             note: `האירוע הושלם - הכנסה כוללת: ${totalIncome.toLocaleString('he-IL')} ₪`
         });
         
+        // Save lead WITHOUT the flag first
         await API.updateLead(this.pendingLead._id || this.pendingLead.id, this.pendingLead);
         
         // Create income record for event payment if amount > 0
@@ -3318,6 +3737,11 @@ const StageManager = {
             };
             
             await API.addClient(incomeRecord);
+            
+            // Mark as recorded ONLY AFTER income was successfully created
+            this.pendingLead.eventPaymentIncomeRecorded = true;
+            this.pendingLead.eventPaymentIncomeRecordedAt = new Date().toISOString();
+            await API.updateLead(this.pendingLead._id || this.pendingLead.id, this.pendingLead);
         }
         
         closeModal('modal-event-completed');
@@ -3326,10 +3750,10 @@ const StageManager = {
         alert(`✅ האירוע סומן כהושלם!\n💰 סך הכל הכנסה: ${totalIncome.toLocaleString('he-IL')} ₪\n(מקדמה: ${actualDeposit.toLocaleString('he-IL')} ₪ + תשלום באירוע: ${eventPayment.toLocaleString('he-IL')} ₪)`);
         
         // Now continue with WhatsApp automation (if applicable)
-        const leadId = this.pendingLead._id || this.pendingLead.id;
+        const completedLeadId = this.pendingLead._id || this.pendingLead.id;
         this.pendingLead = null;
         
-        await WhatsAppAutomation.checkAndPrompt(leadId, 'completed');
+        await WhatsAppAutomation.checkAndPrompt(completedLeadId, 'completed');
         
         // Refresh view
         HomeView.update();
@@ -3500,15 +3924,427 @@ document.addEventListener('click', function(event) {
 // Make toggleDarkMode global
 window.toggleDarkMode = toggleDarkMode;
 
+// ==================== TOOLTIP HELPER ====================
+window.showTooltip = function(tooltipId) {
+    const tooltip = document.getElementById(tooltipId);
+    if (tooltip) {
+        tooltip.classList.toggle('hidden');
+    }
+};
+
+// ==================== BUSINESS INSIGHTS VIEW ====================
+const InsightsView = {
+    charts: {},
+    
+    render() {
+        if (!isAuthenticated) {
+            this.showEmptyState();
+            return;
+        }
+        
+        this.populateFilters();
+        this.refresh();
+    },
+    
+    populateFilters() {
+        // Populate source filter with unique sources from leads
+        const sources = [...new Set(State.leads.map(l => l.source).filter(s => s))];
+        const sourceFilter = document.getElementById('insights-source-filter');
+        
+        if (sourceFilter) {
+            sourceFilter.innerHTML = '<option value="all">הכל</option>' +
+                sources.map(s => `<option value="${s}">${s}</option>`).join('');
+        }
+    },
+    
+    refresh() {
+        const period = document.getElementById('insights-period')?.value || 'year';
+        const sourceFilter = document.getElementById('insights-source-filter')?.value || 'all';
+        
+        // Filter data by period
+        const filteredLeads = this.filterByPeriod(State.leads, period);
+        const filteredData = sourceFilter === 'all' ? 
+            filteredLeads : 
+            filteredLeads.filter(l => l.source === sourceFilter);
+        
+        if (filteredData.length === 0) {
+            this.showEmptyState();
+            return;
+        }
+        
+        this.hideEmptyState();
+        this.updateKPIs(filteredData);
+        this.updateMarketingCharts(filteredData);
+        this.updateProcessCharts(filteredData);
+    },
+    
+    filterByPeriod(leads, period) {
+        const now = new Date();
+        let cutoffDate;
+        
+        switch(period) {
+            case 'month':
+                cutoffDate = new Date(now.setMonth(now.getMonth() - 1));
+                break;
+            case '3months':
+                cutoffDate = new Date(now.setMonth(now.getMonth() - 3));
+                break;
+            case '6months':
+                cutoffDate = new Date(now.setMonth(now.getMonth() - 6));
+                break;
+            case 'year':
+                cutoffDate = new Date(now.setFullYear(now.getFullYear() - 1));
+                break;
+            case 'all':
+            default:
+                return leads;
+        }
+        
+        return leads.filter(l => new Date(l.createdAt) >= cutoffDate);
+    },
+    
+    updateKPIs(leads) {
+        // Total Leads
+        document.getElementById('kpi-total-leads').textContent = leads.length;
+        
+        // Conversion Rate
+        const closed = leads.filter(l => l.status === 'closed').length;
+        const conversionRate = leads.length > 0 ? ((closed / leads.length) * 100).toFixed(1) : 0;
+        document.getElementById('kpi-conversion-rate').textContent = conversionRate + '%';
+        
+        // Total Revenue
+        const totalRevenue = leads
+            .filter(l => l.status === 'closed' && l.income)
+            .reduce((sum, l) => sum + (l.income || 0), 0);
+        document.getElementById('kpi-total-revenue').textContent = totalRevenue.toLocaleString('he-IL') + ' ₪';
+        
+        // Average Time to Close
+        const closedWithDates = leads.filter(l => l.status === 'closed' && l.completedAt && l.createdAt);
+        let avgTime = 0;
+        if (closedWithDates.length > 0) {
+            const totalDays = closedWithDates.reduce((sum, l) => {
+                const start = new Date(l.createdAt);
+                const end = new Date(l.completedAt);
+                const days = Math.floor((end - start) / (1000 * 60 * 60 * 24));
+                return sum + days;
+            }, 0);
+            avgTime = Math.round(totalDays / closedWithDates.length);
+        }
+        document.getElementById('kpi-avg-time').textContent = avgTime;
+    },
+    
+    updateMarketingCharts(leads) {
+        // Group by source
+        const sourceData = {};
+        leads.forEach(l => {
+            const source = l.source || 'לא צוין';
+            if (!sourceData[source]) {
+                sourceData[source] = { total: 0, closed: 0, revenue: 0 };
+            }
+            sourceData[source].total++;
+            if (l.status === 'closed') {
+                sourceData[source].closed++;
+                sourceData[source].revenue += (l.income || 0);
+            }
+        });
+        
+        // Pie Chart - Lead Sources Distribution
+        this.renderPieChart(sourceData);
+        
+        // Bar Chart - Conversion Rate by Source
+        this.renderConversionChart(sourceData);
+        
+        // Table - Revenue by Source
+        this.renderRevenueTable(sourceData);
+        
+        // Generate insights
+        this.generateMarketingInsights(sourceData);
+    },
+    
+    renderPieChart(sourceData) {
+        const ctx = document.getElementById('chart-sources-pie');
+        if (!ctx) return;
+        
+        if (this.charts.pie) this.charts.pie.destroy();
+        
+        const labels = Object.keys(sourceData);
+        const data = Object.values(sourceData).map(d => d.total);
+        
+        this.charts.pie = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: data,
+                    backgroundColor: [
+                        '#8B5CF6', '#EC4899', '#F59E0B', '#10B981', 
+                        '#3B82F6', '#EF4444', '#6366F1', '#14B8A6'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom' }
+                }
+            }
+        });
+    },
+    
+    renderConversionChart(sourceData) {
+        const ctx = document.getElementById('chart-conversion-bar');
+        if (!ctx) return;
+        
+        if (this.charts.conversion) this.charts.conversion.destroy();
+        
+        const labels = Object.keys(sourceData);
+        const data = Object.entries(sourceData).map(([source, stats]) => {
+            return stats.total > 0 ? ((stats.closed / stats.total) * 100).toFixed(1) : 0;
+        });
+        
+        this.charts.conversion = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'אחוז המרה (%)',
+                    data: data,
+                    backgroundColor: '#10B981'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+    },
+    
+    renderRevenueTable(sourceData) {
+        const tbody = document.getElementById('revenue-by-source-table');
+        if (!tbody) return;
+        
+        const rows = Object.entries(sourceData)
+            .sort((a, b) => b[1].revenue - a[1].revenue)
+            .map(([source, stats]) => {
+                const convRate = stats.total > 0 ? ((stats.closed / stats.total) * 100).toFixed(1) : 0;
+                const avgDeal = stats.closed > 0 ? (stats.revenue / stats.closed).toFixed(0) : 0;
+                
+                return `
+                    <tr class="border-b border-gray-200 dark:border-gray-700">
+                        <td class="text-right p-3">${source}</td>
+                        <td class="text-center p-3">${stats.total}</td>
+                        <td class="text-center p-3">${stats.closed}</td>
+                        <td class="text-center p-3">${convRate}%</td>
+                        <td class="text-right p-3 font-bold text-green-600">${stats.revenue.toLocaleString('he-IL')} ₪</td>
+                        <td class="text-right p-3">${avgDeal.toLocaleString('he-IL')} ₪</td>
+                    </tr>
+                `;
+            }).join('');
+        
+        tbody.innerHTML = rows;
+    },
+    
+    generateMarketingInsights(sourceData) {
+        // Find best source
+        const bestSource = Object.entries(sourceData)
+            .sort((a, b) => b[1].revenue - a[1].revenue)[0];
+        
+        if (bestSource) {
+            const sourcesInsight = document.getElementById('sources-insight');
+            if (sourcesInsight) {
+                sourcesInsight.textContent = `המקור המניב ביותר: ${bestSource[0]} (${bestSource[1].revenue.toLocaleString('he-IL')} ₪)`;
+            }
+        }
+        
+        // Find best conversion
+        const bestConversion = Object.entries(sourceData)
+            .map(([source, stats]) => ({
+                source,
+                rate: stats.total > 0 ? (stats.closed / stats.total) * 100 : 0
+            }))
+            .sort((a, b) => b.rate - a.rate)[0];
+        
+        if (bestConversion) {
+            const conversionInsight = document.getElementById('conversion-insight');
+            if (conversionInsight) {
+                conversionInsight.textContent = `האיכות הגבוהה ביותר: ${bestConversion.source} (${bestConversion.rate.toFixed(1)}% המרה)`;
+            }
+        }
+    },
+    
+    updateProcessCharts(leads) {
+        // Funnel data
+        const funnel = {
+            new: leads.filter(l => l.status === 'new').length,
+            inProgress: leads.filter(l => l.status === 'in-progress' || l.status === 'proposal-sent').length,
+            contractSent: leads.filter(l => l.status === 'contract-sent').length,
+            closed: leads.filter(l => l.status === 'closed').length,
+            notClosed: leads.filter(l => l.status === 'not-closed' || l.status === 'lost').length
+        };
+        
+        const total = leads.length;
+        this.renderFunnel(funnel, total);
+        
+        // Deal size by source/service
+        this.renderDealSizeChart(leads);
+    },
+    
+    renderFunnel(funnel, total) {
+        // Update counts
+        document.getElementById('funnel-new-count').textContent = funnel.new;
+        document.getElementById('funnel-progress-count').textContent = funnel.inProgress;
+        document.getElementById('funnel-contract-count').textContent = funnel.contractSent;
+        document.getElementById('funnel-closed-count').textContent = funnel.closed;
+        document.getElementById('funnel-not-closed-count').textContent = funnel.notClosed;
+        
+        // Update bars
+        const newPct = 100;
+        const progressPct = total > 0 ? (funnel.inProgress / total * 100).toFixed(1) : 0;
+        const contractPct = total > 0 ? (funnel.contractSent / total * 100).toFixed(1) : 0;
+        const closedPct = total > 0 ? (funnel.closed / total * 100).toFixed(1) : 0;
+        const notClosedPct = total > 0 ? (funnel.notClosed / total * 100).toFixed(1) : 0;
+        
+        document.getElementById('funnel-new-bar').style.width = newPct + '%';
+        document.getElementById('funnel-new-bar').textContent = newPct + '%';
+        
+        document.getElementById('funnel-progress-bar').style.width = progressPct + '%';
+        document.getElementById('funnel-progress-bar').textContent = progressPct + '%';
+        
+        document.getElementById('funnel-contract-bar').style.width = contractPct + '%';
+        document.getElementById('funnel-contract-bar').textContent = contractPct + '%';
+        
+        document.getElementById('funnel-closed-bar').style.width = closedPct + '%';
+        document.getElementById('funnel-closed-bar').textContent = closedPct + '%';
+        
+        document.getElementById('funnel-not-closed-bar').style.width = notClosedPct + '%';
+        document.getElementById('funnel-not-closed-bar').textContent = notClosedPct + '%';
+        
+        // Generate insight
+        const funnelInsight = document.getElementById('funnel-insight');
+        if (funnelInsight) {
+            if (funnel.inProgress > funnel.contractSent + funnel.closed) {
+                funnelInsight.textContent = 'הרבה לידים תקועים ב"בתהליך" - כדאי להזדרז לשלוח חוזים!';
+            } else if (funnel.contractSent > funnel.closed && funnel.contractSent > 0) {
+                funnelInsight.textContent = 'יש הרבה חוזים שלא נסגרו - מומלץ לעקוב ולהזכיר ללקוחות';
+            } else {
+                funnelInsight.textContent = 'המשפך נראה בריא! המשיכו לעבוד חזק 💪';
+            }
+        }
+    },
+    
+    renderDealSizeChart(leads) {
+        const ctx = document.getElementById('chart-deal-size');
+        if (!ctx) return;
+        
+        if (this.charts.dealSize) this.charts.dealSize.destroy();
+        
+        // Group by service
+        const serviceData = {};
+        leads.filter(l => l.status === 'closed' && l.income).forEach(l => {
+            const service = l.service || 'לא צוין';
+            if (!serviceData[service]) {
+                serviceData[service] = { total: 0, count: 0 };
+            }
+            serviceData[service].total += l.income;
+            serviceData[service].count++;
+        });
+        
+        const labels = Object.keys(serviceData);
+        const data = Object.values(serviceData).map(d => 
+            d.count > 0 ? (d.total / d.count).toFixed(0) : 0
+        );
+        
+        this.charts.dealSize = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'ממוצע (₪)',
+                    data: data,
+                    backgroundColor: '#3B82F6'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return value.toLocaleString('he-IL') + ' ₪';
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+        
+        // Generate insight
+        const dealSizeInsight = document.getElementById('deal-size-insight');
+        if (dealSizeInsight && labels.length > 0) {
+            const maxIndex = data.indexOf(Math.max(...data));
+            dealSizeInsight.textContent = `השירות הכי רווחי: ${labels[maxIndex]} (${data[maxIndex].toLocaleString('he-IL')} ₪ בממוצע)`;
+        }
+    },
+    
+    showEmptyState() {
+        document.getElementById('insights-empty-state')?.classList.remove('hidden');
+        // Hide all content sections
+        document.querySelectorAll('#page-insights > div:not(#insights-empty-state)').forEach(el => {
+            el.classList.add('hidden');
+        });
+    },
+    
+    hideEmptyState() {
+        document.getElementById('insights-empty-state')?.classList.add('hidden');
+        // Show all content sections
+        document.querySelectorAll('#page-insights > div:not(#insights-empty-state)').forEach(el => {
+            el.classList.remove('hidden');
+        });
+    }
+};
+
 // Initialize app
 async function init() {
     console.log('🚀 Initializing CRM...');
     loadDarkMode(); // Load dark mode preference first
+    
+    // Check authentication status FIRST
+    await checkAuthStatus();
+    
     await State.init();
     await MessageSettings.init();
     await TimerSettings.init();
     FollowUpTimers.init();
     
+    // Populate year filter
+    const yearFilter = document.getElementById('stats-year-filter');
+    const currentYear = new Date().getFullYear();
+    const years = [currentYear - 1, currentYear, currentYear + 1]; // Previous, current, next year
+    yearFilter.innerHTML = years
+        .map(year => `<option value="${year}" ${year === currentYear ? 'selected' : ''}>${year}</option>`)
+        .join('');
+    
+    // Populate month filter
     const filter = document.getElementById('stats-month-filter');
     const currentMonth = CONFIG.MONTHS[new Date().getMonth()];
     filter.innerHTML = CONFIG.MONTHS
@@ -3519,7 +4355,7 @@ async function init() {
     
     // Initial render - Show home page by default
     await switchPage('home');
-    console.log(' CRM Ready!');
+    console.log('✅ CRM Ready!');
 }
 
 document.addEventListener('DOMContentLoaded', init);

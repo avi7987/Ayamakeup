@@ -1,0 +1,247 @@
+        <!-- Page: Business Insights -->
+        <section id="page-insights" class="hidden pt-6">
+            <!-- Header with Dark Mode Toggle -->
+            <div class="relative mb-6">
+                <!-- Dark Mode Toggle - Top Right -->
+                <button onclick="toggleDarkMode()" class="absolute top-0 right-0 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 p-2 rounded-full shadow-md transition-all duration-300 hover:scale-110 z-10">
+                    <svg id="dark-mode-icon-insights" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                    </svg>
+                </button>
+                
+                <!-- Centered Logo -->
+                <div class="text-center mb-4">
+                    <div class="inline-block">
+                        <div class="bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-500 text-white px-6 py-2 rounded-xl shadow-lg">
+                            <span class="text-2xl font-black tracking-tight flex items-center gap-2 justify-center">🌙 Luna</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Back Button - Small, Left Side -->
+                <button onclick="switchPage('home')" class="absolute bottom-0 left-0 group bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 px-3 py-1.5 rounded-lg font-medium text-sm flex items-center gap-1 transition-all duration-300 shadow-sm hover:shadow-md border border-gray-200 dark:border-gray-600">
+                    <svg class="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    </svg>
+                    <span>חזרה</span>
+                </button>
+            </div>
+
+            <!-- Page Title -->
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">📊 תובנות עסקיות</h2>
+                <p class="text-sm text-gray-600 dark:text-gray-400">גלו מהיכן מגיעים הלקוחות שלכם, אילו ערוצים מניבים הכנסה ואיפה אתם יכולים להשתפר</p>
+            </div>
+
+            <!-- Filters -->
+            <div class="bg-white dark:bg-slate-800 rounded-xl shadow-md p-4 mb-6">
+                <div class="flex flex-wrap gap-3 items-center">
+                    <div class="flex-1 min-w-[200px]">
+                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">טווח תאריכים</label>
+                        <select id="insights-period" onchange="InsightsView.refresh()" class="w-full p-2 border-2 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl text-sm">
+                            <option value="month">חודש אחרון</option>
+                            <option value="3months">3 חודשים אחרונים</option>
+                            <option value="6months">6 חודשים אחרונים</option>
+                            <option value="year" selected>שנה אחרונה</option>
+                            <option value="all">כל הזמן</option>
+                        </select>
+                    </div>
+                    <div class="flex-1 min-w-[200px]">
+                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">מקור (אופציונלי)</label>
+                        <select id="insights-source-filter" onchange="InsightsView.refresh()" class="w-full p-2 border-2 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl text-sm">
+                            <option value="all">הכל</option>
+                            <!-- Will be populated dynamically -->
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 1: High-Level Overview (KPI Cards) -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <!-- Total Leads Card -->
+                <div class="bg-white dark:bg-slate-800 rounded-xl shadow-md p-6 text-center">
+                    <div class="flex items-center justify-center gap-2 mb-2">
+                        <h3 class="text-sm font-bold text-gray-700 dark:text-gray-300">סה"כ לידים</h3>
+                        <button onclick="showTooltip('tooltip-total-leads')" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <div id="kpi-total-leads" class="text-4xl font-bold text-purple-600 dark:text-purple-400">0</div>
+                    <div id="tooltip-total-leads" class="hidden text-xs text-gray-500 dark:text-gray-400 mt-2">מספר הלידים שהתקבלו בתקופה שנבחרה</div>
+                </div>
+
+                <!-- Conversion Rate Card -->
+                <div class="bg-white dark:bg-slate-800 rounded-xl shadow-md p-6 text-center">
+                    <div class="flex items-center justify-center gap-2 mb-2">
+                        <h3 class="text-sm font-bold text-gray-700 dark:text-gray-300">אחוז המרה</h3>
+                        <button onclick="showTooltip('tooltip-conversion')" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <div id="kpi-conversion-rate" class="text-4xl font-bold text-green-600 dark:text-green-400">0%</div>
+                    <div id="tooltip-conversion" class="hidden text-xs text-gray-500 dark:text-gray-400 mt-2">אחוז הלידים שהפכו ללקוחות משלמים</div>
+                </div>
+
+                <!-- Total Revenue Card -->
+                <div class="bg-white dark:bg-slate-800 rounded-xl shadow-md p-6 text-center">
+                    <div class="flex items-center justify-center gap-2 mb-2">
+                        <h3 class="text-sm font-bold text-gray-700 dark:text-gray-300">הכנסות כוללות</h3>
+                        <button onclick="showTooltip('tooltip-revenue')" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <div id="kpi-total-revenue" class="text-4xl font-bold text-blue-600 dark:text-blue-400">0 ₪</div>
+                    <div id="tooltip-revenue" class="hidden text-xs text-gray-500 dark:text-gray-400 mt-2">סכום ההכנסות מעסקאות שנסגרו</div>
+                </div>
+
+                <!-- Average Time to Close Card -->
+                <div class="bg-white dark:bg-slate-800 rounded-xl shadow-md p-6 text-center">
+                    <div class="flex items-center justify-center gap-2 mb-2">
+                        <h3 class="text-sm font-bold text-gray-700 dark:text-gray-300">זמן ממוצע לסגירה</h3>
+                        <button onclick="showTooltip('tooltip-time-to-close')" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <div id="kpi-avg-time" class="text-4xl font-bold text-amber-600 dark:text-amber-400">0</div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400">ימים</div>
+                    <div id="tooltip-time-to-close" class="hidden text-xs text-gray-500 dark:text-gray-400 mt-2">כמה זמן בממוצע לוקח עד שליד הופך ללקוח</div>
+                </div>
+            </div>
+
+            <!-- Section 2: Marketing & Channel Insights -->
+            <div class="bg-white dark:bg-slate-800 rounded-xl shadow-md p-6 mb-6">
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">📢 ניתוח ערוצי שיווק</h3>
+                
+                <div class="grid lg:grid-cols-2 gap-6">
+                    <!-- Lead Sources Distribution -->
+                    <div>
+                        <h4 class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-3">התפלגות לידים לפי מקור</h4>
+                        <div class="h-64">
+                            <canvas id="chart-sources-pie"></canvas>
+                        </div>
+                        <p id="sources-insight" class="text-sm text-gray-600 dark:text-gray-400 mt-3 text-center italic"></p>
+                    </div>
+
+                    <!-- Conversion Rate by Source -->
+                    <div>
+                        <h4 class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-3">אחוז המרה לפי מקור</h4>
+                        <div class="h-64">
+                            <canvas id="chart-conversion-bar"></canvas>
+                        </div>
+                        <p id="conversion-insight" class="text-sm text-gray-600 dark:text-gray-400 mt-3 text-center italic"></p>
+                    </div>
+                </div>
+
+                <!-- Revenue by Source Table -->
+                <div class="mt-6">
+                    <h4 class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-3">הכנסות לפי מקור</h4>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="border-b-2 border-gray-200 dark:border-gray-700">
+                                    <th class="text-right p-3 font-bold">מקור</th>
+                                    <th class="text-center p-3 font-bold">לידים</th>
+                                    <th class="text-center p-3 font-bold">נסגרו</th>
+                                    <th class="text-center p-3 font-bold">המרה</th>
+                                    <th class="text-right p-3 font-bold">הכנסות</th>
+                                    <th class="text-right p-3 font-bold">ממוצע לעסקה</th>
+                                </tr>
+                            </thead>
+                            <tbody id="revenue-by-source-table">
+                                <!-- Will be populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 3: Process & Performance Insights -->
+            <div class="bg-white dark:bg-slate-800 rounded-xl shadow-md p-6 mb-6">
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">📈 ביצועים ותהליך מכירה</h3>
+                
+                <div class="grid lg:grid-cols-2 gap-6">
+                    <!-- Lead Drop-Off Funnel -->
+                    <div>
+                        <h4 class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-3">משפך המרה - היכן לידים נופלים?</h4>
+                        <div class="space-y-3">
+                            <div class="funnel-stage" data-stage="new">
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="text-sm font-bold">ליד חדש</span>
+                                    <span class="text-sm font-bold" id="funnel-new-count">0</span>
+                                </div>
+                                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-8">
+                                    <div id="funnel-new-bar" class="bg-purple-600 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold" style="width: 100%">100%</div>
+                                </div>
+                            </div>
+
+                            <div class="funnel-stage" data-stage="in-progress">
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="text-sm font-bold">בתהליך</span>
+                                    <span class="text-sm font-bold" id="funnel-progress-count">0</span>
+                                </div>
+                                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-8">
+                                    <div id="funnel-progress-bar" class="bg-blue-600 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold" style="width: 0%"></div>
+                                </div>
+                            </div>
+
+                            <div class="funnel-stage" data-stage="contract-sent">
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="text-sm font-bold">חוזה נשלח</span>
+                                    <span class="text-sm font-bold" id="funnel-contract-count">0</span>
+                                </div>
+                                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-8">
+                                    <div id="funnel-contract-bar" class="bg-indigo-600 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold" style="width: 0%"></div>
+                                </div>
+                            </div>
+
+                            <div class="funnel-stage" data-stage="closed">
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="text-sm font-bold">✅ נסגר</span>
+                                    <span class="text-sm font-bold" id="funnel-closed-count">0</span>
+                                </div>
+                                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-8">
+                                    <div id="funnel-closed-bar" class="bg-green-600 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold" style="width: 0%"></div>
+                                </div>
+                            </div>
+
+                            <div class="funnel-stage" data-stage="not-closed">
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="text-sm font-bold">❌ לא נסגר</span>
+                                    <span class="text-sm font-bold" id="funnel-not-closed-count">0</span>
+                                </div>
+                                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-8">
+                                    <div id="funnel-not-closed-bar" class="bg-red-600 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <p id="funnel-insight" class="text-sm text-gray-600 dark:text-gray-400 mt-4 text-center italic"></p>
+                    </div>
+
+                    <!-- Average Deal Size -->
+                    <div>
+                        <h4 class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-3">גודל עסקה ממוצע</h4>
+                        <div class="h-64">
+                            <canvas id="chart-deal-size"></canvas>
+                        </div>
+                        <p id="deal-size-insight" class="text-sm text-gray-600 dark:text-gray-400 mt-3 text-center italic"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Empty State (shown when no data) -->
+            <div id="insights-empty-state" class="hidden bg-white dark:bg-slate-800 rounded-xl shadow-md p-12 text-center">
+                <svg class="w-24 h-24 mx-auto text-gray-300 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                </svg>
+                <h3 class="text-xl font-bold text-gray-700 dark:text-gray-300 mb-2">אין מספיק נתונים</h3>
+                <p class="text-gray-600 dark:text-gray-400">התחילו להוסיף לידים ולסגור עסקאות כדי לראות תובנות</p>
+            </div>
+        </section>

@@ -10,6 +10,9 @@ const Docxtemplater = require('docxtemplater');
 const PizZip = require('pizzip');
 const puppeteer = require('puppeteer');
 
+// Auth system imports
+const { setupAuth, requireAuth, setupAuthRoutes } = require('./auth-config');
+
 // Initialize Express App
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -45,7 +48,23 @@ async function connectDB() {
 }
 
 // MongoDB Schemas
+
+// ==================== USER SCHEMA ====================
+const userSchema = new mongoose.Schema({
+    googleId: { type: String, required: true, unique: true },
+    email: { type: String, required: true, unique: true },
+    name: { type: String, required: true },
+    picture: { type: String, default: '' },
+    // Google Calendar tokens
+    accessToken: { type: String, default: '' },
+    refreshToken: { type: String, default: '' },
+    tokenExpiry: { type: Date, default: null },
+    createdAt: { type: Date, default: Date.now },
+    lastLogin: { type: Date, default: Date.now }
+});
+
 const clientSchema = new mongoose.Schema({
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     name: { type: String, required: true },
     phone: { type: String, required: false },
     service: { type: String, required: true },
@@ -56,6 +75,7 @@ const clientSchema = new mongoose.Schema({
 });
 
 const leadSchema = new mongoose.Schema({
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     name: { type: String, required: true },
     lastName: { type: String, required: true }, // Changed to required
     phone: { type: String, required: true },
@@ -117,7 +137,7 @@ const leadSchema = new mongoose.Schema({
 });
 
 const goalsSchema = new mongoose.Schema({
-    userId: { type: String, default: 'default' }, // For future multi-user support
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     year: { type: Number, required: true },
     income: { type: Number, default: 0 },
     brides: { type: Number, default: 0 },
@@ -126,13 +146,14 @@ const goalsSchema = new mongoose.Schema({
 
 // Contract Template Schema - stores the custom HTML template
 const contractTemplateSchema = new mongoose.Schema({
-    userId: { type: String, default: 'default' },
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     templateHTML: { type: String, required: true },
     logoUrl: { type: String, default: '' },
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now }
 });
 
+const User = mongoose.model('User', userSchema);
 const Client = mongoose.model('Client', clientSchema);
 const Lead = mongoose.model('Lead', leadSchema);
 const Goals = mongoose.model('Goals', goalsSchema);
@@ -169,19 +190,34 @@ const upload = multer({
     }
 });
 
+// ==================== AUTHENTICATION SETUP ====================
+// Setup authentication system (if credentials are configured)
+if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+    console.log('🔐 Initializing authentication system...');
+    setupAuth(app, mongoose, User);
+    setupAuthRoutes(app);
+    console.log('✅ Authentication enabled');
+} else {
+    console.warn('⚠️  Authentication disabled - Google OAuth credentials not configured');
+    console.warn('   Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in .env to enable');
+}
+
 // ==================== STATIC FILES ====================
-// Serve static files from public directory
-app.use(express.static(path.join(__dirname, 'public')));
 // Serve generated contracts
 app.use('/contracts', express.static(path.join(__dirname, 'contracts')));
 
-// Serve index.html for root path with no-cache headers
+// Serve index.html for root path (no authentication required - will check in frontend)
 app.get('/', (req, res) => {
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
+
+// Serve static files from public directory (CSS, JS, images) - AFTER protected routes
+app.use(express.static(path.join(__dirname, 'public'), {
+    index: false // Don't serve index.html automatically
+}));
 
 // Serve contract signing page
 app.get('/contract-sign/:leadId', (req, res) => {
@@ -204,9 +240,10 @@ app.get('/api/health', (req, res) => {
 // ==================== CLIENTS/INCOME ROUTES ====================
 
 // Get all clients
-app.get('/api/clients', async (req, res) => {
+app.get('/api/clients', requireAuth, async (req, res) => {
     try {
-        const clients = await Client.find().sort({ date: -1 });
+        const userId = req.user._id;
+        const clients = await Client.find({ userId }).sort({ date: -1 });
         res.json(clients);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -214,9 +251,10 @@ app.get('/api/clients', async (req, res) => {
 });
 
 // Get single client
-app.get('/api/clients/:id', async (req, res) => {
+app.get('/api/clients/:id', requireAuth, async (req, res) => {
     try {
-        const client = await Client.findById(req.params.id);
+        const userId = req.user._id;
+        const client = await Client.findOne({ _id: req.params.id, userId });
         if (!client) {
             return res.status(404).json({ error: 'Client not found' });
         }
@@ -227,9 +265,13 @@ app.get('/api/clients/:id', async (req, res) => {
 });
 
 // Create new client
-app.post('/api/clients', async (req, res) => {
+app.post('/api/clients', requireAuth, async (req, res) => {
     try {
-        const client = new Client(req.body);
+        const userId = req.user._id;
+        const client = new Client({
+            ...req.body,
+            userId
+        });
         await client.save();
         res.status(201).json(client);
     } catch (error) {
@@ -238,10 +280,11 @@ app.post('/api/clients', async (req, res) => {
 });
 
 // Update client
-app.put('/api/clients/:id', async (req, res) => {
+app.put('/api/clients/:id', requireAuth, async (req, res) => {
     try {
-        const client = await Client.findByIdAndUpdate(
-            req.params.id,
+        const userId = req.user._id;
+        const client = await Client.findOneAndUpdate(
+            { _id: req.params.id, userId },
             req.body,
             { new: true, runValidators: true }
         );
@@ -254,10 +297,36 @@ app.put('/api/clients/:id', async (req, res) => {
     }
 });
 
-// Delete client
-app.delete('/api/clients/:id', async (req, res) => {
+// Bulk delete clients (must be before the :id route)
+app.post('/api/clients/bulk-delete', requireAuth, async (req, res) => {
     try {
-        const client = await Client.findByIdAndDelete(req.params.id);
+        const userId = req.user._id;
+        const { ids } = req.body;
+        
+        if (!Array.isArray(ids) || ids.length === 0) {
+            return res.status(400).json({ error: 'Invalid ids array' });
+        }
+        
+        const result = await Client.deleteMany({ 
+            _id: { $in: ids }, 
+            userId 
+        });
+        
+        res.json({ 
+            success: true, 
+            message: `${result.deletedCount} clients deleted successfully`,
+            deletedCount: result.deletedCount
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Delete client
+app.delete('/api/clients/:id', requireAuth, async (req, res) => {
+    try {
+        const userId = req.user._id;
+        const client = await Client.findOneAndDelete({ _id: req.params.id, userId });
         if (!client) {
             return res.status(404).json({ error: 'Client not found' });
         }
@@ -270,9 +339,10 @@ app.delete('/api/clients/:id', async (req, res) => {
 // ==================== LEADS ROUTES ====================
 
 // Get all leads
-app.get('/api/leads', async (req, res) => {
+app.get('/api/leads', requireAuth, async (req, res) => {
     try {
-        const leads = await Lead.find().sort({ contactDate: -1 });
+        const userId = req.user._id;
+        const leads = await Lead.find({ userId }).sort({ contactDate: -1 });
         res.json(leads);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -280,9 +350,10 @@ app.get('/api/leads', async (req, res) => {
 });
 
 // Get single lead
-app.get('/api/leads/:id', async (req, res) => {
+app.get('/api/leads/:id', requireAuth, async (req, res) => {
     try {
-        const lead = await Lead.findById(req.params.id);
+        const userId = req.user._id;
+        const lead = await Lead.findOne({ _id: req.params.id, userId });
         if (!lead) {
             return res.status(404).json({ error: 'Lead not found' });
         }
@@ -293,9 +364,13 @@ app.get('/api/leads/:id', async (req, res) => {
 });
 
 // Create new lead
-app.post('/api/leads', async (req, res) => {
+app.post('/api/leads', requireAuth, async (req, res) => {
     try {
-        const lead = new Lead(req.body);
+        const userId = req.user._id;
+        const lead = new Lead({
+            ...req.body,
+            userId
+        });
         await lead.save();
         res.status(201).json(lead);
     } catch (error) {
@@ -304,10 +379,11 @@ app.post('/api/leads', async (req, res) => {
 });
 
 // Update lead
-app.put('/api/leads/:id', async (req, res) => {
+app.put('/api/leads/:id', requireAuth, async (req, res) => {
     try {
-        const lead = await Lead.findByIdAndUpdate(
-            req.params.id,
+        const userId = req.user._id;
+        const lead = await Lead.findOneAndUpdate(
+            { _id: req.params.id, userId },
             req.body,
             { new: true, runValidators: true }
         );
@@ -338,9 +414,10 @@ app.patch('/api/leads/:id/status', async (req, res) => {
 });
 
 // Delete lead
-app.delete('/api/leads/:id', async (req, res) => {
+app.delete('/api/leads/:id', requireAuth, async (req, res) => {
     try {
-        const lead = await Lead.findByIdAndDelete(req.params.id);
+        const userId = req.user._id;
+        const lead = await Lead.findOneAndDelete({ _id: req.params.id, userId });
         if (!lead) {
             return res.status(404).json({ error: 'Lead not found' });
         }
@@ -379,10 +456,11 @@ app.post('/api/leads/:id/convert', async (req, res) => {
 // ==================== STATISTICS ROUTES ====================
 
 // Get statistics
-app.get('/api/stats', async (req, res) => {
+app.get('/api/stats', requireAuth, async (req, res) => {
     try {
-        const clients = await Client.find();
-        const leads = await Lead.find();
+        const userId = req.user._id;
+        const clients = await Client.find({ userId });
+        const leads = await Lead.find({ userId });
 
         const totalIncome = clients.reduce((sum, client) => sum + (client.price || 0), 0);
         const totalClients = clients.length;
@@ -407,9 +485,10 @@ app.get('/api/stats', async (req, res) => {
 });
 
 // Get monthly stats
-app.get('/api/stats/monthly', async (req, res) => {
+app.get('/api/stats/monthly', requireAuth, async (req, res) => {
     try {
-        const clients = await Client.find();
+        const userId = req.user._id;
+        const clients = await Client.find({ userId });
         
         const monthlyStats = {};
         clients.forEach(client => {
@@ -472,15 +551,16 @@ app.post('/api/fix-indexes', async (req, res) => {
 // ==================== GOALS ROUTES ====================
 
 // Get current year goals
-app.get('/api/goals', async (req, res) => {
+app.get('/api/goals', requireAuth, async (req, res) => {
     try {
+        const userId = req.user._id;
         const currentYear = new Date().getFullYear();
-        let goals = await Goals.findOne({ userId: 'default', year: currentYear });
+        let goals = await Goals.findOne({ userId, year: currentYear });
         
         if (!goals) {
             // Create default goals if not exists
             goals = await Goals.create({
-                userId: 'default',
+                userId,
                 year: currentYear,
                 income: 0,
                 brides: 0
@@ -494,12 +574,13 @@ app.get('/api/goals', async (req, res) => {
 });
 
 // Update goals
-app.put('/api/goals', async (req, res) => {
+app.put('/api/goals', requireAuth, async (req, res) => {
     try {
+        const userId = req.user._id;
         const currentYear = new Date().getFullYear();
         const { income, brides } = req.body;
         
-        let goals = await Goals.findOne({ userId: 'default', year: currentYear });
+        let goals = await Goals.findOne({ userId, year: currentYear });
         
         if (goals) {
             goals.income = income;
@@ -508,7 +589,7 @@ app.put('/api/goals', async (req, res) => {
             await goals.save();
         } else {
             goals = await Goals.create({
-                userId: 'default',
+                userId,
                 year: currentYear,
                 income,
                 brides
@@ -524,9 +605,10 @@ app.put('/api/goals', async (req, res) => {
 // ==================== CONTRACT ENDPOINTS ====================
 
 // Get contract template HTML from database
-app.get('/api/contract-template-html', async (req, res) => {
+app.get('/api/contract-template-html', requireAuth, async (req, res) => {
     try {
-        let template = await ContractTemplate.findOne({ userId: 'default' });
+        const userId = req.user._id;
+        let template = await ContractTemplate.findOne({ userId });
         
         if (!template) {
             // Create default template if doesn't exist
@@ -606,7 +688,7 @@ app.get('/api/contract-template-html', async (req, res) => {
 </p>`;
 
             template = await ContractTemplate.create({
-                userId: 'default',
+                userId,
                 templateHTML: defaultTemplate,
                 logoUrl: ''
             });
@@ -620,11 +702,12 @@ app.get('/api/contract-template-html', async (req, res) => {
 });
 
 // Save contract template HTML
-app.post('/api/contract-template-html', async (req, res) => {
+app.post('/api/contract-template-html', requireAuth, async (req, res) => {
     try {
+        const userId = req.user._id;
         const { templateHTML } = req.body;
         
-        let template = await ContractTemplate.findOne({ userId: 'default' });
+        let template = await ContractTemplate.findOne({ userId });
         
         if (template) {
             template.templateHTML = templateHTML;
@@ -632,7 +715,7 @@ app.post('/api/contract-template-html', async (req, res) => {
             await template.save();
         } else {
             template = await ContractTemplate.create({
-                userId: 'default',
+                userId,
                 templateHTML,
                 logoUrl: ''
             });
@@ -646,15 +729,16 @@ app.post('/api/contract-template-html', async (req, res) => {
 });
 
 // Upload logo
-app.post('/api/upload-logo', upload.single('logo'), async (req, res) => {
+app.post('/api/upload-logo', requireAuth, upload.single('logo'), async (req, res) => {
     try {
+        const userId = req.user._id;
         if (!req.file) {
             return res.status(400).json({ error: 'No file uploaded' });
         }
         
         const logoUrl = `/uploads/${req.file.filename}`;
         
-        let template = await ContractTemplate.findOne({ userId: 'default' });
+        let template = await ContractTemplate.findOne({ userId });
         
         if (template) {
             template.logoUrl = logoUrl;
@@ -662,7 +746,7 @@ app.post('/api/upload-logo', upload.single('logo'), async (req, res) => {
             await template.save();
         } else {
             template = await ContractTemplate.create({
-                userId: 'default',
+                userId,
                 templateHTML: '',
                 logoUrl
             });
@@ -676,7 +760,7 @@ app.post('/api/upload-logo', upload.single('logo'), async (req, res) => {
 });
 
 // Upload contract template
-app.post('/api/contract-template', upload.single('template'), async (req, res) => {
+app.post('/api/contract-template', requireAuth, upload.single('template'), async (req, res) => {
     try {
         console.log('📄 Contract template upload request received');
         console.log('File:', req.file);
@@ -904,8 +988,8 @@ app.get('/api/contract-view/:leadId', async (req, res) => {
             return res.status(404).json({ error: 'ליד לא נמצא' });
         }
 
-        // Load custom template
-        const customTemplate = await ContractTemplate.findOne({ userId: 'default' });
+        // Load custom template using the lead's userId
+        const customTemplate = await ContractTemplate.findOne({ userId: lead.userId });
         if (!customTemplate) {
             return res.status(404).json({ error: 'לא נמצאה תבנית חוזה' });
         }
@@ -1187,44 +1271,85 @@ app.post('/api/sign-contract/:leadId', async (req, res) => {
         const signedFilename = `signed-contract-${lead._id}.pdf`;
         const signedPath = path.join(contractsDir, signedFilename);
 
-        const browser = await puppeteer.launch({
-            headless: true,
-            args: [
-                '--no-sandbox',
-                '--disable-setuid-sandbox',
-                '--disable-dev-shm-usage',
-                '--disable-accelerated-2d-canvas',
-                '--disable-gpu',
-                '--disable-software-rasterizer',
-                '--disable-extensions'
-            ]
-        });
-        
-        const page = await browser.newPage();
-        await page.setContent(fullHTML);
-        await page.pdf({
-            path: signedPath,
-            format: 'A4',
-            printBackground: true,
-            margin: {
-                top: '20mm',
-                bottom: '20mm',
-                left: '20mm',
-                right: '20mm'
+        let browser;
+        try {
+            browser = await puppeteer.launch({
+                headless: true,
+                args: [
+                    '--no-sandbox',
+                    '--disable-setuid-sandbox',
+                    '--disable-dev-shm-usage',
+                    '--disable-accelerated-2d-canvas',
+                    '--disable-gpu',
+                    '--disable-software-rasterizer',
+                    '--disable-extensions'
+                ],
+                timeout: 30000
+            });
+            
+            const page = await browser.newPage();
+            await page.setContent(fullHTML);
+            await page.pdf({
+                path: signedPath,
+                format: 'A4',
+                printBackground: true,
+                margin: {
+                    top: '20mm',
+                    bottom: '20mm',
+                    left: '20mm',
+                    right: '20mm'
+                }
+            });
+            
+            await browser.close();
+            console.log('✅ Signed PDF generated successfully');
+        } catch (puppeteerError) {
+            console.error('❌ Puppeteer failed for signed PDF:', puppeteerError.message);
+            
+            if (browser) {
+                try { await browser.close(); } catch (e) {}
             }
-        });
-        await browser.close();
-
-        console.log('✅ Signed PDF generated successfully');
+            
+            // Check if running on Railway (PROD) - if yes, throw error instead of fallback
+            const isProduction = process.env.RAILWAY_ENVIRONMENT || process.env.NODE_ENV === 'production';
+            
+            if (isProduction) {
+                console.error('❌ PRODUCTION: Puppeteer must work for signed contracts - no fallback');
+                throw puppeteerError; // Re-throw to be caught by outer try-catch
+            }
+            
+            // DEV FALLBACK ONLY: Save as HTML
+            console.log('💡 DEV MODE: Saving signed HTML preview instead...');
+            const signedHtmlFilename = `signed-contract-${lead._id}.html`;
+            const signedHtmlPath = path.join(contractsDir, signedHtmlFilename);
+            await fs.writeFile(signedHtmlPath, fullHTML);
+            
+            lead.signedContractUrl = `/contracts/${signedHtmlFilename}`;
+            lead.signatureSVG = signatureSVG;
+            lead.signedAt = new Date().toISOString();
+            lead.contractStatus = 'signed';
+            await lead.save();
+            
+            return res.json({
+                success: true,
+                signedPdfUrl: `/contracts/${signedHtmlFilename}`,
+                message: 'החוזה נחתם בהצלחה (תצוגת HTML - סביבת פיתוח)',
+                isHtmlFallback: true,
+                isDev: true
+            });
+        }
 
         // Update lead with signed contract URL
         lead.signedContractUrl = `/contracts/${signedFilename}`;
+        lead.signatureSVG = signatureSVG;
+        lead.signedAt = new Date().toISOString();
+        lead.contractStatus = 'signed';
         await lead.save();
 
         res.json({
             success: true,
             message: 'החתימה נשמרה והחוזה החתום נוצר בהצלחה',
-            signedAt: lead.customerSignedAt,
+            signedAt: lead.signedAt,
             signedContractUrl: lead.signedContractUrl
         });
     } catch (error) {
@@ -1234,11 +1359,12 @@ app.post('/api/sign-contract/:leadId', async (req, res) => {
 });
 
 // Generate contract from lead data
-app.post('/api/generate-contract/:leadId', async (req, res) => {
+app.post('/api/generate-contract/:leadId', requireAuth, async (req, res) => {
     try {
+        const userId = req.user._id;
         console.log('📄 Generating contract for lead:', req.params.leadId);
         
-        const lead = await Lead.findById(req.params.leadId);
+        const lead = await Lead.findOne({ _id: req.params.leadId, userId });
         if (!lead) {
             console.error('❌ Lead not found:', req.params.leadId);
             return res.status(404).json({ error: 'ליד לא נמצא' });
@@ -1415,7 +1541,7 @@ ${servicesText}
 
         // Load custom template from database
         console.log('📋 Loading custom contract template from database...');
-        let customTemplate = await ContractTemplate.findOne({ userId: 'default' });
+        let customTemplate = await ContractTemplate.findOne({ userId });
         
         if (!customTemplate || !customTemplate.templateHTML) {
             console.log('⚠️ No custom template found, using default hardcoded template');
@@ -1539,39 +1665,80 @@ ${servicesText}
             console.log('✅ Using chromium from:', chromiumPath);
         }
         
-        const browser = await puppeteer.launch({
-            headless: true,
-            args: [
-                '--no-sandbox',
-                '--disable-setuid-sandbox',
-                '--disable-dev-shm-usage',
-                '--disable-accelerated-2d-canvas',
-                '--disable-gpu',
-                '--disable-software-rasterizer',
-                '--disable-extensions'
-            ],
-            executablePath: chromiumPath
-        });
-        console.log('✅ Browser launched');
-        
-        const page = await browser.newPage();
-        console.log('📄 Setting content...');
-        await page.setContent(htmlContent);
-        console.log('📝 Generating PDF...');
-        await page.pdf({
-            path: pdfPath,
-            format: 'A4',
-            printBackground: true,
-            margin: {
-                top: '20mm',
-                bottom: '20mm',
-                left: '20mm',
-                right: '20mm'
+        let browser;
+        try {
+            browser = await puppeteer.launch({
+                headless: true,
+                args: [
+                    '--no-sandbox',
+                    '--disable-setuid-sandbox',
+                    '--disable-dev-shm-usage',
+                    '--disable-accelerated-2d-canvas',
+                    '--disable-gpu',
+                    '--disable-software-rasterizer',
+                    '--disable-extensions'
+                ],
+                executablePath: chromiumPath,
+                timeout: 30000 // 30 seconds timeout
+            });
+            console.log('✅ Browser launched');
+            
+            const page = await browser.newPage();
+            console.log('📄 Setting content...');
+            await page.setContent(htmlContent);
+            console.log('📝 Generating PDF...');
+            await page.pdf({
+                path: pdfPath,
+                format: 'A4',
+                printBackground: true,
+                margin: {
+                    top: '20mm',
+                    bottom: '20mm',
+                    left: '20mm',
+                    right: '20mm'
+                }
+            });
+            console.log('✅ PDF generated successfully');
+            await browser.close();
+            console.log('🔒 Browser closed');
+        } catch (puppeteerError) {
+            console.error('❌ Puppeteer failed:', puppeteerError.message);
+            
+            // Close browser if it was opened
+            if (browser) {
+                try { await browser.close(); } catch (e) {}
             }
-        });
-        console.log('✅ PDF generated successfully');
-        await browser.close();
-        console.log('🔒 Browser closed');
+            
+            // Check if running on Railway (PROD) - if yes, throw error instead of fallback
+            const isProduction = process.env.RAILWAY_ENVIRONMENT || process.env.NODE_ENV === 'production';
+            
+            if (isProduction) {
+                console.error('❌ PRODUCTION: Puppeteer must work - no fallback');
+                throw puppeteerError; // Re-throw to be caught by outer try-catch
+            }
+            
+            // DEV FALLBACK ONLY: Save as HTML file for preview
+            console.log('💡 DEV MODE: Saving HTML preview instead of PDF...');
+            const htmlFilename = `contract-${lead._id}.html`;
+            const htmlPath = path.join(contractsDir, htmlFilename);
+            await fs.writeFile(htmlPath, htmlContent);
+            console.log('✅ HTML preview saved:', htmlFilename);
+            
+            // Update lead with HTML URL
+            lead.contractFileUrl = `/contracts/${htmlFilename}`;
+            lead.contractStatus = 'sent';
+            await lead.save();
+            
+            return res.json({
+                success: true,
+                pdfUrl: `/contracts/${htmlFilename}`,
+                wordUrl: `/contracts/${wordFilename}`,
+                message: 'החוזה נוצר (תצוגת HTML - Puppeteer לא זמין בסביבת פיתוח)',
+                isHtmlFallback: true,
+                isDev: true,
+                puppeteerError: puppeteerError.message
+            });
+        }
 
         // Update lead with contract URL
         lead.contractFileUrl = `/contracts/${pdfFilename}`;

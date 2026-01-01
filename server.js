@@ -108,18 +108,7 @@ app.put('/api/clients/:id', (req, res) => {
     }
 });
 
-// Delete client
-app.delete('/api/clients/:id', (req, res) => {
-    try {
-        const { id } = req.params;
-        db.get('clients').remove({ id: parseInt(id) }).write();
-        res.json({ success: true, message: 'Client deleted successfully' });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// Bulk delete clients
+// Bulk delete clients (must be before the :id route)
 app.post('/api/clients/bulk-delete', (req, res) => {
     try {
         const { ids } = req.body;
@@ -127,6 +116,17 @@ app.post('/api/clients/bulk-delete', (req, res) => {
             db.get('clients').remove({ id }).write();
         });
         res.json({ success: true, message: `${ids.length} clients deleted successfully` });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Delete client
+app.delete('/api/clients/:id', (req, res) => {
+    try {
+        const { id } = req.params;
+        db.get('clients').remove({ id: parseInt(id) }).write();
+        res.json({ success: true, message: 'Client deleted successfully' });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
