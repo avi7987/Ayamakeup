@@ -11,13 +11,21 @@ let isAuthenticated = false;
 // Check authentication status on page load
 async function checkAuthStatus() {
     try {
-        const response = await fetch('/api/auth/status');
+        const response = await fetch('/api/user');
         const data = await response.json();
         
-        if (data.authenticated) {
+        // In fallback mode or authenticated - show data
+        if (data.isFallbackMode || data.isAuthenticated) {
             isAuthenticated = true;
             currentUser = data.user;
-            showUserProfile(data.user);
+            
+            // In fallback mode, don't show user menu
+            if (data.isFallbackMode) {
+                showLoginButton();
+            } else {
+                showUserProfile(data.user);
+            }
+            
             // Load user data
             await loadAllData();
         } else {
