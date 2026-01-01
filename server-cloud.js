@@ -64,7 +64,7 @@ const userSchema = new mongoose.Schema({
 });
 
 const clientSchema = new mongoose.Schema({
-    userId: { type: mongoose.Schema.Types.Mixed, required: true }, // Support both ObjectId and String
+    userId: { type: mongoose.Schema.Types.Mixed, required: false }, // Support both ObjectId and String, optional for backward compatibility
     name: { type: String, required: true },
     phone: { type: String, required: false },
     service: { type: String, required: true },
@@ -75,7 +75,7 @@ const clientSchema = new mongoose.Schema({
 });
 
 const leadSchema = new mongoose.Schema({
-    userId: { type: mongoose.Schema.Types.Mixed, required: true }, // Support both ObjectId and String
+    userId: { type: mongoose.Schema.Types.Mixed, required: false }, // Support both ObjectId and String, optional for backward compatibility
     name: { type: String, required: true },
     lastName: { type: String, required: true }, // Changed to required
     phone: { type: String, required: true },
@@ -137,7 +137,7 @@ const leadSchema = new mongoose.Schema({
 });
 
 const goalsSchema = new mongoose.Schema({
-    userId: { type: mongoose.Schema.Types.Mixed, required: true }, // Support both ObjectId and String
+    userId: { type: mongoose.Schema.Types.Mixed, required: false }, // Support both ObjectId and String, optional for backward compatibility
     year: { type: Number, required: true },
     income: { type: Number, default: 0 },
     brides: { type: Number, default: 0 },
@@ -146,7 +146,7 @@ const goalsSchema = new mongoose.Schema({
 
 // Contract Template Schema - stores the custom HTML template
 const contractTemplateSchema = new mongoose.Schema({
-    userId: { type: mongoose.Schema.Types.Mixed, required: true }, // Support both ObjectId and String
+    userId: { type: mongoose.Schema.Types.Mixed, required: false }, // Support both ObjectId and String, optional for backward compatibility
     templateHTML: { type: String, required: true },
     logoUrl: { type: String, default: '' },
     createdAt: { type: Date, default: Date.now },
