@@ -262,15 +262,18 @@ app.get('/api/health', (req, res) => {
 app.get('/api/clients', requireAuth, async (req, res) => {
     try {
         const userId = req.user._id;
-        // Support both ObjectId and string (for fallback mode)
+        // Support multiple userId formats for backward compatibility
         const clients = await Client.find({ 
             $or: [
                 { userId: userId },
-                { userId: userId.toString() }
+                { userId: userId.toString() },
+                { userId: { $exists: false } }, // Old data without userId
+                { userId: null } // Old data with null userId
             ]
         }).sort({ date: -1 });
         res.json(clients);
     } catch (error) {
+        console.error('Error fetching clients:', error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -367,9 +370,18 @@ app.delete('/api/clients/:id', requireAuth, async (req, res) => {
 app.get('/api/leads', requireAuth, async (req, res) => {
     try {
         const userId = req.user._id;
-        const leads = await Lead.find({ userId }).sort({ contactDate: -1 });
+        // Support multiple userId formats for backward compatibility
+        const leads = await Lead.find({ 
+            $or: [
+                { userId: userId },
+                { userId: userId.toString() },
+                { userId: { $exists: false } }, // Old data without userId
+                { userId: null } // Old data with null userId
+            ]
+        }).sort({ contactDate: -1 });
         res.json(leads);
     } catch (error) {
+        console.error('Error fetching leads:', error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -580,7 +592,16 @@ app.get('/api/goals', requireAuth, async (req, res) => {
     try {
         const userId = req.user._id;
         const currentYear = new Date().getFullYear();
-        let goals = await Goals.findOne({ userId, year: currentYear });
+        // Support multiple userId formats for backward compatibility
+        let goals = await Goals.findOne({ 
+            $or: [
+                { userId: userId },
+                { userId: userId.toString() },
+                { userId: { $exists: false } },
+                { userId: null }
+            ],
+            year: currentYear 
+        });
         
         if (!goals) {
             // Create default goals if not exists
