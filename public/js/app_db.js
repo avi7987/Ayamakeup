@@ -4336,9 +4336,7 @@ async function init() {
     console.log('🚀 Initializing CRM...');
     loadDarkMode(); // Load dark mode preference first
     
-    // Check authentication status FIRST
-    await checkAuthStatus();
-    
+    // Initialize UI elements first
     await State.init();
     await MessageSettings.init();
     await TimerSettings.init();
@@ -4360,6 +4358,9 @@ async function init() {
         .join('') + `<option value="ALL">הצג הכל</option>`;
     
     document.getElementById('inc-date').valueAsDate = new Date();
+    
+    // Check authentication status AFTER UI is ready
+    await checkAuthStatus();
     
     // Initial render - Show home page by default
     await switchPage('home');
