@@ -1016,6 +1016,29 @@ const LeadProfile = {
                         </div>
                     </div>
                     
+                    <!-- Contract Upload -->
+                    <div class="bg-indigo-50 p-4 rounded-xl">
+                        <h3 class="font-bold text-indigo-800 mb-3">📄 חוזה חתום</h3>
+                        ${lead.contract?.fileUrl ? `
+                            <div class="bg-white p-3 rounded-lg mb-3">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm font-bold text-green-600">✅ קובץ חוזה קיים</span>
+                                    <button onclick="ContractsManager.downloadContract('${lead._id || lead.id}')" class="text-xs bg-green-500 text-white px-3 py-2 rounded-lg font-bold">
+                                        📥 הורד
+                                    </button>
+                                </div>
+                                <div class="text-xs text-gray-500 mt-1">${lead.contract.fileName || 'חוזה.pdf'}</div>
+                                <div class="text-xs text-gray-400">${lead.contract.uploadDate ? new Date(lead.contract.uploadDate).toLocaleDateString('he-IL') : ''}</div>
+                            </div>
+                        ` : ''}
+                        <div class="text-sm">
+                            <input type="file" id="contract-file-input" accept=".pdf,.doc,.docx" class="hidden" onchange="LeadProfile.uploadContract(event)">
+                            <button onclick="document.getElementById('contract-file-input').click()" class="w-full bg-indigo-600 text-white py-2 rounded-lg font-bold text-sm">
+                                ${lead.contract?.fileUrl ? '📤 החלף חוזה' : '📤 העלה חוזה חתום'}
+                            </button>
+                        </div>
+                    </div>
+                    
                     <!-- Stage History -->
                     <div class="bg-purple-50 p-4 rounded-xl">
                         <h3 class="font-bold text-purple-800 mb-3">היסטוריית שלבים</h3>
@@ -1219,6 +1242,53 @@ const LeadProfile = {
             ReminderSystem.add(this.currentLeadId, { date, time, note });
             this.render(lead);
         }
+    },
+    
+    async uploadContract(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        const lead = State.leads.find(l => (l._id || l.id) === this.currentLeadId);
+        if (!lead) return;
+        
+        // Show loading
+        const uploadBtn = event.target.previousElementSibling;
+        const originalText = uploadBtn.textContent;
+        uploadBtn.textContent = '⏳ מעלה...';
+        uploadBtn.disabled = true;
+        
+        try {
+            // Convert file to base64
+            const base64 = await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+            
+            // Update lead with contract info
+            lead.contract = {
+                fileUrl: base64,
+                fileName: file.name,
+                uploadDate: new Date().toISOString(),
+                status: 'חתום'
+            };
+            lead.contractStatus = 'signed';
+            lead.updatedAt = new Date().toISOString();
+            
+            // Save to DB
+            await API.updateLead(this.currentLeadId, lead);
+            
+            // Refresh view
+            this.render(lead);
+            
+            alert('החוזה הועלה בהצלחה! ✅');
+        } catch (error) {
+            console.error('Error uploading contract:', error);
+            alert('שגיאה בהעלאת החוזה. נסה שוב.');
+            uploadBtn.textContent = originalText;
+            uploadBtn.disabled = false;
+        }
     }
 };
 
@@ -1298,6 +1368,10 @@ const LeadsView = {
             const reminderBadge = hasReminders ? '<span class="text-amber-500 text-xs">🔔</span>' : '';
             const leadId = lead._id || lead.id;
             
+            const contractButton = lead.contract?.fileUrl 
+                ? `<button onclick="ContractsManager.downloadContract('${leadId}')" class="text-[10px] bg-green-50 text-green-600 px-2 py-1 rounded font-bold">📄 חוזה</button>`
+                : '';
+            
             return `
             <div class="lead-card text-right" data-id="${leadId}">
                 <div class="flex justify-between mb-1">
@@ -1308,6 +1382,7 @@ const LeadsView = {
                 ${lead.isBride ? '<div class="text-[10px] text-pink-500 mb-1">👰 כלה</div>' : ''}
                 <div class="flex gap-2 border-t pt-2 mt-1">
                     <button onclick="viewLead('${leadId}')" class="text-[10px] bg-purple-50 text-purple-600 px-2 py-1 rounded font-bold">הצג פרטים</button>
+                    ${contractButton}
                     <button onclick="deleteLead('${leadId}')" class="text-[10px] text-red-300 mr-auto">מחק</button>
                 </div>
             </div>
@@ -4527,6 +4602,9 @@ async function switchPageNav(pageName) {
     } else if (pageName === 'insights') {
         console.log('💡 Loading insights data...');
         await InsightsView.render();
+    } else if (pageName === 'contracts') {
+        console.log('📄 Loading contracts...');
+        ContractsManager.init();
     } else if (pageName === 'social-strategy') {
         console.log('🧠 Loading social strategy...');
         SocialStrategy.init();
@@ -4549,6 +4627,156 @@ async function switchPageNav(pageName) {
 
 // Make it globally accessible
 window.switchPageNav = switchPageNav;
+
+// ==============================================
+// CONTRACTS MANAGER MODULE
+// ==============================================
+
+const ContractsManager = {
+    contracts: [],
+
+    init() {
+        console.log('📄 Initializing Contracts Manager...');
+        this.loadContracts();
+        this.render();
+    },
+
+    loadContracts() {
+        // Load contracts from leads that have contracts
+        const state = State.data;
+        this.contracts = [];
+
+        if (state.leads) {
+            state.leads.forEach(lead => {
+                if (lead.contract && lead.contract.fileUrl) {
+                    this.contracts.push({
+                        id: lead.id,
+                        leadName: lead.name,
+                        service: lead.service || 'לא צוין',
+                        date: lead.contract.uploadDate || lead.addedDate,
+                        fileUrl: lead.contract.fileUrl,
+                        fileName: lead.contract.fileName || 'חוזה.pdf',
+                        status: lead.contract.status || 'חתום'
+                    });
+                }
+            });
+        }
+
+        // Sort by date (newest first)
+        this.contracts.sort((a, b) => new Date(b.date) - new Date(a.date));
+    },
+
+    render() {
+        this.loadContracts();
+        const tbody = document.getElementById('contracts-table-body');
+        const emptyState = document.getElementById('contracts-empty-state');
+
+        if (!tbody) return;
+
+        if (this.contracts.length === 0) {
+            tbody.innerHTML = '';
+            if (emptyState) emptyState.classList.remove('hidden');
+            this.updateStats();
+            return;
+        }
+
+        if (emptyState) emptyState.classList.add('hidden');
+
+        tbody.innerHTML = this.contracts.map(contract => this.renderContractRow(contract)).join('');
+        this.updateStats();
+    },
+
+    renderContractRow(contract) {
+        const date = new Date(contract.date).toLocaleDateString('he-IL');
+        const statusColors = {
+            'חתום': 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+            'ממתין': 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+        };
+        const statusColor = statusColors[contract.status] || statusColors['חתום'];
+
+        return `
+            <tr class="hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors contract-row" data-name="${contract.leadName}" data-date="${contract.date}">
+                <td class="px-6 py-4 text-sm text-gray-900 dark:text-white">${date}</td>
+                <td class="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">${contract.leadName}</td>
+                <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">${contract.service}</td>
+                <td class="px-6 py-4">
+                    <span class="px-3 py-1 rounded-full text-xs font-bold ${statusColor}">
+                        ${contract.status}
+                    </span>
+                </td>
+                <td class="px-6 py-4 text-center">
+                    <button onclick="ContractsManager.downloadContract('${contract.id}')" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition-all inline-flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                        </svg>
+                        הורד חוזה
+                    </button>
+                </td>
+            </tr>
+        `;
+    },
+
+    filterContracts() {
+        const searchInput = document.getElementById('contract-search');
+        if (!searchInput) return;
+
+        const searchTerm = searchInput.value.toLowerCase();
+        const rows = document.querySelectorAll('.contract-row');
+
+        rows.forEach(row => {
+            const name = row.getAttribute('data-name').toLowerCase();
+            const date = row.getAttribute('data-date');
+            
+            if (name.includes(searchTerm) || date.includes(searchTerm)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    },
+
+    downloadContract(leadId) {
+        const contract = this.contracts.find(c => c.id === leadId);
+        if (!contract) {
+            alert('❌ לא נמצא חוזה');
+            return;
+        }
+
+        // If we have a real file URL, download it
+        if (contract.fileUrl && contract.fileUrl.startsWith('http')) {
+            window.open(contract.fileUrl, '_blank');
+        } else {
+            // Create a download link for the stored file
+            const link = document.createElement('a');
+            link.href = contract.fileUrl;
+            link.download = contract.fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    },
+
+    updateStats() {
+        const totalEl = document.getElementById('total-contracts');
+        const signedEl = document.getElementById('signed-contracts');
+        const monthEl = document.getElementById('month-contracts');
+
+        if (totalEl) totalEl.textContent = this.contracts.length;
+        
+        const signedCount = this.contracts.filter(c => c.status === 'חתום').length;
+        if (signedEl) signedEl.textContent = signedCount;
+
+        const now = new Date();
+        const thisMonth = this.contracts.filter(c => {
+            const contractDate = new Date(c.date);
+            return contractDate.getMonth() === now.getMonth() && 
+                   contractDate.getFullYear() === now.getFullYear();
+        }).length;
+        if (monthEl) monthEl.textContent = thisMonth;
+    }
+};
+
+window.ContractsManager = ContractsManager;
 
 // ==============================================
 // SOCIAL STRATEGY MODULE

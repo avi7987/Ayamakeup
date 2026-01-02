@@ -1297,21 +1297,96 @@
         </section>
 
         <!-- Page: Contracts (Coming Soon) -->
+        <!-- Page: Contracts Management -->
         <section id="page-contracts" class="hidden pt-6">
-            <div class="max-w-4xl mx-auto">
-                <div class="bg-white dark:bg-slate-800 rounded-xl shadow-md p-12 text-center">
-                    <div class="mb-6">
-                        <svg class="w-32 h-32 mx-auto text-purple-300 dark:text-purple-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                        </svg>
+            <div class="max-w-6xl mx-auto px-4">
+                <!-- Header -->
+                <div class="mb-8 flex items-center justify-between">
+                    <div>
+                        <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">📄 ניהול חוזים</h1>
+                        <p class="text-gray-600 dark:text-gray-400">כל החוזים החתומים שלך במקום אחד</p>
                     </div>
-                    <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-4">ניהול חוזים</h2>
-                    <p class="text-lg text-gray-600 dark:text-gray-400 mb-2">תכונה זו במערכת בפיתוח</p>
-                    <p class="text-sm text-gray-500 dark:text-gray-500">בקרוב תוכלו לנהל חוזים דיגיטליים, לשלוח לחתימה ולמעקב בקלי קליק</p>
-                    <div class="mt-8">
-                        <button onclick="switchPage('home')" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-xl font-bold transition-all">
-                            חזרה לדף הבית
+                    <button onclick="window.switchPageNav('home')" class="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg font-bold transition-all">
+                        ← חזרה
+                    </button>
+                </div>
+
+                <!-- Search Bar -->
+                <div class="bg-white dark:bg-slate-800 rounded-xl shadow-md p-4 mb-6">
+                    <div class="flex gap-4">
+                        <div class="flex-1 relative">
+                            <input 
+                                type="text" 
+                                id="contract-search" 
+                                onkeyup="ContractsManager.filterContracts()" 
+                                placeholder="חיפוש לפי שם לקוחה או תאריך..."
+                                class="w-full p-3 pr-10 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+                            >
+                            <svg class="w-5 h-5 absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                        </div>
+                        <button onclick="ContractsManager.render()" class="bg-purple-100 dark:bg-purple-900 hover:bg-purple-200 dark:hover:bg-purple-800 text-purple-700 dark:text-purple-200 px-6 py-3 rounded-xl font-bold transition-all">
+                            🔄 רענן
                         </button>
+                    </div>
+                </div>
+
+                <!-- Contracts Table -->
+                <div class="bg-white dark:bg-slate-800 rounded-xl shadow-md overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-purple-50 dark:bg-purple-900/30">
+                                <tr>
+                                    <th class="px-6 py-4 text-right text-sm font-bold text-gray-900 dark:text-white">תאריך</th>
+                                    <th class="px-6 py-4 text-right text-sm font-bold text-gray-900 dark:text-white">שם הלקוחה</th>
+                                    <th class="px-6 py-4 text-right text-sm font-bold text-gray-900 dark:text-white">סוג השירות</th>
+                                    <th class="px-6 py-4 text-right text-sm font-bold text-gray-900 dark:text-white">סטטוס</th>
+                                    <th class="px-6 py-4 text-center text-sm font-bold text-gray-900 dark:text-white">פעולות</th>
+                                </tr>
+                            </thead>
+                            <tbody id="contracts-table-body" class="divide-y divide-gray-200 dark:divide-gray-700">
+                                <!-- Contracts will be rendered here -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Empty State -->
+                    <div id="contracts-empty-state" class="hidden p-12 text-center">
+                        <div class="text-6xl mb-4">📭</div>
+                        <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">אין חוזים עדיין</h3>
+                        <p class="text-gray-600 dark:text-gray-400">חוזים חתומים יופיעו כאן אוטומטית</p>
+                    </div>
+                </div>
+
+                <!-- Stats -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+                    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-md p-6">
+                        <div class="flex items-center gap-3">
+                            <div class="text-3xl">📄</div>
+                            <div>
+                                <div class="text-sm text-gray-600 dark:text-gray-400">סך חוזים</div>
+                                <div class="text-2xl font-bold text-gray-900 dark:text-white" id="total-contracts">0</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-md p-6">
+                        <div class="flex items-center gap-3">
+                            <div class="text-3xl">✅</div>
+                            <div>
+                                <div class="text-sm text-gray-600 dark:text-gray-400">חוזים חתומים</div>
+                                <div class="text-2xl font-bold text-green-600 dark:text-green-400" id="signed-contracts">0</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-md p-6">
+                        <div class="flex items-center gap-3">
+                            <div class="text-3xl">📅</div>
+                            <div>
+                                <div class="text-sm text-gray-600 dark:text-gray-400">החודש</div>
+                                <div class="text-2xl font-bold text-purple-600 dark:text-purple-400" id="month-contracts">0</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
