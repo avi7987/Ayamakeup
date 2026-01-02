@@ -1,0 +1,38 @@
+$content = Get-Content "c:\Users\avishu\Project one\Ayamakeup\public\index.html" -Raw -Encoding UTF8
+
+# Fix remaining corrupted text
+$content = $content -replace '╫כלה╫ע╫ף╫¿╫שמור╫¬','הגדרות'
+$content = $content -replace 'Γתש∩╕ן','עריכת'
+$content = $content -replace '≡ƒףך','תרשים'
+$content = $content -replace '≡ƒכלהם','תצוגת'
+$content = $content -replace '≡ƒףה','יצירת'
+$content = $content -replace '≡ƒמי','אירוע'
+$content = $content -replace '≡ƒע¼','וואטסאפ'
+$content = $content -replace '≡ƒע░','הצעת'
+$content = $content -replace '≡ƒע╡','מקדמה מוצעת'
+$content = $content -replace '≡ƒעד','זמן'
+$content = $content -replace '≡ƒע│','אמצעי תשלום'
+$content = $content -replace '≡ƒףכ','פרטים'
+$content = $content -replace '≡ƒףó','ניתוח'
+$content = $content -replace '≡ƒףט','ביצועים'
+$content = $content -replace '≡ƒףז','תאריך'
+$content = $content -replace '≡ƒץנ','שעת'
+$content = $content -replace '≡ƒףם','מיקום'
+$content = $content -replace '≡ƒף¥','הערות'
+$content = $content -replace '≡ƒףו','הוספת'
+$content = $content -replace '≡ƒע¼','שליחת'
+$content = $content -replace '≡ƒףñ','ייצוא'
+$content = $content -replace 'Γתá∩╕ן','שים לב'
+$content = $content -replace 'Γן▒∩╕ן','משך זמן'
+$content = $content -replace 'Γג¬','₪'
+$content = $content -replace 'Γ£ו','הכל'
+$content = $content -replace 'Γ¥ל','לא'
+$content = $content -replace 'Γ£ף','כן'
+$content = $content -replace 'Γ£ק','לא'
+$content = $content -replace 'Γןו','זמן'
+$content = $content -replace 'Γן░','הגדרת'
+$content = $content -replace '≡ƒסב∩╕ן','תצוגת מקדימה'
+$content = $content -replace '≡ƒףנ','ליד'
+
+Set-Content "c:\Users\avishu\Project one\Ayamakeup\public\index.html" -Value $content -Encoding UTF8
+Write-Host "תיקון הושלם!"
