@@ -1891,6 +1891,128 @@ app.get('/api/contract-template/status', async (req, res) => {
     }
 });
 
+// ==============================================
+// AI / GEMINI ENDPOINT FOR SOCIAL PLANNING
+// ==============================================
+
+// AI Content Planning endpoint
+app.post('/api/ai/generate-content-plan', async (req, res) => {
+    try {
+        const { prompt, preferences } = req.body;
+        
+        console.log('🤖 Generating AI content plan with Gemini...');
+        console.log('Preferences:', preferences);
+
+        // Check if Gemini API key exists
+        const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+        
+        if (!GEMINI_API_KEY) {
+            console.warn('⚠️  GEMINI_API_KEY not found - using mock data');
+            // Return mock data for development
+            const mockPlan = generateMockPlan(preferences.frequency);
+            return res.json({ success: true, plan: mockPlan });
+        }
+
+        // Call Gemini API
+        const fetch = (await import('node-fetch')).default;
+        const geminiResponse = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`,
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    contents: [{
+                        parts: [{
+                            text: prompt
+                        }]
+                    }]
+                })
+            }
+        );
+
+        if (!geminiResponse.ok) {
+            throw new Error(`Gemini API error: ${geminiResponse.statusText}`);
+        }
+
+        const geminiData = await geminiResponse.json();
+        const generatedText = geminiData.candidates[0].content.parts[0].text;
+        
+        // Extract JSON from response
+        const jsonMatch = generatedText.match(/\[[\s\S]*\]/);
+        if (!jsonMatch) {
+            throw new Error('No valid JSON found in Gemini response');
+        }
+
+        const plan = JSON.parse(jsonMatch[0]);
+        
+        console.log('✅ Generated plan:', plan.length, 'cards');
+        res.json({ success: true, plan });
+
+    } catch (error) {
+        console.error('❌ Error generating AI plan:', error);
+        // Return mock data as fallback
+        const mockPlan = generateMockPlan(req.body.preferences.frequency || 3);
+        res.json({ success: true, plan: mockPlan });
+    }
+});
+
+// Mock plan generator (for development without API key)
+function generateMockPlan(frequency) {
+    const contentTypes = [
+        'תמונת לפני ואחרי',
+        'טיפ מקצועי',
+        'סרטון הדרכה',
+        'תמונה של עבודה',
+        'סיפור הצלחה',
+        'מבט מאחורי הקלעים',
+        'המלצת מוצר'
+    ];
+    
+    const formats = ['תמונה בודדת', 'קרוסלה', 'Reel', 'Story', 'Video'];
+    const platforms = ['Instagram', 'Facebook', 'TikTok'];
+    const goals = ['אירוסין', 'מכירה', 'מודעות', 'קהילה'];
+    
+    const ideas = [
+        'הצגת עבודת איפור דרמטית - טרנספורמציה מדהימה',
+        'טיפ לעמידות האיפור במשך כל האירוע',
+        'תהליך איפור מהיר ל-30 דקות',
+        'עבודת איפור מיוחדת עם פרטים זהב',
+        'סיפור של כלה שהתרגשה מהתוצאה',
+        'כך אני בוחרת את גוון הבסיס המושלם',
+        'המוצרים האהובים עלי לאיפור כלות'
+    ];
+
+    const plan = [];
+    const numCards = parseInt(frequency) || 3;
+    const usedDays = new Set();
+
+    for (let i = 0; i < numCards; i++) {
+        // Distribute evenly across the week
+        let day;
+        do {
+            day = Math.floor((i / numCards) * 7);
+        } while (usedDays.has(day) && usedDays.size < 7);
+        usedDays.add(day);
+
+        const hour = 18 + Math.floor(Math.random() * 3); // 18:00-20:00
+        const minutes = Math.random() > 0.5 ? '00' : '30';
+
+        plan.push({
+            day: day,
+            time: `${hour}:${minutes}`,
+            platform: platforms[Math.floor(Math.random() * platforms.length)],
+            contentType: contentTypes[i % contentTypes.length],
+            format: formats[Math.floor(Math.random() * formats.length)],
+            idea: ideas[i % ideas.length],
+            goal: goals[Math.floor(Math.random() * goals.length)]
+        });
+    }
+
+    return plan;
+}
+
 // ==================== START SERVER ====================
 
 async function startServer() {

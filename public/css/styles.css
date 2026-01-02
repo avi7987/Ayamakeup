@@ -337,3 +337,189 @@ tr {
         font-size: 14px;
     }
 }
+
+/* Social Planning Styles */
+.week-board-container {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 16px;
+}
+
+.day-column {
+    background: white;
+    border-radius: 16px;
+    padding: 16px;
+    min-height: 400px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.day-header {
+    font-weight: 700;
+    font-size: 16px;
+    color: #9333ea;
+    text-align: center;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #f3e8ff;
+}
+
+.day-date {
+    font-size: 12px;
+    color: #64748b;
+    display: block;
+    margin-top: 4px;
+}
+
+.content-card {
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 12px;
+    cursor: grab;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.content-card:active {
+    cursor: grabbing;
+}
+
+.content-card:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.content-card.dragging {
+    opacity: 0.5;
+    cursor: grabbing;
+}
+
+.day-column.drag-over {
+    background: #f3e8ff;
+    border: 2px dashed #9333ea;
+}
+
+.platform-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.platform-instagram {
+    background: #fce7f3;
+    color: #ec4899;
+    border-color: #ec4899 !important;
+}
+
+.platform-facebook {
+    background: #dbeafe;
+    color: #3b82f6;
+    border-color: #3b82f6 !important;
+}
+
+.platform-tiktok {
+    background: #f3e8ff;
+    color: #9333ea;
+    border-color: #9333ea !important;
+}
+
+.card-field {
+    margin-bottom: 8px;
+    font-size: 13px;
+}
+
+.card-field-label {
+    font-weight: 600;
+    color: #64748b;
+    font-size: 11px;
+    display: block;
+    margin-bottom: 2px;
+}
+
+.card-field-value {
+    color: #1e293b;
+    padding: 4px 8px;
+    border-radius: 6px;
+    cursor: text;
+    min-height: 20px;
+    transition: background 0.2s;
+}
+
+.card-field-value:hover {
+    background: #f8fafc;
+}
+
+.card-field-value:focus {
+    outline: 2px solid #9333ea;
+    background: white;
+}
+
+.card-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.card-action-btn {
+    padding: 4px 10px;
+    font-size: 11px;
+    border-radius: 8px;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+}
+
+.btn-duplicate {
+    background: #e0e7ff;
+    color: #4f46e5;
+}
+
+.btn-duplicate:hover {
+    background: #c7d2fe;
+}
+
+.btn-delete {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.btn-delete:hover {
+    background: #fecaca;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .week-board-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .day-tabs {
+        display: flex;
+        overflow-x: auto;
+        gap: 8px;
+        margin-bottom: 16px;
+        padding-bottom: 8px;
+    }
+    
+    .day-tab {
+        padding: 10px 20px;
+        background: white;
+        border-radius: 12px;
+        border: 2px solid #e2e8f0;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: all 0.2s;
+    }
+    
+    .day-tab.active {
+        background: #9333ea;
+        color: white;
+        border-color: #9333ea;
+    }
+}

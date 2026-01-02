@@ -507,7 +507,7 @@ const Navigation = {
         document.documentElement.scrollTop = 0;
         
         // Hide all pages
-        ['home', 'entry', 'leads', 'stats', 'insights', 'contracts', 'social'].forEach(id => {
+        ['home', 'entry', 'leads', 'stats', 'insights', 'contracts', 'social', 'social-planning'].forEach(id => {
             const page = document.getElementById('page-' + id);
             if (page) page.classList.add('hidden');
         });
@@ -525,6 +525,7 @@ const Navigation = {
         if (pageName === 'leads') LeadsView.render();
         if (pageName === 'stats') StatsView.update();
         if (pageName === 'insights') InsightsView.render();
+        if (pageName === 'social-planning') SocialPlanning.init();
         // contracts and social pages don't need initialization (they're static coming soon pages)
         
         // Scroll to top again to ensure it worked
@@ -4537,6 +4538,421 @@ async function switchPageNav(pageName) {
 
 // Make it globally accessible
 window.switchPageNav = switchPageNav;
+
+// ==============================================
+// SOCIAL PLANNING MODULE (AI-Powered Weekly Planner)
+// ==============================================
+
+const SocialPlanning = {
+    currentWeek: [],
+    selectedMobileDay: 0,
+    
+    // Initialize the planning module
+    init() {
+        console.log('📅 Initializing Social Planning module...');
+        this.currentWeek = this.getWeekDays();
+    },
+
+    // Get array of 7 days (starting from today)
+    getWeekDays() {
+        const days = [];
+        const today = new Date();
+        const hebrewDays = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
+        
+        for (let i = 0; i < 7; i++) {
+            const date = new Date(today);
+            date.setDate(today.getDate() + i);
+            days.push({
+                date: date,
+                dayName: hebrewDays[date.getDay()],
+                dayNumber: date.getDate(),
+                month: date.getMonth() + 1,
+                cards: []
+            });
+        }
+        return days;
+    },
+
+    // Show setup section
+    showSetup() {
+        document.getElementById('planning-setup').classList.remove('hidden');
+        document.getElementById('weekly-planner').classList.add('hidden');
+    },
+
+    // Generate weekly plan using AI
+    async generateWeeklyPlan() {
+        console.log('✨ Generating AI-powered weekly plan...');
+        
+        // Get user preferences
+        const frequency = document.getElementById('posting-frequency').value;
+        const goal = document.getElementById('publishing-goal').value;
+        const audience = document.getElementById('target-audience').value;
+        
+        const platforms = [];
+        if (document.getElementById('platform-instagram').checked) platforms.push('Instagram');
+        if (document.getElementById('platform-facebook').checked) platforms.push('Facebook');
+        if (document.getElementById('platform-tiktok').checked) platforms.push('TikTok');
+
+        if (platforms.length === 0) {
+            alert('⚠️ יש לבחור לפחות פלטפורמה אחת');
+            return;
+        }
+
+        // Show loading state
+        const button = event.target;
+        const originalText = button.innerHTML;
+        button.innerHTML = '<span class="text-2xl animate-spin inline-block">⏳</span><span>מייצר תוכנית...</span>';
+        button.disabled = true;
+
+        try {
+            // Call AI service (Gemini)
+            const plan = await this.callGeminiAPI({
+                frequency: parseInt(frequency),
+                goal,
+                audience,
+                platforms
+            });
+
+            // Apply generated plan
+            this.applyGeneratedPlan(plan);
+
+            // Hide setup, show planner
+            document.getElementById('planning-setup').classList.add('hidden');
+            document.getElementById('weekly-planner').classList.remove('hidden');
+
+            // Render the board
+            this.renderWeekBoard();
+            this.updateCardsCount();
+
+        } catch (error) {
+            console.error('❌ Error generating plan:', error);
+            alert('שגיאה ביצירת התוכנית. נסה שוב.');
+        } finally {
+            button.innerHTML = originalText;
+            button.disabled = false;
+        }
+    },
+
+    // Call Gemini AI API
+    async callGeminiAPI(preferences) {
+        console.log('🤖 Calling Gemini AI...', preferences);
+        
+        // Prepare prompt for Gemini
+        const prompt = `
+אתה מומחה לתוכן ברשתות חברתיות. צור תוכנית תוכן שבועית עבור עסק של איפור כלות.
+
+הגדרות:
+- קצב פרסום: ${preferences.frequency} פוסטים בשבוע
+- מטרה: ${this.getGoalDescription(preferences.goal)}
+- קהל יעד: ${preferences.audience || 'כלות לפני חתונה'}
+- פלטפורמות: ${preferences.platforms.join(', ')}
+
+צור בדיוק ${preferences.frequency} כרטיסי תוכן מפוזרים בצורה חכמה לאורך השבוע.
+כל כרטיס צריך לכלול:
+1. יום בשבוע (0-6, כאשר 0=ראשון)
+2. זמן פרסום מומלץ (בפורמט HH:MM)
+3. פלטפורמה (אחת מ: ${preferences.platforms.join(', ')})
+4. סוג תוכן (למשל: תמונת לפני ואחרי, טיפ מקצועי, סרטון הדרכה, תמונה של עבודה, סיפור הצלחה)
+5. פורמט (למשל: תמונה בודדת, קרוסלה, Reel, Story, Video)
+6. רעיון תוכן (משפט קצר עם הרעיון המדויק)
+7. מטרת התוכן (למשל: אירוסין, מכירה, מודעות)
+
+החזר JSON array בפורמט הבא:
+[
+  {
+    "day": 0,
+    "time": "18:30",
+    "platform": "Instagram",
+    "contentType": "תמונת לפני ואחרי",
+    "format": "תמונה בודדת",
+    "idea": "הצגת עבודת איפור דרמטית - טרנספורמציה מדהימה",
+    "goal": "אירוסין"
+  }
+]
+
+חשוב: החזר רק JSON תקין, ללא טקסט נוסף.
+`;
+
+        // Call the API via your backend
+        const response = await fetch('/api/ai/generate-content-plan', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                prompt,
+                preferences
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to generate plan');
+        }
+
+        const data = await response.json();
+        return data.plan;
+    },
+
+    // Get goal description in Hebrew
+    getGoalDescription(goal) {
+        const goals = {
+            awareness: 'העלאת מודעות למותג',
+            engagement: 'יצירת אינטראקציה וקהילה',
+            leads: 'הפקת לידים והזמנות',
+            sales: 'מכירות ישירות',
+            mixed: 'שילוב של מטרות שונות'
+        };
+        return goals[goal] || 'שילוב מטרות';
+    },
+
+    // Apply generated plan to week structure
+    applyGeneratedPlan(plan) {
+        // Reset all days
+        this.currentWeek.forEach(day => day.cards = []);
+
+        // Distribute cards to days
+        plan.forEach((card, index) => {
+            const dayIndex = card.day;
+            if (dayIndex >= 0 && dayIndex < 7) {
+                this.currentWeek[dayIndex].cards.push({
+                    id: `card-${Date.now()}-${index}`,
+                    ...card
+                });
+            }
+        });
+    },
+
+    // Render the week board (desktop)
+    renderWeekBoard() {
+        const board = document.getElementById('week-board');
+        board.innerHTML = '';
+
+        this.currentWeek.forEach((day, dayIndex) => {
+            const dayColumn = document.createElement('div');
+            dayColumn.className = 'bg-gray-50 dark:bg-slate-900 rounded-xl p-3 min-h-[400px]';
+            dayColumn.innerHTML = `
+                <!-- Day Header -->
+                <div class="bg-white dark:bg-slate-800 rounded-lg p-3 mb-3 shadow-sm sticky top-0">
+                    <div class="text-center">
+                        <div class="text-sm font-bold text-gray-900 dark:text-white">${day.dayName}</div>
+                        <div class="text-xs text-gray-500 dark:text-gray-400">${day.dayNumber}/${day.month}</div>
+                    </div>
+                    <button onclick="SocialPlanning.addCard(${dayIndex})" class="w-full mt-2 bg-purple-100 dark:bg-purple-900 hover:bg-purple-200 dark:hover:bg-purple-800 text-purple-700 dark:text-purple-200 px-3 py-2 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-1">
+                        <span>➕</span>
+                        <span>הוסף תוכן</span>
+                    </button>
+                </div>
+
+                <!-- Cards Container -->
+                <div class="space-y-3" id="day-${dayIndex}-cards" data-day="${dayIndex}">
+                    ${this.renderDayCards(day.cards, dayIndex)}
+                </div>
+            `;
+            board.appendChild(dayColumn);
+        });
+
+        // Initialize drag & drop
+        this.initDragAndDrop();
+    },
+
+    // Render cards for a specific day
+    renderDayCards(cards, dayIndex) {
+        if (cards.length === 0) {
+            return `<div class="text-center text-gray-400 dark:text-gray-600 text-sm py-8">אין תוכן מתוכנן</div>`;
+        }
+
+        return cards.map(card => this.renderCard(card, dayIndex)).join('');
+    },
+
+    // Render a single content card
+    renderCard(card, dayIndex) {
+        const platformEmoji = {
+            'Instagram': '📷',
+            'Facebook': '👥',
+            'TikTok': '🎵'
+        };
+
+        return `
+            <div class="content-card bg-white dark:bg-slate-800 rounded-lg p-4 shadow-sm hover:shadow-md transition-all cursor-move border-r-4 ${this.getPlatformColor(card.platform)}" 
+                 draggable="true" 
+                 data-card-id="${card.id}"
+                 data-day="${dayIndex}">
+                
+                <!-- Card Header -->
+                <div class="flex items-start justify-between mb-3">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xl">${platformEmoji[card.platform] || '📱'}</span>
+                        <div>
+                            <div class="text-xs font-bold text-gray-900 dark:text-white">${card.platform}</div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400">🕒 ${card.time}</div>
+                        </div>
+                    </div>
+                    <button onclick="SocialPlanning.deleteCard('${card.id}', ${dayIndex})" class="text-gray-400 hover:text-red-500 transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Content Type & Format -->
+                <div class="mb-2">
+                    <span class="inline-block bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-200 px-2 py-1 rounded text-xs font-bold">
+                        ${card.contentType}
+                    </span>
+                    <span class="inline-block bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-1 rounded text-xs ml-1">
+                        ${card.format}
+                    </span>
+                </div>
+
+                <!-- Content Idea (Editable) -->
+                <div class="mb-2">
+                    <input type="text" 
+                           value="${card.idea}" 
+                           onchange="SocialPlanning.updateCardField('${card.id}', ${dayIndex}, 'idea', this.value)"
+                           class="w-full text-sm text-gray-700 dark:text-gray-200 bg-transparent border-none p-0 focus:outline-none focus:ring-0"
+                           placeholder="רעיון התוכן...">
+                </div>
+
+                <!-- Goal Badge -->
+                <div class="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+                    <span>🎯</span>
+                    <span>${card.goal}</span>
+                </div>
+
+                <!-- AI Badge -->
+                <div class="mt-2 pt-2 border-t border-gray-100 dark:border-gray-700">
+                    <div class="text-xs text-purple-600 dark:text-purple-400 flex items-center gap-1">
+                        <span>✨</span>
+                        <span>זמן מומלץ ע״י המערכת</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    },
+
+    // Get platform color class
+    getPlatformColor(platform) {
+        const colors = {
+            'Instagram': 'border-pink-500',
+            'Facebook': 'border-blue-500',
+            'TikTok': 'border-purple-500'
+        };
+        return colors[platform] || 'border-gray-500';
+    },
+
+    // Initialize drag and drop functionality
+    initDragAndDrop() {
+        const cards = document.querySelectorAll('.content-card');
+        const containers = document.querySelectorAll('[id^="day-"][id$="-cards"]');
+
+        cards.forEach(card => {
+            card.addEventListener('dragstart', (e) => {
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/html', card.innerHTML);
+                e.dataTransfer.setData('card-id', card.dataset.cardId);
+                e.dataTransfer.setData('source-day', card.dataset.day);
+                card.classList.add('opacity-50');
+            });
+
+            card.addEventListener('dragend', (e) => {
+                card.classList.remove('opacity-50');
+            });
+        });
+
+        containers.forEach(container => {
+            container.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                container.classList.add('bg-purple-100', 'dark:bg-purple-900');
+            });
+
+            container.addEventListener('dragleave', (e) => {
+                container.classList.remove('bg-purple-100', 'dark:bg-purple-900');
+            });
+
+            container.addEventListener('drop', (e) => {
+                e.preventDefault();
+                container.classList.remove('bg-purple-100', 'dark:bg-purple-900');
+                
+                const cardId = e.dataTransfer.getData('card-id');
+                const sourceDay = parseInt(e.dataTransfer.getData('source-day'));
+                const targetDay = parseInt(container.dataset.day);
+
+                if (sourceDay !== targetDay) {
+                    this.moveCard(cardId, sourceDay, targetDay);
+                }
+            });
+        });
+    },
+
+    // Move card between days
+    moveCard(cardId, fromDay, toDay) {
+        const card = this.currentWeek[fromDay].cards.find(c => c.id === cardId);
+        if (card) {
+            // Remove from source
+            this.currentWeek[fromDay].cards = this.currentWeek[fromDay].cards.filter(c => c.id !== cardId);
+            // Add to target
+            this.currentWeek[toDay].cards.push(card);
+            // Re-render
+            this.renderWeekBoard();
+            this.updateCardsCount();
+        }
+    },
+
+    // Add new card manually
+    addCard(dayIndex) {
+        const newCard = {
+            id: `card-${Date.now()}`,
+            day: dayIndex,
+            time: '18:00',
+            platform: 'Instagram',
+            contentType: 'תוכן חדש',
+            format: 'תמונה בודדת',
+            idea: 'הכניסי את הרעיון שלך כאן...',
+            goal: 'אירוסין'
+        };
+
+        this.currentWeek[dayIndex].cards.push(newCard);
+        this.renderWeekBoard();
+        this.updateCardsCount();
+    },
+
+    // Delete card
+    deleteCard(cardId, dayIndex) {
+        if (confirm('למחוק כרטיס זה?')) {
+            this.currentWeek[dayIndex].cards = this.currentWeek[dayIndex].cards.filter(c => c.id !== cardId);
+            this.renderWeekBoard();
+            this.updateCardsCount();
+        }
+    },
+
+    // Update card field
+    updateCardField(cardId, dayIndex, field, value) {
+        const card = this.currentWeek[dayIndex].cards.find(c => c.id === cardId);
+        if (card) {
+            card[field] = value;
+        }
+    },
+
+    // Update cards count display
+    updateCardsCount() {
+        const total = this.currentWeek.reduce((sum, day) => sum + day.cards.length, 0);
+        const countEl = document.getElementById('cards-count');
+        if (countEl) {
+            countEl.textContent = `${total} כרטיסי תוכן`;
+        }
+    },
+
+    // Regenerate plan
+    async regeneratePlan() {
+        if (confirm('⚠️ פעולה זו תמחק את התוכנית הנוכחית ותיצור תוכנית חדשה. להמשיך?')) {
+            this.showSetup();
+        }
+    }
+};
+
+// Make globally accessible
+window.SocialPlanning = SocialPlanning;
 
 document.addEventListener('DOMContentLoaded', init);
 

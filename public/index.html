@@ -1293,14 +1293,168 @@
                         </svg>
                     </div>
                     <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-4">ניהול סושיאל מדיה</h2>
-                    <p class="text-lg text-gray-600 dark:text-gray-400 mb-2">תכונה זו במערכת בפיתוח</p>
-                    <p class="text-sm text-gray-500 dark:text-gray-500">בקרוב תוכלו לנהל פוסטים, תוכן ואינטראקציות ישירות מהמערכת</p>
+                    <p class="text-lg text-gray-600 dark:text-gray-400 mb-6">ברוכים הבאים למרכז הסושיאל מדיה</p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+                        <!-- Planning Card -->
+                        <div class="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 p-8 rounded-xl border-2 border-purple-200 dark:border-purple-700">
+                            <div class="mb-4">
+                                <svg class="w-16 h-16 mx-auto text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
+                                </svg>
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">תכנון תוכן שבועי</h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">תכנון חכם עם AI לתוכן שבועי ברשתות החברתיות</p>
+                            <button onclick="switchPage('social-planning')" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-xl font-bold transition-all w-full">
+                                פתח תכנון שבועי
+                            </button>
+                        </div>
+
+                        <!-- Coming Soon Card -->
+                        <div class="bg-gray-50 dark:bg-slate-700/50 p-8 rounded-xl border-2 border-gray-200 dark:border-gray-600 opacity-60">
+                            <div class="mb-4">
+                                <svg class="w-16 h-16 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path>
+                                </svg>
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">ניהול פוסטים</h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">פרסום אוטומטי ומעקב אחר ביצועים</p>
+                            <div class="bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 px-6 py-3 rounded-xl font-bold w-full">
+                                בקרוב
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="mt-8">
                         <button onclick="switchPage('home')" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold transition-all">
                             חזרה לדף הבית
                         </button>
                     </div>
                 </div>
+            </div>
+        </section>
+
+        <!-- Page: Social Planning (AI Weekly Planner) -->
+        <section id="page-social-planning" class="hidden pt-6">
+            <div class="max-w-7xl mx-auto px-4">
+                
+                <!-- Header with Back Button -->
+                <div class="mb-6 flex items-center justify-between">
+                    <button onclick="switchPage('home')" class="group bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2 transition-all duration-300 shadow-sm hover:shadow-md border border-gray-200 dark:border-gray-600">
+                        <svg class="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                        </svg>
+                        <span>חזרה</span>
+                    </button>
+                    
+                    <h1 class="text-3xl font-bold text-gray-900 dark:text-white">📅 תכנון תוכן שבועי</h1>
+                    <div class="w-24"></div>
+                </div>
+
+                <!-- Setup Section (shown first time or when editing settings) -->
+                <div id="planning-setup" class="bg-white dark:bg-slate-800 rounded-xl shadow-md p-6 mb-6">
+                    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-6">⚙️ הגדרות תכנון</h2>
+                    
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <!-- Posting Frequency -->
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">קצב פרסום שבועי</label>
+                            <select id="posting-frequency" class="w-full p-3 border-2 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl">
+                                <option value="3">3 פרסומים בשבוע (מומלץ)</option>
+                                <option value="5">5 פרסומים בשבוע</option>
+                                <option value="7">פרסום יומי</option>
+                                <option value="custom">מותאם אישית</option>
+                            </select>
+                        </div>
+
+                        <!-- Publishing Goal -->
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">מטרת הפרסום</label>
+                            <select id="publishing-goal" class="w-full p-3 border-2 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl">
+                                <option value="awareness">מודעות למותג</option>
+                                <option value="engagement">אינטראקציה וקהילה</option>
+                                <option value="leads">הפקת לידים</option>
+                                <option value="sales">מכירות ישירות</option>
+                                <option value="mixed">שילוב מטרות</option>
+                            </select>
+                        </div>
+
+                        <!-- Target Audience -->
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">קהל יעד</label>
+                            <input type="text" id="target-audience" placeholder="לדוגמה: כלות לפני חתונה, נשים בגילאי 25-40" 
+                                   class="w-full p-3 border-2 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl">
+                        </div>
+
+                        <!-- Selected Platforms -->
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">פלטפורמות</label>
+                            <div class="space-y-2">
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" id="platform-instagram" checked class="w-5 h-5 rounded">
+                                    <span class="text-gray-700 dark:text-gray-200">📷 Instagram</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" id="platform-facebook" checked class="w-5 h-5 rounded">
+                                    <span class="text-gray-700 dark:text-gray-200">👥 Facebook</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" id="platform-tiktok" class="w-5 h-5 rounded">
+                                    <span class="text-gray-700 dark:text-gray-200">🎵 TikTok</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 flex gap-4">
+                        <button onclick="SocialPlanning.generateWeeklyPlan()" class="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-6 py-4 rounded-xl font-bold transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2">
+                            <span class="text-2xl">✨</span>
+                            <span>צור תוכנית שבועית חכמה</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Weekly Planner Board -->
+                <div id="weekly-planner" class="hidden">
+                    
+                    <!-- Controls -->
+                    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-md p-4 mb-4 flex items-center justify-between">
+                        <div class="flex items-center gap-4">
+                            <button onclick="SocialPlanning.showSetup()" class="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg font-bold transition-all flex items-center gap-2">
+                                <span>⚙️</span>
+                                <span>עריכת הגדרות</span>
+                            </button>
+                            <button onclick="SocialPlanning.regeneratePlan()" class="bg-purple-100 dark:bg-purple-900 hover:bg-purple-200 dark:hover:bg-purple-800 text-purple-700 dark:text-purple-200 px-4 py-2 rounded-lg font-bold transition-all flex items-center gap-2">
+                                <span>🔄</span>
+                                <span>צור תוכנית מחדש</span>
+                            </button>
+                        </div>
+                        <div class="text-sm text-gray-600 dark:text-gray-400">
+                            <span id="cards-count">0 כרטיסי תוכן</span>
+                        </div>
+                    </div>
+
+                    <!-- Week View (Desktop: 7 columns) -->
+                    <div class="hidden md:block">
+                        <div id="week-board" class="grid grid-cols-7 gap-3">
+                            <!-- Days will be generated dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Mobile View (Day Selector + Cards) -->
+                    <div class="md:hidden">
+                        <div class="bg-white dark:bg-slate-800 rounded-xl shadow-md p-2 mb-4 overflow-x-auto">
+                            <div id="mobile-day-tabs" class="flex gap-2">
+                                <!-- Day tabs will be generated -->
+                            </div>
+                        </div>
+                        <div id="mobile-cards-container">
+                            <!-- Cards for selected day -->
+                        </div>
+                    </div>
+
+                </div>
+
             </div>
         </section>
     
