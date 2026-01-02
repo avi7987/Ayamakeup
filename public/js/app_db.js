@@ -1456,6 +1456,13 @@ const HomeView = {
             ['new', 'contact', 'quoted', 'in-process'].includes(l.stage)
         ).length;
         
+        // Pending response (leads in new or contact stage for more than 2 days)
+        const twoDaysAgo = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000);
+        const pendingResponse = State.leads.filter(l => {
+            const leadDate = new Date(l.createdAt || l.date);
+            return ['new', 'contact'].includes(l.stage) && leadDate < twoDaysAgo;
+        }).length;
+        
         // Upcoming events (next 7 days)
         const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
         const upcomingEvents = State.leads.filter(l => {
@@ -1464,107 +1471,32 @@ const HomeView = {
             return eventDate >= now && eventDate <= nextWeek;
         }).length;
         
-        // Update Quick Stats Cards
-        const monthlyRevenueEl = document.getElementById('monthly-revenue');
-        if (monthlyRevenueEl) {
-            monthlyRevenueEl.innerText = `₪${monthlyRevenue.toLocaleString()}`;
-        }
+        // Closed deals this month
+        const closedDeals = monthlyClients.length;
         
-        const revenueTrendEl = document.getElementById('revenue-trend');
-        if (revenueTrendEl) {
-            const trendSign = revenueTrend >= 0 ? '+' : '';
-            revenueTrendEl.innerText = `${trendSign}${revenueTrend}%`;
-            revenueTrendEl.className = revenueTrend >= 0 
-                ? 'text-xs md:text-sm font-semibold text-green-600 dark:text-green-400'
-                : 'text-xs md:text-sm font-semibold text-red-600 dark:text-red-400';
-        }
+        // New leads this month
+        const newLeadsThisMonth = State.leads.filter(l => {
+            const leadDate = new Date(l.createdAt || l.date);
+            return leadDate.getFullYear() === thisYear && leadDate.getMonth() === thisMonth;
+        }).length;
         
-        const activeLeadsEl = document.getElementById('active-leads-count');
-        if (activeLeadsEl) {
-            activeLeadsEl.innerText = activeLeads;
-        }
+        // ===== NEW DASHBOARD SECTIONS =====
         
-        const upcomingEventsEl = document.getElementById('upcoming-events-count');
-        if (upcomingEventsEl) {
-            upcomingEventsEl.innerText = upcomingEvents;
-        }
+        // Section 1: Goals & Progress
+        this.updateGoalsSection(goals, monthlyRevenue, newLeadsThisMonth, closedDeals);
         
-        // Update annual goals title with current year
-        const annualGoalsTitleEl = document.getElementById('annual-goals-title');
-        if (annualGoalsTitleEl) {
-            annualGoalsTitleEl.innerText = `יעדים שנתיים ${thisYear}`;
-        }
+        // Section 2: Business Health Snapshot
+        this.updateSnapshotSection(activeLeads, pendingResponse, monthlyRevenue, upcomingEvents);
         
-        // Update Annual Goals with new IDs
-        const totalIncome = yearlyClients.reduce((sum, c) => sum + (c.income || c.price || c.amount || 0), 0);
-        const totalBrides = yearlyClients.filter(c => c.isBride || c.notes?.includes('כלה')).length;
+        // Section 3: Attention Required
+        this.updateAttentionSection(pendingResponse, activeLeads);
         
-        const incomeGoal = goals.income || 0;
-        const bridesGoal = goals.brides || 0;
-        
-        const incomePercent = incomeGoal > 0 ? Math.min(100, Math.round((totalIncome / incomeGoal) * 100)) : 0;
-        const bridesPercent = bridesGoal > 0 ? Math.min(100, Math.round((totalBrides / bridesGoal) * 100)) : 0;
-        
-        // Update income goal elements
-        const incomeGoalCurrent = document.getElementById('income-goal-current');
-        const incomeGoalTarget = document.getElementById('income-goal-target');
-        const incomeGoalPercentage = document.getElementById('income-goal-percentage');
-        const incomeGoalBar = document.getElementById('income-goal-bar');
-        const incomeGoalBarText = document.getElementById('income-goal-bar-text');
-        
-        if (incomeGoalCurrent) incomeGoalCurrent.innerText = `₪${totalIncome.toLocaleString()}`;
-        if (incomeGoalTarget) incomeGoalTarget.innerText = incomeGoal > 0 ? `₪${incomeGoal.toLocaleString()}` : 'לא הוגדר';
-        if (incomeGoalPercentage) incomeGoalPercentage.innerText = `${incomePercent}%`;
-        if (incomeGoalBar) {
-            incomeGoalBar.style.width = `${incomePercent}%`;
-            if (showMessages && incomePercent > 0) {
-                incomeGoalBar.style.transform = 'scaleY(1.1)';
-                setTimeout(() => incomeGoalBar.style.transform = 'scaleY(1)', 400);
-            }
-        }
-        if (incomeGoalBarText && incomePercent >= 20) {
-            incomeGoalBarText.innerText = `${incomePercent}%`;
-        }
-        
-        // Update brides goal elements
-        const bridesGoalCurrent = document.getElementById('brides-goal-current');
-        const bridesGoalTarget = document.getElementById('brides-goal-target');
-        const bridesGoalPercentage = document.getElementById('brides-goal-percentage');
-        const bridesGoalBar = document.getElementById('brides-goal-bar');
-        const bridesGoalBarText = document.getElementById('brides-goal-bar-text');
-        
-        if (bridesGoalCurrent) bridesGoalCurrent.innerText = totalBrides;
-        if (bridesGoalTarget) bridesGoalTarget.innerText = bridesGoal > 0 ? bridesGoal : 'לא הוגדר';
-        if (bridesGoalPercentage) bridesGoalPercentage.innerText = `${bridesPercent}%`;
-        if (bridesGoalBar) {
-            bridesGoalBar.style.width = `${bridesPercent}%`;
-            if (showMessages && bridesPercent > 0) {
-                bridesGoalBar.style.transform = 'scaleY(1.1)';
-                setTimeout(() => bridesGoalBar.style.transform = 'scaleY(1)', 400);
-            }
-        }
-        if (bridesGoalBarText && bridesPercent >= 20) {
-            bridesGoalBarText.innerText = `${bridesPercent}%`;
-        }
-        
-        // Keep old IDs for compatibility (if they exist)
-        if (document.getElementById('income-current')) {
-            document.getElementById('income-current').innerText = `₪${totalIncome.toLocaleString()}`;
-            document.getElementById('income-goal').innerText = incomeGoal > 0 ? `₪${incomeGoal.toLocaleString()}` : 'לא הוגדר';
-            document.getElementById('income-percentage').innerText = `${incomePercent}%`;
-            document.getElementById('income-progress').style.width = `${incomePercent}%`;
-        }
-        
-        if (document.getElementById('brides-current')) {
-            document.getElementById('brides-current').innerText = totalBrides;
-            document.getElementById('brides-goal').innerText = bridesGoal > 0 ? bridesGoal : 'לא הוגדר';
-            document.getElementById('brides-percentage').innerText = `${bridesPercent}%`;
-            document.getElementById('brides-progress').style.width = `${bridesPercent}%`;
-        }
+        // Section 4: Recent Activity
+        this.updateActivityFeed();
         
         // Show motivational message for brides milestone
         if (showMessages) {
-            const currentBrides = totalBrides;
+            const currentBrides = monthlyClients.filter(c => c.isBride || c.notes?.includes('כלה')).length;
             const shouldShowMessage = MotivationalMessages.previousBridesCount > 0 && 
                                       currentBrides > MotivationalMessages.previousBridesCount;
             
@@ -1576,6 +1508,184 @@ const HomeView = {
             
             MotivationalMessages.previousBridesCount = currentBrides;
         }
+    },
+    
+    updateGoalsSection(goals, currentIncome, currentLeads, currentDeals) {
+        const incomeGoal = goals.monthlyIncome || 200000;
+        const leadsGoal = goals.monthlyLeads || 50;
+        const dealsGoal = goals.monthlyDeals || 20;
+        
+        // Income goal
+        const incomePercent = Math.min(100, Math.round((currentIncome / incomeGoal) * 100));
+        const incomeStatus = incomePercent >= 90 ? 'עומד ביעד ✔️' : incomePercent >= 70 ? 'קרוב ליעד ⚠️' : 'רחוק מהיעד';
+        
+        document.getElementById('income-goal-current-display').innerText = `₪${currentIncome.toLocaleString()}`;
+        document.getElementById('income-goal-target-display').innerText = `₪${incomeGoal.toLocaleString()}`;
+        document.getElementById('income-goal-percentage-display').innerText = `${incomePercent}%`;
+        document.getElementById('income-goal-status').innerText = incomeStatus;
+        document.getElementById('income-goal-bar-new').style.width = `${incomePercent}%`;
+        
+        // Leads goal
+        const leadsPercent = Math.min(100, Math.round((currentLeads / leadsGoal) * 100));
+        const leadsStatus = leadsPercent >= 90 ? 'עומד ביעד ✔️' : leadsPercent >= 70 ? 'קרוב ליעד ⚠️' : 'רחוק מהיעד';
+        
+        document.getElementById('leads-goal-current-display').innerText = currentLeads;
+        document.getElementById('leads-goal-target-display').innerText = leadsGoal;
+        document.getElementById('leads-goal-percentage-display').innerText = `${leadsPercent}%`;
+        document.getElementById('leads-goal-status').innerText = leadsStatus;
+        document.getElementById('leads-goal-bar-new').style.width = `${leadsPercent}%`;
+        
+        // Deals goal
+        const dealsPercent = Math.min(100, Math.round((currentDeals / dealsGoal) * 100));
+        const dealsStatus = dealsPercent >= 90 ? 'עומד ביעד ✔️' : dealsPercent >= 70 ? 'קרוב ליעד ⚠️' : 'רחוק מהיעד';
+        
+        document.getElementById('deals-goal-current-display').innerText = currentDeals;
+        document.getElementById('deals-goal-target-display').innerText = dealsGoal;
+        document.getElementById('deals-goal-percentage-display').innerText = `${dealsPercent}%`;
+        document.getElementById('deals-goal-status').innerText = dealsStatus;
+        document.getElementById('deals-goal-bar-new').style.width = `${dealsPercent}%`;
+    },
+    
+    updateSnapshotSection(activeLeads, pendingResponse, monthlyRevenue, upcomingEvents) {
+        document.getElementById('snapshot-active-leads').innerText = activeLeads;
+        document.getElementById('snapshot-pending-response').innerText = pendingResponse;
+        document.getElementById('snapshot-monthly-revenue').innerText = `₪${monthlyRevenue.toLocaleString()}`;
+        document.getElementById('snapshot-upcoming-events').innerText = upcomingEvents;
+    },
+    
+    updateAttentionSection(pendingResponse, activeLeads) {
+        const attentionList = document.getElementById('attention-list');
+        if (!attentionList) return;
+        
+        const items = [];
+        
+        // Check for pending leads
+        if (pendingResponse > 0) {
+            items.push({
+                icon: '<svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
+                title: `${pendingResponse} לידים ממתינים למענה`,
+                subtitle: 'יותר מיומיים ללא מענה'
+            });
+        }
+        
+        // Check for goals not met
+        const goals = {
+            income: parseFloat(document.getElementById('income-goal-percentage-display')?.innerText || '0'),
+            leads: parseFloat(document.getElementById('leads-goal-percentage-display')?.innerText || '0'),
+            deals: parseFloat(document.getElementById('deals-goal-percentage-display')?.innerText || '0')
+        };
+        
+        if (goals.income < 50) {
+            items.push({
+                icon: '<svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>',
+                title: 'יעד הכנסה רחוק',
+                subtitle: `${goals.income.toFixed(0)}% מהיעד החודשי`
+            });
+        }
+        
+        if (items.length === 0) {
+            attentionList.innerHTML = `
+                <div class="text-center py-8">
+                    <svg class="w-16 h-16 mx-auto text-emerald-500 dark:text-emerald-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <div class="text-lg font-semibold text-emerald-600 dark:text-emerald-400">הכול בשליטה 👍</div>
+                    <div class="text-sm text-gray-500 dark:text-gray-400 mt-1">אין פריטים הדורשים תשומת לב</div>
+                </div>
+            `;
+        } else {
+            attentionList.innerHTML = items.map(item => `
+                <div class="flex items-start gap-3 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-xl">
+                    ${item.icon}
+                    <div class="flex-1">
+                        <div class="text-sm font-semibold text-gray-900 dark:text-white">${item.title}</div>
+                        <div class="text-xs text-gray-600 dark:text-gray-400 mt-0.5">${item.subtitle}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+    },
+    
+    updateActivityFeed() {
+        const activityFeed = document.getElementById('activity-feed');
+        if (!activityFeed) return;
+        
+        // Combine clients and leads, sort by date
+        const activities = [];
+        
+        // Recent clients (last 5)
+        State.clients.slice(-5).reverse().forEach(client => {
+            activities.push({
+                type: 'client',
+                date: new Date(client.date),
+                title: `עסקה נסגרה - ${client.name}`,
+                amount: client.income || client.price || client.amount,
+                icon: '<svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>'
+            });
+        });
+        
+        // Recent leads (last 5)
+        State.leads.slice(-5).reverse().forEach(lead => {
+            const stageNames = {
+                'new': 'ליד חדש',
+                'contact': 'יצירת קשר',
+                'quoted': 'הצעת מחיר נשלחה',
+                'in-process': 'בתהליך',
+                'won': 'זכייה',
+                'lost': 'אבד'
+            };
+            
+            activities.push({
+                type: 'lead',
+                date: new Date(lead.createdAt || lead.date),
+                title: `${stageNames[lead.stage] || lead.stage} - ${lead.name}`,
+                stage: lead.stage,
+                icon: '<svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>'
+            });
+        });
+        
+        // Sort by date and take last 5
+        activities.sort((a, b) => b.date - a.date);
+        const recentActivities = activities.slice(0, 5);
+        
+        if (recentActivities.length === 0) {
+            activityFeed.innerHTML = `
+                <div class="text-center py-8 text-gray-400 dark:text-gray-500 text-sm">
+                    אין פעילות אחרונה להצגה
+                </div>
+            `;
+        } else {
+            activityFeed.innerHTML = recentActivities.map(activity => {
+                const timeAgo = this.getTimeAgo(activity.date);
+                const amountText = activity.amount ? `<span class="text-emerald-600 dark:text-emerald-400 font-semibold">₪${activity.amount.toLocaleString()}</span>` : '';
+                
+                return `
+                    <div class="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-700/30 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors">
+                        <div class="mt-0.5">${activity.icon}</div>
+                        <div class="flex-1 min-w-0">
+                            <div class="text-sm font-medium text-gray-900 dark:text-white truncate">${activity.title}</div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 flex items-center gap-2">
+                                <span>${timeAgo}</span>
+                                ${amountText}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+    },
+    
+    getTimeAgo(date) {
+        const now = new Date();
+        const diff = now - date;
+        const minutes = Math.floor(diff / 60000);
+        const hours = Math.floor(minutes / 60);
+        const days = Math.floor(hours / 24);
+        
+        if (days > 0) return `לפני ${days} ימים`;
+        if (hours > 0) return `לפני ${hours} שעות`;
+        if (minutes > 0) return `לפני ${minutes} דקות`;
+        return 'עכשיו';
     }
 };
 
