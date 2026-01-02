@@ -4368,45 +4368,40 @@ async function init() {
     console.log('✅ CRM Ready!');
 }
 
-// Side Navigation Functions
-function switchPageNav(pageName) {
-    // Close any open modals
-    document.querySelectorAll('.modal').forEach(modal => {
-        modal.style.display = 'none';
-    });
+// Side Menu Functions
+function openSideMenu() {
+    document.getElementById('side-menu').classList.remove('translate-x-full');
+    document.getElementById('menu-overlay').classList.remove('hidden');
+    document.body.style.overflow = 'hidden'; // Prevent body scroll
+}
+
+function closeSideMenu() {
+    document.getElementById('side-menu').classList.add('translate-x-full');
+    document.getElementById('menu-overlay').classList.add('hidden');
+    document.body.style.overflow = ''; // Restore body scroll
+}
+
+function switchPageWithMenu(pageName) {
+    switchPage(pageName);
+    closeSideMenu();
     
-    // Hide all pages
-    document.querySelectorAll('.page').forEach(page => {
-        page.classList.remove('active');
-        page.classList.add('hidden');
-    });
-    
-    // Show requested page
-    const targetPage = document.getElementById(`page-${pageName}`);
-    if (targetPage) {
-        targetPage.classList.remove('hidden');
-        targetPage.classList.add('active');
-    }
-    
-    // Update active state in side nav
-    document.querySelectorAll('.side-nav-item').forEach(item => {
-        item.classList.remove('active');
+    // Update active menu item
+    document.querySelectorAll('.menu-item').forEach(item => {
         if (item.getAttribute('data-page') === pageName) {
-            item.classList.add('active');
+            item.classList.add('bg-purple-100', 'dark:bg-gray-700');
+        } else {
+            item.classList.remove('bg-purple-100', 'dark:bg-gray-700');
         }
     });
-    
-    // Load data for specific pages
-    if (pageName === 'leads') {
-        loadLeads();
-    } else if (pageName === 'stats') {
-        updateStats();
-    } else if (pageName === 'insights') {
-        loadInsights();
-    } else if (pageName === 'home') {
-        updateDashboard();
+}
+
+function showComingSoon(feature) {
+    // Navigate to the respective coming soon page
+    if (feature === 'חוזים') {
+        switchPageWithMenu('contracts');
+    } else if (feature === 'סושיאל') {
+        switchPageWithMenu('social');
     }
 }
 
 document.addEventListener('DOMContentLoaded', init);
-
