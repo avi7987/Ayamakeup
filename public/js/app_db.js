@@ -4954,5 +4954,29 @@ const SocialPlanning = {
 // Make globally accessible
 window.SocialPlanning = SocialPlanning;
 
+// Side Menu Functions
+function openSideMenu() {
+    const menu = document.getElementById('side-menu');
+    const overlay = document.getElementById('menu-overlay');
+    if (menu) menu.classList.remove('translate-x-full');
+    if (overlay) overlay.classList.remove('hidden');
+}
+
+function closeSideMenu() {
+    const menu = document.getElementById('side-menu');
+    const overlay = document.getElementById('menu-overlay');
+    if (menu) menu.classList.add('translate-x-full');
+    if (overlay) overlay.classList.add('hidden');
+}
+
+async function switchPageWithMenu(pageName) {
+    closeSideMenu();
+    await switchPage(pageName);
+}
+
+window.openSideMenu = openSideMenu;
+window.closeSideMenu = closeSideMenu;
+window.switchPageWithMenu = switchPageWithMenu;
+
 document.addEventListener('DOMContentLoaded', init);
 
