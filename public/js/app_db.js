@@ -4479,7 +4479,7 @@ async function init() {
 }
 
 // Side Navigation Functions
-function switchPageNav(pageName) {
+async function switchPageNav(pageName) {
     // Close any open modals
     document.querySelectorAll('.modal').forEach(modal => {
         modal.style.display = 'none';
@@ -4508,15 +4508,21 @@ function switchPageNav(pageName) {
     
     // Load data for specific pages
     if (pageName === 'leads') {
-        loadLeads();
+        await LeadsView.render();
     } else if (pageName === 'stats') {
-        updateStats();
+        await StatsView.update();
     } else if (pageName === 'insights') {
-        loadInsights();
+        await InsightsView.render();
     } else if (pageName === 'home') {
-        updateDashboard();
+        await HomeView.update();
     }
+    
+    // Scroll to top
+    window.scrollTo(0, 0);
 }
+
+// Make it globally accessible
+window.switchPageNav = switchPageNav;
 
 document.addEventListener('DOMContentLoaded', init);
 
