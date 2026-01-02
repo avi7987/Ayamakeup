@@ -1443,28 +1443,101 @@
                         </div>
                     </div>
 
-                    <!-- Content Style -->
+                    <!-- Content Style (Multi-select) -->
                     <div>
-                        <label class="block text-lg font-bold text-gray-900 dark:text-white mb-3">🎨 סגנון התוכן</label>
-                        <select id="strategy-style" class="w-full p-4 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all">
-                            <option value="">בחרו סגנון...</option>
-                            <option value="professional">מקצועי ורציני</option>
-                            <option value="friendly">ידידותי וחם</option>
-                            <option value="inspiring">מעורר השראה</option>
-                            <option value="educational">חינוכי ומלמד</option>
-                            <option value="entertaining">בידורי ומשעשע</option>
-                        </select>
+                        <label class="block text-lg font-bold text-gray-900 dark:text-white mb-3">🎨 סגנון התוכן (ניתן לבחור כמה)</label>
+                        <div class="space-y-2">
+                            <label class="flex items-center p-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl hover:bg-purple-50 dark:hover:bg-purple-900/20 cursor-pointer">
+                                <input type="checkbox" class="content-style w-5 h-5 text-purple-600 rounded" value="professional">
+                                <span class="mr-3 font-medium text-gray-900 dark:text-white">מקצועי ורציני</span>
+                            </label>
+                            <label class="flex items-center p-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl hover:bg-purple-50 dark:hover:bg-purple-900/20 cursor-pointer">
+                                <input type="checkbox" class="content-style w-5 h-5 text-purple-600 rounded" value="friendly">
+                                <span class="mr-3 font-medium text-gray-900 dark:text-white">ידידותי וחם</span>
+                            </label>
+                            <label class="flex items-center p-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl hover:bg-purple-50 dark:hover:bg-purple-900/20 cursor-pointer">
+                                <input type="checkbox" class="content-style w-5 h-5 text-purple-600 rounded" value="inspiring">
+                                <span class="mr-3 font-medium text-gray-900 dark:text-white">מעורר השראה</span>
+                            </label>
+                            <label class="flex items-center p-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl hover:bg-purple-50 dark:hover:bg-purple-900/20 cursor-pointer">
+                                <input type="checkbox" class="content-style w-5 h-5 text-purple-600 rounded" value="educational">
+                                <span class="mr-3 font-medium text-gray-900 dark:text-white">חינוכי ומלמד</span>
+                            </label>
+                            <label class="flex items-center p-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl hover:bg-purple-50 dark:hover:bg-purple-900/20 cursor-pointer">
+                                <input type="checkbox" class="content-style w-5 h-5 text-purple-600 rounded" value="entertaining">
+                                <span class="mr-3 font-medium text-gray-900 dark:text-white">בידורי ומשעשע</span>
+                            </label>
+                        </div>
                     </div>
 
                     <!-- Tone -->
                     <div>
-                        <label class="block text-lg font-bold text-gray-900 dark:text-white mb-3">💬 טון דיבור</label>
+                        <div class="flex items-center justify-between mb-3">
+                            <label class="block text-lg font-bold text-gray-900 dark:text-white">💬 טון דיבור</label>
+                            <button onclick="showToneExamples()" class="text-sm text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 font-medium flex items-center gap-1">
+                                <span>💡</span>
+                                <span>ראה דוגמאות</span>
+                            </button>
+                        </div>
                         <textarea id="strategy-tone" rows="3" class="w-full p-4 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all" placeholder="לדוגמה: חם, אישי, מעודד. משתמשים בשפה פשוטה וברורה..."></textarea>
+                    </div>
+
+                    <!-- Content Types -->
+                    <div>
+                        <label class="block text-lg font-bold text-gray-900 dark:text-white mb-3">📝 סוגי תוכן שאתם מעלים (ניתן לבחור כמה)</label>
+                        <div class="grid md:grid-cols-2 gap-2">
+                            <label class="flex items-center p-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl hover:bg-purple-50 dark:hover:bg-purple-900/20 cursor-pointer">
+                                <input type="checkbox" class="content-type w-4 h-4 text-purple-600 rounded" value="portfolio">
+                                <span class="mr-2 text-sm font-medium text-gray-900 dark:text-white">🎨 הצגת עבודות לפני/אחרי</span>
+                            </label>
+                            <label class="flex items-center p-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl hover:bg-purple-50 dark:hover:bg-purple-900/20 cursor-pointer">
+                                <input type="checkbox" class="content-type w-4 h-4 text-purple-600 rounded" value="behind-scenes">
+                                <span class="mr-2 text-sm font-medium text-gray-900 dark:text-white">🎬 מאחורי הקלעים</span>
+                            </label>
+                            <label class="flex items-center p-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl hover:bg-purple-50 dark:hover:bg-purple-900/20 cursor-pointer">
+                                <input type="checkbox" class="content-type w-4 h-4 text-purple-600 rounded" value="tips">
+                                <span class="mr-2 text-sm font-medium text-gray-900 dark:text-white">💡 טיפים והמלצות</span>
+                            </label>
+                            <label class="flex items-center p-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl hover:bg-purple-50 dark:hover:bg-purple-900/20 cursor-pointer">
+                                <input type="checkbox" class="content-type w-4 h-4 text-purple-600 rounded" value="testimonials">
+                                <span class="mr-2 text-sm font-medium text-gray-900 dark:text-white">⭐ ביקורות ומשובים</span>
+                            </label>
+                            <label class="flex items-center p-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl hover:bg-purple-50 dark:hover:bg-purple-900/20 cursor-pointer">
+                                <input type="checkbox" class="content-type w-4 h-4 text-purple-600 rounded" value="personal">
+                                <span class="mr-2 text-sm font-medium text-gray-900 dark:text-white">✨ חיים אישיים וסיפורים</span>
+                            </label>
+                            <label class="flex items-center p-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl hover:bg-purple-50 dark:hover:bg-purple-900/20 cursor-pointer">
+                                <input type="checkbox" class="content-type w-4 h-4 text-purple-600 rounded" value="education">
+                                <span class="mr-2 text-sm font-medium text-gray-900 dark:text-white">📚 הדרכות וטוטוריאלים</span>
+                            </label>
+                            <label class="flex items-center p-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl hover:bg-purple-50 dark:hover:bg-purple-900/20 cursor-pointer">
+                                <input type="checkbox" class="content-type w-4 h-4 text-purple-600 rounded" value="products">
+                                <span class="mr-2 text-sm font-medium text-gray-900 dark:text-white">🛍️ מוצרים ושירותים</span>
+                            </label>
+                            <label class="flex items-center p-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl hover:bg-purple-50 dark:hover:bg-purple-900/20 cursor-pointer">
+                                <input type="checkbox" class="content-type w-4 h-4 text-purple-600 rounded" value="motivation">
+                                <span class="mr-2 text-sm font-medium text-gray-900 dark:text-white">💪 מוטיבציה והשראה</span>
+                            </label>
+                            <label class="flex items-center p-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl hover:bg-purple-50 dark:hover:bg-purple-900/20 cursor-pointer">
+                                <input type="checkbox" class="content-type w-4 h-4 text-purple-600 rounded" value="promotions">
+                                <span class="mr-2 text-sm font-medium text-gray-900 dark:text-white">🎉 מבצעים ואירועים</span>
+                            </label>
+                            <label class="flex items-center p-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl hover:bg-purple-50 dark:hover:bg-purple-900/20 cursor-pointer">
+                                <input type="checkbox" class="content-type w-4 h-4 text-purple-600 rounded" value="qa">
+                                <span class="mr-2 text-sm font-medium text-gray-900 dark:text-white">❓ שאלות ותשובות</span>
+                            </label>
+                        </div>
                     </div>
 
                     <!-- Target Audience -->
                     <div>
-                        <label class="block text-lg font-bold text-gray-900 dark:text-white mb-3">👥 קהל יעד</label>
+                        <div class="flex items-center justify-between mb-3">
+                            <label class="block text-lg font-bold text-gray-900 dark:text-white">👥 קהל יעד</label>
+                            <button onclick="showAudienceExamples()" class="text-sm text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 font-medium flex items-center gap-1">
+                                <span>💡</span>
+                                <span>ראה דוגמאות</span>
+                            </button>
+                        </div>
                         <textarea id="strategy-audience" rows="3" class="w-full p-4 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all" placeholder="לדוגמה: נשים בגילאי 25-45, מעוניינות בטיפוח עצמי..."></textarea>
                     </div>
 
@@ -1593,67 +1666,27 @@
                     <div class="w-24"></div>
                 </div>
 
-                <!-- Setup Section (shown first time or when editing settings) -->
-                <div id="planning-setup" class="bg-white dark:bg-slate-800 rounded-xl shadow-md p-6 mb-6">
-                    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-6">⚙️ הגדרות תכנון</h2>
-                    
-                    <div class="grid md:grid-cols-2 gap-6">
-                        <!-- Posting Frequency -->
-                        <div>
-                            <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">קצב פרסום שבועי</label>
-                            <select id="posting-frequency" class="w-full p-3 border-2 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl">
-                                <option value="3">3 פרסומים בשבוע (מומלץ)</option>
-                                <option value="5">5 פרסומים בשבוע</option>
-                                <option value="7">פרסום יומי</option>
-                                <option value="custom">מותאם אישית</option>
-                            </select>
-                        </div>
-
-                        <!-- Publishing Goal -->
-                        <div>
-                            <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">מטרת הפרסום</label>
-                            <select id="publishing-goal" class="w-full p-3 border-2 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl">
-                                <option value="awareness">מודעות למותג</option>
-                                <option value="engagement">אינטראקציה וקהילה</option>
-                                <option value="leads">הפקת לידים</option>
-                                <option value="sales">מכירות ישירות</option>
-                                <option value="mixed">שילוב מטרות</option>
-                            </select>
-                        </div>
-
-                        <!-- Target Audience -->
-                        <div>
-                            <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">קהל יעד</label>
-                            <input type="text" id="target-audience" placeholder="לדוגמה: כלות לפני חתונה, נשים בגילאי 25-40" 
-                                   class="w-full p-3 border-2 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl">
-                        </div>
-
-                        <!-- Selected Platforms -->
-                        <div>
-                            <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">פלטפורמות</label>
-                            <div class="space-y-2">
-                                <label class="flex items-center gap-2 cursor-pointer">
-                                    <input type="checkbox" id="platform-instagram" checked class="w-5 h-5 rounded">
-                                    <span class="text-gray-700 dark:text-gray-200">📷 Instagram</span>
-                                </label>
-                                <label class="flex items-center gap-2 cursor-pointer">
-                                    <input type="checkbox" id="platform-facebook" checked class="w-5 h-5 rounded">
-                                    <span class="text-gray-700 dark:text-gray-200">👥 Facebook</span>
-                                </label>
-                                <label class="flex items-center gap-2 cursor-pointer">
-                                    <input type="checkbox" id="platform-tiktok" class="w-5 h-5 rounded">
-                                    <span class="text-gray-700 dark:text-gray-200">🎵 TikTok</span>
-                                </label>
-                            </div>
+                <!-- Info Section -->
+                <div class="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-xl p-6 mb-6 border-2 border-purple-200 dark:border-purple-700">
+                    <div class="flex items-start gap-4">
+                        <div class="text-4xl">💡</div>
+                        <div class="flex-1">
+                            <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">התכנון שלך מבוסס על האסטרטגיה</h3>
+                            <p class="text-gray-700 dark:text-gray-300 mb-3">התוכן שיווצר כאן מותאם להגדרות שקבעתם באסטרטגיית הסושיאל</p>
+                            <button onclick="window.switchPageNav('social-strategy')" class="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-purple-700 dark:text-purple-300 px-4 py-2 rounded-lg font-bold text-sm transition-all border-2 border-purple-300 dark:border-purple-600">
+                                ⚙️ עריכת אסטרטגיה
+                            </button>
                         </div>
                     </div>
+                </div>
 
-                    <div class="mt-6 flex gap-4">
-                        <button onclick="SocialPlanning.generateWeeklyPlan()" class="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-6 py-4 rounded-xl font-bold transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2">
-                            <span class="text-2xl">✨</span>
-                            <span>צור תוכנית שבועית חכמה</span>
-                        </button>
-                    </div>
+                <!-- Generate Button -->
+                <div class="bg-white dark:bg-slate-800 rounded-xl shadow-md p-6 mb-6">
+                    <button onclick="SocialPlanning.generateWeeklyPlan()" class="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-6 py-4 rounded-xl font-bold text-lg transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-3">
+                        <span class="text-3xl">✨</span>
+                        <span>צור תוכנית שבועית חכמה</span>
+                    </button>
+                    <p class="text-center text-sm text-gray-600 dark:text-gray-400 mt-3">התוכן ייווצר באמצעות AI על בסיס האסטרטגיה שלכם</p>
                 </div>
 
                 <!-- Weekly Planner Board -->

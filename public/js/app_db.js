@@ -4621,9 +4621,16 @@ const SocialStrategy = {
         // Collect data from form
         this.strategy.goal = document.getElementById('strategy-goal')?.value || '';
         this.strategy.frequency = document.getElementById('strategy-frequency')?.value || '';
-        this.strategy.style = document.getElementById('strategy-style')?.value || '';
         this.strategy.tone = document.getElementById('strategy-tone')?.value || '';
         this.strategy.audience = document.getElementById('strategy-audience')?.value || '';
+
+        // Collect content styles (multi-select)
+        this.strategy.styles = Array.from(document.querySelectorAll('.content-style:checked'))
+            .map(cb => cb.value);
+
+        // Collect content types
+        this.strategy.contentTypes = Array.from(document.querySelectorAll('.content-type:checked'))
+            .map(cb => cb.value);
 
         // Collect platforms
         this.strategy.platforms = [];
@@ -4633,7 +4640,7 @@ const SocialStrategy = {
 
         // Collect posting times
         this.strategy.postingTimes = Array.from(document.querySelectorAll('input[type="checkbox"][value]'))
-            .filter(cb => cb.checked && cb.value && !cb.id.startsWith('platform-'))
+            .filter(cb => cb.checked && cb.value && !cb.id.startsWith('platform-') && !cb.classList.contains('content-style') && !cb.classList.contains('content-type'))
             .map(cb => cb.value);
 
         // Save to localStorage
@@ -4659,6 +4666,47 @@ window.selectFrequency = function(freq) {
 
 window.saveStrategy = function() {
     return SocialStrategy.save();
+};
+
+window.showToneExamples = function() {
+    const examples = `
+📝 דוגמאות לטון דיבור:
+
+1️⃣ מקצועי וחם:
+"אני כאן כדי ללוות אתכם בדרך, עם ניסיון של שנים ואהבה אמיתית למה שאני עושה"
+
+2️⃣ ידידותי ונגיש:
+"היי! בואו נדבר על זה בפשטות - בלי פרפראות, רק את מה שחשוב באמת"
+
+3️⃣ מעורר השראה:
+"כל אחת מכן יכולה להגיע לשם. המסע מתחיל במקום שבו את נמצאת עכשיו"
+
+4️⃣ מלמד ומקצועי:
+"היום נלמד טכניקה חשובה שתשנה את התוצאות שלכם. שימו לב לכל שלב"
+    `;
+    alert(examples);
+};
+
+window.showAudienceExamples = function() {
+    const examples = `
+👥 דוגמאות לקהל יעד:
+
+💄 איפור וטיפוח:
+"נשים בגילאי 25-45, מעוניינות בטיפוח עצמי ואיפור איכותי, רמת הכנסה בינונית-גבוהה"
+
+💪 כושר ובריאות:
+"גברים ונשים בגילאי 30-50, מעוניינים בשיפור הכושר והבריאות, עובדים במשרה מלאה"
+
+👗 אופנה וסטייל:
+"נשים צעירות 20-35, עוקבות אחר טרנדים, אוהבות קניות ומעוניינות בסטייל אישי"
+
+🏠 עיצוב ומזון:
+"בעלי בית בגילאי 30-55, מעוניינים בשדרוג הבית, אוהבים בישול ואירוח"
+
+💼 עסקים ויזמות:
+"בעלי עסקים קטנים ובינוניים, יזמים, מעוניינים בכלים לצמיחה עסקית"
+    `;
+    alert(examples);
 };
 
 window.SocialStrategy = SocialStrategy;
