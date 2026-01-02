@@ -225,6 +225,20 @@ input, select {
     margin-bottom: 10px; 
     font-family: inherit;
     transition: border-color 0.3s;
+    background: white;
+    color: #1e293b;
+}
+
+@media (prefers-color-scheme: dark) {
+    input, select {
+        background: #334155 !important;
+        color: #f1f5f9 !important;
+        border-color: #475569 !important;
+    }
+    
+    input::placeholder {
+        color: #94a3b8 !important;
+    }
 }
 
 input:focus, select:focus { 
