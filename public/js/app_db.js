@@ -4480,22 +4480,30 @@ async function init() {
 
 // Side Navigation Functions
 async function switchPageNav(pageName) {
+    console.log('🔄 Switching to page:', pageName);
+    
     // Close any open modals
     document.querySelectorAll('.modal').forEach(modal => {
         modal.style.display = 'none';
     });
     
-    // Hide all pages
-    document.querySelectorAll('.page').forEach(page => {
-        page.classList.remove('active');
-        page.classList.add('hidden');
+    // Hide all pages - use ID selector for all page-* elements
+    ['home', 'entry', 'leads', 'stats', 'insights', 'contracts', 'social'].forEach(page => {
+        const pageEl = document.getElementById(`page-${page}`);
+        if (pageEl) {
+            pageEl.classList.add('hidden');
+            pageEl.classList.remove('active');
+        }
     });
     
     // Show requested page
     const targetPage = document.getElementById(`page-${pageName}`);
     if (targetPage) {
+        console.log('✅ Found page:', targetPage.id);
         targetPage.classList.remove('hidden');
         targetPage.classList.add('active');
+    } else {
+        console.error('❌ Page not found:', `page-${pageName}`);
     }
     
     // Update active state in side nav
@@ -4508,17 +4516,23 @@ async function switchPageNav(pageName) {
     
     // Load data for specific pages
     if (pageName === 'leads') {
+        console.log('📊 Loading leads data...');
         await LeadsView.render();
     } else if (pageName === 'stats') {
+        console.log('📈 Loading stats data...');
         await StatsView.update();
     } else if (pageName === 'insights') {
+        console.log('💡 Loading insights data...');
         await InsightsView.render();
     } else if (pageName === 'home') {
+        console.log('🏠 Loading home dashboard...');
         await HomeView.update();
     }
     
     // Scroll to top
     window.scrollTo(0, 0);
+    document.body.scrollTop = 0;
+    document.documentElement.scrollTop = 0;
 }
 
 // Make it globally accessible
