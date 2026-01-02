@@ -507,7 +507,7 @@ const Navigation = {
         document.documentElement.scrollTop = 0;
         
         // Hide all pages
-        ['home', 'entry', 'leads', 'stats', 'insights'].forEach(id => {
+        ['home', 'entry', 'leads', 'stats', 'insights', 'contracts', 'social'].forEach(id => {
             const page = document.getElementById('page-' + id);
             if (page) page.classList.add('hidden');
         });
@@ -525,6 +525,7 @@ const Navigation = {
         if (pageName === 'leads') LeadsView.render();
         if (pageName === 'stats') StatsView.update();
         if (pageName === 'insights') InsightsView.render();
+        // contracts and social pages don't need initialization (they're static coming soon pages)
         
         // Scroll to top again to ensure it worked
         setTimeout(() => {
@@ -4365,6 +4366,42 @@ async function init() {
     // Initial render - Show home page by default
     await switchPage('home');
     console.log('✅ CRM Ready!');
+}
+
+// Side Menu Functions
+function openSideMenu() {
+    document.getElementById('side-menu').classList.remove('translate-x-full');
+    document.getElementById('menu-overlay').classList.remove('hidden');
+    document.body.style.overflow = 'hidden'; // Prevent body scroll
+}
+
+function closeSideMenu() {
+    document.getElementById('side-menu').classList.add('translate-x-full');
+    document.getElementById('menu-overlay').classList.add('hidden');
+    document.body.style.overflow = ''; // Restore body scroll
+}
+
+function switchPageWithMenu(pageName) {
+    switchPage(pageName);
+    closeSideMenu();
+    
+    // Update active menu item
+    document.querySelectorAll('.menu-item').forEach(item => {
+        if (item.getAttribute('data-page') === pageName) {
+            item.classList.add('bg-purple-100', 'dark:bg-gray-700');
+        } else {
+            item.classList.remove('bg-purple-100', 'dark:bg-gray-700');
+        }
+    });
+}
+
+function showComingSoon(feature) {
+    // Navigate to the respective coming soon page
+    if (feature === 'חוזים') {
+        switchPageWithMenu('contracts');
+    } else if (feature === 'סושיאל') {
+        switchPageWithMenu('social');
+    }
 }
 
 document.addEventListener('DOMContentLoaded', init);

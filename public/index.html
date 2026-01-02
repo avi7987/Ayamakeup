@@ -274,6 +274,156 @@
     </style>
 </head>
 <body>
+    <!-- Side Menu Overlay -->
+    <div id="menu-overlay" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 hidden transition-opacity duration-300" onclick="closeSideMenu()"></div>
+    
+    <!-- Side Menu -->
+    <div id="side-menu" class="fixed top-0 right-0 h-full w-80 bg-white dark:bg-gray-800 shadow-2xl z-50 transform translate-x-full transition-transform duration-300 flex flex-col">
+        <!-- Menu Header -->
+        <div class="mesh-background p-6 relative">
+            <button onclick="closeSideMenu()" class="absolute top-4 left-4 text-white hover:bg-white/20 p-2 rounded-full transition-all">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+            <div class="text-center">
+                <div class="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-2xl">
+                    <span class="text-3xl moon-float">🌙</span>
+                    <span class="text-2xl font-bold text-white">Luna</span>
+                </div>
+                <p class="mt-2 text-sm text-white/80">תפריט ניווט</p>
+            </div>
+        </div>
+        
+        <!-- Menu Items -->
+        <div class="flex-1 overflow-y-auto p-4 space-y-2">
+            <!-- Home -->
+            <button onclick="switchPageWithMenu('home')" class="menu-item w-full text-right p-4 rounded-xl flex items-center gap-3 hover:bg-purple-50 dark:hover:bg-gray-700 transition-all group" data-page="home">
+                <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="font-bold text-gray-900 dark:text-white">בית</h3>
+                    <p class="text-xs text-gray-600 dark:text-gray-400">דף הבית</p>
+                </div>
+            </button>
+            
+            <!-- Leads -->
+            <button onclick="switchPageWithMenu('leads')" class="menu-item w-full text-right p-4 rounded-xl flex items-center gap-3 hover:bg-blue-50 dark:hover:bg-gray-700 transition-all group" data-page="leads">
+                <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="font-bold text-gray-900 dark:text-white">לידים</h3>
+                    <p class="text-xs text-gray-600 dark:text-gray-400">ניהול לקוחות</p>
+                </div>
+            </button>
+            
+            <!-- Income/Entry -->
+            <button onclick="switchPageWithMenu('entry')" class="menu-item w-full text-right p-4 rounded-xl flex items-center gap-3 hover:bg-emerald-50 dark:hover:bg-gray-700 transition-all group" data-page="entry">
+                <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-green-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="font-bold text-gray-900 dark:text-white">הכנסות</h3>
+                    <p class="text-xs text-gray-600 dark:text-gray-400">הוספת הכנסות</p>
+                </div>
+            </button>
+            
+            <!-- Statistics -->
+            <button onclick="switchPageWithMenu('stats')" class="menu-item w-full text-right p-4 rounded-xl flex items-center gap-3 hover:bg-amber-50 dark:hover:bg-gray-700 transition-all group" data-page="stats">
+                <div class="w-10 h-10 bg-gradient-to-br from-amber-500 to-orange-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="font-bold text-gray-900 dark:text-white">סטטיסטיקות</h3>
+                    <p class="text-xs text-gray-600 dark:text-gray-400">דוחות וניתוחים</p>
+                </div>
+            </button>
+            
+            <!-- Insights -->
+            <button onclick="switchPageWithMenu('insights')" class="menu-item w-full text-right p-4 rounded-xl flex items-center gap-3 hover:bg-pink-50 dark:hover:bg-gray-700 transition-all group" data-page="insights">
+                <div class="w-10 h-10 bg-gradient-to-br from-pink-500 to-rose-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="font-bold text-gray-900 dark:text-white">תובנות</h3>
+                    <p class="text-xs text-gray-600 dark:text-gray-400">ניתוח עסקי</p>
+                </div>
+            </button>
+            
+            <!-- Divider -->
+            <div class="border-t border-gray-200 dark:border-gray-700 my-2"></div>
+            
+            <!-- Contracts (Future) -->
+            <button onclick="showComingSoon('חוזים')" class="menu-item w-full text-right p-4 rounded-xl flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all group opacity-60">
+                <div class="w-10 h-10 bg-gradient-to-br from-gray-400 to-gray-500 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="font-bold text-gray-900 dark:text-white">חוזים</h3>
+                    <p class="text-xs text-gray-600 dark:text-gray-400">בקרוב...</p>
+                </div>
+            </button>
+            
+            <!-- Social (Future) -->
+            <button onclick="showComingSoon('סושיאל')" class="menu-item w-full text-right p-4 rounded-xl flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all group opacity-60">
+                <div class="w-10 h-10 bg-gradient-to-br from-gray-400 to-gray-500 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="font-bold text-gray-900 dark:text-white">סושיאל</h3>
+                    <p class="text-xs text-gray-600 dark:text-gray-400">בקרוב...</p>
+                </div>
+            </button>
+            
+            <!-- Divider -->
+            <div class="border-t border-gray-200 dark:border-gray-700 my-2"></div>
+            
+            <!-- Settings -->
+            <button onclick="openModal('modal-settings'); closeSideMenu();" class="menu-item w-full text-right p-4 rounded-xl flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all group">
+                <div class="w-10 h-10 bg-gradient-to-br from-gray-600 to-gray-700 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="font-bold text-gray-900 dark:text-white">הגדרות</h3>
+                    <p class="text-xs text-gray-600 dark:text-gray-400">הגדרות מערכת</p>
+                </div>
+            </button>
+        </div>
+        
+        <!-- Menu Footer -->
+        <div class="p-4 border-t border-gray-200 dark:border-gray-700 space-y-2">
+            <div class="text-center text-xs text-gray-500 dark:text-gray-400">
+                <p>Luna CRM System</p>
+                <p class="mt-1">Version 2.0</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Menu Toggle Button (Hamburger) -->
+    <button id="menu-toggle" onclick="openSideMenu()" class="fixed top-4 right-4 z-30 bg-gradient-to-br from-purple-500 to-purple-600 text-white p-3 rounded-full shadow-lg hover:scale-110 transition-all duration-300">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+        </svg>
+    </button>
 
     <!-- Main Container -->
     <div class="min-h-screen">
@@ -283,25 +433,7 @@
             <!-- Hero Section with Gradient Background -->
             <div class="mesh-background relative pb-8 pt-6 px-4">
                 <!-- Top Controls -->
-                <div class="max-w-7xl mx-auto flex justify-between items-center mb-6">
-                    <!-- Left: Settings Button -->
-                    <button onclick="openModal('modal-settings')" class="bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white p-3 rounded-full shadow-lg transition-all duration-300 hover:scale-110">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                        </svg>
-                    </button>
-                    
-                    <!-- Center: Luna Logo -->
-                    <div class="text-center">
-                        <div class="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-6 py-3 rounded-2xl shadow-lg">
-                            <span class="text-4xl moon-float">🌙</span>
-                            <span class="text-3xl font-bold text-white">Luna</span>
-                        </div>
-                        <!-- Slogan below logo -->
-                        <p class="mt-2 text-sm text-white/80 italic">✨ Illuminate your business path ✨</p>
-                    </div>
-                    
+                <div class="max-w-7xl mx-auto flex justify-end items-center mb-6 pr-20">
                     <!-- Right: User Profile & Dark Mode -->
                     <div class="flex items-center gap-3">
                         <!-- User Profile Section -->
@@ -358,8 +490,13 @@
                     </div>
                 </div>
                 
-                <!-- Welcome Message -->
+                <!-- Welcome Message & Logo Center -->
                 <div class="max-w-7xl mx-auto text-center text-white relative z-10 mb-6 fade-in">
+                    <div class="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-6 py-3 rounded-2xl shadow-lg mb-3">
+                        <span class="text-4xl moon-float">🌙</span>
+                        <span class="text-3xl font-bold text-white">Luna</span>
+                    </div>
+                    <p class="text-sm text-white/80 italic mb-2">✨ Illuminate your business path ✨</p>
                     <h1 class="text-xl md:text-2xl font-bold" id="welcome-message">שלום, ברוכה השובה ל-Luna</h1>
                 </div>
             </div>
@@ -966,6 +1103,48 @@
                 </svg>
                 <h3 class="text-xl font-bold text-gray-700 dark:text-gray-300 mb-2">אין מספיק נתונים</h3>
                 <p class="text-gray-600 dark:text-gray-400">התחילו להוסיף לידים ולסגור עסקאות כדי לראות תובנות</p>
+            </div>
+        </section>
+
+        <!-- Page: Contracts (Coming Soon) -->
+        <section id="page-contracts" class="hidden pt-6">
+            <div class="max-w-4xl mx-auto">
+                <div class="bg-white dark:bg-slate-800 rounded-xl shadow-md p-12 text-center">
+                    <div class="mb-6">
+                        <svg class="w-32 h-32 mx-auto text-purple-300 dark:text-purple-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                    </div>
+                    <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-4">✨ מערכת חוזים</h2>
+                    <p class="text-lg text-gray-600 dark:text-gray-400 mb-2">תכונה זו נמצאת בפיתוח</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-500">בקרוב תוכלי לנהל חוזים דיגיטליים, לשלוח לחתימה ולעקוב אחרי סטטוס</p>
+                    <div class="mt-8">
+                        <button onclick="switchPage('home')" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-xl font-bold transition-all">
+                            חזרה לדף הבית
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Page: Social (Coming Soon) -->
+        <section id="page-social" class="hidden pt-6">
+            <div class="max-w-4xl mx-auto">
+                <div class="bg-white dark:bg-slate-800 rounded-xl shadow-md p-12 text-center">
+                    <div class="mb-6">
+                        <svg class="w-32 h-32 mx-auto text-blue-300 dark:text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path>
+                        </svg>
+                    </div>
+                    <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-4">✨ ניהול סושיאל מדיה</h2>
+                    <p class="text-lg text-gray-600 dark:text-gray-400 mb-2">תכונה זו נמצאת בפיתוח</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-500">בקרוב תוכלי לנהל פוסטים, תוכן ואינטראקציות ישירות מהמערכת</p>
+                    <div class="mt-8">
+                        <button onclick="switchPage('home')" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold transition-all">
+                            חזרה לדף הבית
+                        </button>
+                    </div>
+                </div>
             </div>
         </section>
     
