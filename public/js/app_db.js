@@ -4489,7 +4489,7 @@ async function switchPageNav(pageName) {
     });
     
     // Hide all pages - use ID selector for all page-* elements
-    ['home', 'entry', 'leads', 'stats', 'insights', 'contracts', 'social'].forEach(page => {
+    ['home', 'entry', 'leads', 'stats', 'insights', 'contracts', 'social', 'social-planning'].forEach(page => {
         const pageEl = document.getElementById(`page-${page}`);
         if (pageEl) {
             pageEl.classList.add('hidden');
@@ -4525,6 +4525,9 @@ async function switchPageNav(pageName) {
     } else if (pageName === 'insights') {
         console.log('💡 Loading insights data...');
         await InsightsView.render();
+    } else if (pageName === 'social-planning') {
+        console.log('📅 Loading social planning...');
+        SocialPlanning.init();
     } else if (pageName === 'home') {
         console.log('🏠 Loading home dashboard...');
         await HomeView.update();
