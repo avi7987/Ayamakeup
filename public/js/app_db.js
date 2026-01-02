@@ -507,7 +507,7 @@ const Navigation = {
         document.documentElement.scrollTop = 0;
         
         // Hide all pages
-        ['home', 'entry', 'leads', 'stats', 'insights', 'contracts', 'social', 'social-planning'].forEach(id => {
+        ['home', 'entry', 'leads', 'stats', 'insights', 'contracts', 'social', 'social-strategy', 'social-planning', 'social-execution'].forEach(id => {
             const page = document.getElementById('page-' + id);
             if (page) page.classList.add('hidden');
         });
@@ -525,7 +525,9 @@ const Navigation = {
         if (pageName === 'leads') LeadsView.render();
         if (pageName === 'stats') StatsView.update();
         if (pageName === 'insights') InsightsView.render();
+        if (pageName === 'social-strategy') SocialStrategy.init();
         if (pageName === 'social-planning') SocialPlanning.init();
+        if (pageName === 'social-execution') SocialExecution.init();
         // contracts and social pages don't need initialization (they're static coming soon pages)
         
         // Scroll to top again to ensure it worked
@@ -4489,7 +4491,7 @@ async function switchPageNav(pageName) {
     });
     
     // Hide all pages - use ID selector for all page-* elements
-    ['home', 'entry', 'leads', 'stats', 'insights', 'contracts', 'social', 'social-planning'].forEach(page => {
+    ['home', 'entry', 'leads', 'stats', 'insights', 'contracts', 'social', 'social-strategy', 'social-planning', 'social-execution'].forEach(page => {
         const pageEl = document.getElementById(`page-${page}`);
         if (pageEl) {
             pageEl.classList.add('hidden');
@@ -4525,9 +4527,15 @@ async function switchPageNav(pageName) {
     } else if (pageName === 'insights') {
         console.log('💡 Loading insights data...');
         await InsightsView.render();
+    } else if (pageName === 'social-strategy') {
+        console.log('🧠 Loading social strategy...');
+        SocialStrategy.init();
     } else if (pageName === 'social-planning') {
         console.log('📅 Loading social planning...');
         SocialPlanning.init();
+    } else if (pageName === 'social-execution') {
+        console.log('🚀 Loading social execution...');
+        SocialExecution.init();
     } else if (pageName === 'home') {
         console.log('🏠 Loading home dashboard...');
         await HomeView.update();
@@ -4541,6 +4549,262 @@ async function switchPageNav(pageName) {
 
 // Make it globally accessible
 window.switchPageNav = switchPageNav;
+
+// ==============================================
+// SOCIAL STRATEGY MODULE
+// ==============================================
+
+const SocialStrategy = {
+    strategy: {
+        goal: '',
+        frequency: '',
+        platforms: [],
+        style: '',
+        tone: '',
+        audience: '',
+        postingTimes: []
+    },
+
+    init() {
+        console.log('🧠 Initializing Social Strategy...');
+        this.loadStrategy();
+        this.attachEvents();
+    },
+
+    loadStrategy() {
+        // Load from localStorage
+        const saved = localStorage.getItem('socialStrategy');
+        if (saved) {
+            this.strategy = JSON.parse(saved);
+            this.populateForm();
+        }
+    },
+
+    populateForm() {
+        // Populate form fields with saved strategy
+        const goalSelect = document.getElementById('strategy-goal');
+        if (goalSelect) goalSelect.value = this.strategy.goal || '';
+
+        const styleSelect = document.getElementById('strategy-style');
+        if (styleSelect) styleSelect.value = this.strategy.style || '';
+
+        const toneTextarea = document.getElementById('strategy-tone');
+        if (toneTextarea) toneTextarea.value = this.strategy.tone || '';
+
+        const audienceTextarea = document.getElementById('strategy-audience');
+        if (audienceTextarea) audienceTextarea.value = this.strategy.audience || '';
+
+        // Set frequency
+        if (this.strategy.frequency) {
+            const freqInput = document.getElementById('strategy-frequency');
+            if (freqInput) freqInput.value = this.strategy.frequency;
+            
+            // Highlight the selected frequency button
+            document.querySelectorAll('.frequency-btn').forEach(btn => {
+                btn.classList.remove('border-purple-500', 'bg-purple-50');
+            });
+        }
+
+        // Set platforms
+        if (this.strategy.platforms) {
+            document.getElementById('platform-instagram').checked = this.strategy.platforms.includes('instagram');
+            document.getElementById('platform-facebook').checked = this.strategy.platforms.includes('facebook');
+            document.getElementById('platform-tiktok').checked = this.strategy.platforms.includes('tiktok');
+        }
+    },
+
+    attachEvents() {
+        // Frequency buttons will be handled by global function
+    },
+
+    save() {
+        // Collect data from form
+        this.strategy.goal = document.getElementById('strategy-goal')?.value || '';
+        this.strategy.frequency = document.getElementById('strategy-frequency')?.value || '';
+        this.strategy.style = document.getElementById('strategy-style')?.value || '';
+        this.strategy.tone = document.getElementById('strategy-tone')?.value || '';
+        this.strategy.audience = document.getElementById('strategy-audience')?.value || '';
+
+        // Collect platforms
+        this.strategy.platforms = [];
+        if (document.getElementById('platform-instagram')?.checked) this.strategy.platforms.push('instagram');
+        if (document.getElementById('platform-facebook')?.checked) this.strategy.platforms.push('facebook');
+        if (document.getElementById('platform-tiktok')?.checked) this.strategy.platforms.push('tiktok');
+
+        // Collect posting times
+        this.strategy.postingTimes = Array.from(document.querySelectorAll('input[type="checkbox"][value]'))
+            .filter(cb => cb.checked && cb.value && !cb.id.startsWith('platform-'))
+            .map(cb => cb.value);
+
+        // Save to localStorage
+        localStorage.setItem('socialStrategy', JSON.stringify(this.strategy));
+
+        // Show success message
+        alert('✅ האסטרטגיה נשמרה בהצלחה!');
+        
+        return true;
+    }
+};
+
+// Global helper function for frequency selection
+window.selectFrequency = function(freq) {
+    document.getElementById('strategy-frequency').value = freq;
+    
+    // Update UI
+    document.querySelectorAll('.frequency-btn').forEach(btn => {
+        btn.classList.remove('border-purple-500', 'bg-purple-50', 'dark:bg-purple-900/50');
+    });
+    event.target.closest('.frequency-btn').classList.add('border-purple-500', 'bg-purple-50', 'dark:bg-purple-900/50');
+};
+
+window.saveStrategy = function() {
+    return SocialStrategy.save();
+};
+
+window.SocialStrategy = SocialStrategy;
+
+// ==============================================
+// SOCIAL EXECUTION MODULE
+// ==============================================
+
+const SocialExecution = {
+    currentFilter: 'today',
+    
+    init() {
+        console.log('🚀 Initializing Social Execution...');
+        this.loadTodayContent();
+    },
+
+    loadTodayContent() {
+        // Load content for today from the weekly plan
+        const plan = localStorage.getItem('weeklyPlan');
+        if (!plan) {
+            this.showEmptyState();
+            return;
+        }
+
+        const weeklyPlan = JSON.parse(plan);
+        const today = new Date().getDay(); // 0 = Sunday
+        
+        // Get today's content
+        const todayContent = weeklyPlan.filter(card => card.day === today);
+        
+        if (todayContent.length === 0) {
+            this.showEmptyState();
+        } else {
+            this.renderContent(todayContent);
+        }
+    },
+
+    renderContent(content) {
+        const container = document.getElementById('execution-today');
+        if (!container) return;
+
+        container.innerHTML = content.map(card => this.renderExecutionCard(card)).join('');
+    },
+
+    renderExecutionCard(card) {
+        const platformColors = {
+            'instagram': 'pink',
+            'facebook': 'blue',
+            'tiktok': 'purple'
+        };
+        const color = platformColors[card.platform] || 'gray';
+
+        return `
+            <div class="bg-white dark:bg-slate-800 rounded-xl shadow-md p-6">
+                <div class="flex items-start gap-4">
+                    <div class="flex flex-col gap-2 pt-1">
+                        <label class="flex items-center cursor-pointer">
+                            <input type="checkbox" class="w-5 h-5 text-green-600 rounded" onchange="markAsPrepared('${card.id}', this.checked)">
+                            <span class="mr-2 text-sm text-gray-600 dark:text-gray-400">הוכן</span>
+                        </label>
+                        <label class="flex items-center cursor-pointer">
+                            <input type="checkbox" class="w-5 h-5 text-blue-600 rounded" onchange="markAsUploaded('${card.id}', this.checked)">
+                            <span class="mr-2 text-sm text-gray-600 dark:text-gray-400">הועלה</span>
+                        </label>
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="px-3 py-1 bg-${color}-100 dark:bg-${color}-900/30 text-${color}-700 dark:text-${color}-300 rounded-full text-sm font-bold capitalize">${card.platform}</span>
+                            <span class="text-gray-600 dark:text-gray-400">⏰ ${card.time}</span>
+                        </div>
+                        <h3 class="font-bold text-gray-900 dark:text-white mb-2">${card.contentType} - ${card.format}</h3>
+                        <p class="text-gray-600 dark:text-gray-400 text-sm mb-3">${card.idea}</p>
+                        <div class="flex gap-2">
+                            <button onclick="editExecutionCard('${card.id}')" class="px-4 py-2 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-lg text-sm font-bold hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-all">
+                                ✏️ ערוך
+                            </button>
+                            <button onclick="copyCardText('${card.id}')" class="px-4 py-2 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg text-sm font-bold hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-all">
+                                📋 העתק טקסט
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    },
+
+    showEmptyState() {
+        const container = document.getElementById('execution-today');
+        if (!container) return;
+
+        container.innerHTML = `
+            <div class="text-center py-12 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
+                <div class="text-6xl mb-4">🎉</div>
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">כל הכבוד!</h3>
+                <p class="text-gray-600 dark:text-gray-400">אין תוכן מתוכנן להיום</p>
+                <button onclick="window.switchPageNav('social-planning')" class="mt-4 px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold transition-all">
+                    ← חזרה לתכנון
+                </button>
+            </div>
+        `;
+    }
+};
+
+window.filterExecution = function(filter) {
+    SocialExecution.currentFilter = filter;
+    
+    // Update button styles
+    document.querySelectorAll('.execution-filter').forEach(btn => {
+        btn.classList.remove('bg-purple-600', 'text-white');
+        btn.classList.add('bg-gray-200', 'dark:bg-gray-700', 'text-gray-900', 'dark:text-white');
+    });
+    event.target.classList.remove('bg-gray-200', 'dark:bg-gray-700', 'text-gray-900', 'dark:text-white');
+    event.target.classList.add('bg-purple-600', 'text-white');
+    
+    // Show/hide content
+    if (filter === 'today') {
+        document.getElementById('execution-today').classList.remove('hidden');
+        document.getElementById('execution-week').classList.add('hidden');
+    } else {
+        document.getElementById('execution-today').classList.add('hidden');
+        document.getElementById('execution-week').classList.remove('hidden');
+    }
+};
+
+window.markAsPrepared = function(cardId, checked) {
+    console.log(`Card ${cardId} prepared: ${checked}`);
+    // TODO: Save to database
+};
+
+window.markAsUploaded = function(cardId, checked) {
+    console.log(`Card ${cardId} uploaded: ${checked}`);
+    // TODO: Save to database
+};
+
+window.editExecutionCard = function(cardId) {
+    console.log(`Edit card: ${cardId}`);
+    // TODO: Open edit modal
+};
+
+window.copyCardText = function(cardId) {
+    console.log(`Copy card text: ${cardId}`);
+    alert('📋 הטקסט הועתק ללוח!');
+    // TODO: Actually copy text
+};
+
+window.SocialExecution = SocialExecution;
 
 // ==============================================
 // SOCIAL PLANNING MODULE (AI-Powered Weekly Planner)
