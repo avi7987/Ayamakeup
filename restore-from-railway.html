@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>שחזור נתונים מ-Railway</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #9333ea;
+            text-align: center;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f9fafb;
+            border-radius: 8px;
+        }
+        .data-box {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+            direction: ltr;
+            text-align: left;
+        }
+        button {
+            background: #9333ea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            width: 100%;
+            margin-top: 10px;
+        }
+        button:hover {
+            background: #7e22ce;
+        }
+        button:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+        }
+        .success {
+            background: #10b981;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            display: none;
+        }
+        .error {
+            background: #ef4444;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        .instructions {
+            background: #dbeafe;
+            padding: 15px;
+            border-radius: 8px;
+            border-right: 4px solid #3b82f6;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #9333ea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>☁️ שחזור נתונים מ-Railway</h1>
+        
+        <div class="instructions">
+            <h3>הוראות:</h3>
+            <ol>
+                <li>לחץ על "משוך נתונים מ-Railway"</li>
+                <li>המערכת תמשוך את כל הנתונים מהשרת</li>
+                <li>לחץ על "הורד db.json" כדי לשמור את הקובץ</li>
+                <li>החלף את db.json בפרויקט שלך בקובץ שהורדת</li>
+            </ol>
+        </div>
+
+        <div class="section">
+            <h3>שלב 1: משוך נתונים מהשרת</h3>
+            <button onclick="fetchFromRailway()" id="fetch-btn">☁️ משוך נתונים מ-Railway</button>
+            <div id="loading" class="loading" style="display:none;">
+                <div>⏳ מושך נתונים מהשרת...</div>
+            </div>
+            <div id="result"></div>
+        </div>
+
+        <div class="section" id="clients-section" style="display:none;">
+            <h3>הכנסות (Clients) - <span id="clients-count"></span></h3>
+            <div class="data-box" id="clients-data"></div>
+        </div>
+
+        <div class="section" id="leads-section" style="display:none;">
+            <h3>לידים (Leads) - <span id="leads-count"></span></h3>
+            <div class="data-box" id="leads-data"></div>
+        </div>
+
+        <div class="section" id="combined-section" style="display:none;">
+            <h3>קובץ db.json מלא</h3>
+            <div class="data-box" id="combined-data"></div>
+            <button onclick="copyCombined()">📋 העתק את db.json</button>
+            <button onclick="downloadJSON()">💾 הורד כקובץ db.json</button>
+        </div>
+
+        <div class="success" id="success-msg"></div>
+    </div>
+
+    <script>
+        let clientsData = [];
+        let leadsData = [];
+        const RAILWAY_API = 'https://lunabusiness.up.railway.app/api';
+
+        async function fetchFromRailway() {
+            const resultDiv = document.getElementById('result');
+            const loadingDiv = document.getElementById('loading');
+            const fetchBtn = document.getElementById('fetch-btn');
+            
+            fetchBtn.disabled = true;
+            loadingDiv.style.display = 'block';
+            resultDiv.innerHTML = '';
+
+            try {
+                // Fetch clients and leads
+                const [clientsRes, leadsRes] = await Promise.all([
+                    fetch(`${RAILWAY_API}/clients`),
+                    fetch(`${RAILWAY_API}/leads`)
+                ]);
+
+                if (!clientsRes.ok || !leadsRes.ok) {
+                    throw new Error('שגיאה בקבלת נתונים מהשרת');
+                }
+
+                clientsData = await clientsRes.json();
+                leadsData = await leadsRes.json();
+
+                loadingDiv.style.display = 'none';
+
+                if (clientsData.length === 0 && leadsData.length === 0) {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            ⚠️ לא נמצאו נתונים ב-Railway!<br>
+                            השרת ריק - אין הכנסות ולא לידים.
+                        </div>
+                    `;
+                    fetchBtn.disabled = false;
+                    return;
+                }
+
+                // Display data
+                document.getElementById('clients-data').textContent = JSON.stringify(clientsData, null, 2);
+                document.getElementById('clients-count').textContent = `${clientsData.length} רשומות`;
+                document.getElementById('clients-section').style.display = 'block';
+
+                document.getElementById('leads-data').textContent = JSON.stringify(leadsData, null, 2);
+                document.getElementById('leads-count').textContent = `${leadsData.length} רשומות`;
+                document.getElementById('leads-section').style.display = 'block';
+
+                // Create combined db.json
+                const dbJson = {
+                    clients: clientsData,
+                    leads: leadsData
+                };
+                document.getElementById('combined-data').textContent = JSON.stringify(dbJson, null, 2);
+                document.getElementById('combined-section').style.display = 'block';
+
+                resultDiv.innerHTML = `
+                    <div class="success" style="display:block;">
+                        ✅ הנתונים נמשכו בהצלחה מ-Railway!<br>
+                        - ${clientsData.length} הכנסות<br>
+                        - ${leadsData.length} לידים
+                    </div>
+                `;
+
+            } catch (error) {
+                loadingDiv.style.display = 'none';
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        ❌ שגיאה: ${error.message}<br>
+                        בדוק שיש חיבור לאינטרנט וש-Railway פעיל.
+                    </div>
+                `;
+                fetchBtn.disabled = false;
+            }
+        }
+
+        function copyCombined() {
+            const text = document.getElementById('combined-data').textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                showSuccess('הכל הועתק! עכשיו הדבק את זה בקובץ db.json ✅');
+            });
+        }
+
+        function downloadJSON() {
+            const dbJson = {
+                clients: clientsData,
+                leads: leadsData
+            };
+            const dataStr = JSON.stringify(dbJson, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'db.json';
+            link.click();
+            showSuccess('הקובץ db.json הורד! החלף אותו בפרויקט ✅');
+        }
+
+        function showSuccess(msg) {
+            const successDiv = document.getElementById('success-msg');
+            successDiv.textContent = msg;
+            successDiv.style.display = 'block';
+            setTimeout(() => {
+                successDiv.style.display = 'none';
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

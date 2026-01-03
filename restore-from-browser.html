@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>שחזור נתונים מהדפדפן</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #9333ea;
+            text-align: center;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f9fafb;
+            border-radius: 8px;
+        }
+        .data-box {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+            direction: ltr;
+            text-align: left;
+        }
+        button {
+            background: #9333ea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            width: 100%;
+            margin-top: 10px;
+        }
+        button:hover {
+            background: #7e22ce;
+        }
+        .success {
+            background: #10b981;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            display: none;
+        }
+        .error {
+            background: #ef4444;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        .instructions {
+            background: #dbeafe;
+            padding: 15px;
+            border-radius: 8px;
+            border-right: 4px solid #3b82f6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔄 שחזור נתונים מהדפדפן</h1>
+        
+        <div class="instructions">
+            <h3>הוראות:</h3>
+            <ol>
+                <li>פתח את הדף הזה <strong>באותו דפדפן</strong> שבו השתמשת במערכת</li>
+                <li>לחץ על הכפתור "חפש נתונים בדפדפן"</li>
+                <li>אם נמצאו נתונים - העתק אותם והדבק בקובץ db.json</li>
+            </ol>
+        </div>
+
+        <div class="section">
+            <h3>שלב 1: חיפוש נתונים בדפדפן</h3>
+            <button onclick="searchLocalStorage()">🔍 חפש נתונים בדפדפן</button>
+            <div id="result"></div>
+        </div>
+
+        <div class="section" id="clients-section" style="display:none;">
+            <h3>הכנסות (Clients)</h3>
+            <div class="data-box" id="clients-data"></div>
+            <button onclick="copyClients()">📋 העתק נתוני הכנסות</button>
+        </div>
+
+        <div class="section" id="leads-section" style="display:none;">
+            <h3>לידים (Leads)</h3>
+            <div class="data-box" id="leads-data"></div>
+            <button onclick="copyLeads()">📋 העתק נתוני לידים</button>
+        </div>
+
+        <div class="section" id="combined-section" style="display:none;">
+            <h3>קובץ db.json מלא</h3>
+            <div class="data-box" id="combined-data"></div>
+            <button onclick="copyCombined()">📋 העתק הכל</button>
+            <button onclick="downloadJSON()">💾 הורד כקובץ db.json</button>
+        </div>
+
+        <div class="success" id="success-msg"></div>
+    </div>
+
+    <script>
+        let clientsData = [];
+        let leadsData = [];
+
+        function searchLocalStorage() {
+            const resultDiv = document.getElementById('result');
+            
+            // Search for data in localStorage
+            const keys = ['crm_clients_v3', 'crm_clients', 'crm_leads_v3', 'crm_leads'];
+            let found = false;
+
+            keys.forEach(key => {
+                const data = localStorage.getItem(key);
+                if (data) {
+                    found = true;
+                    try {
+                        const parsed = JSON.parse(data);
+                        if (key.includes('clients')) {
+                            clientsData = parsed;
+                            document.getElementById('clients-data').textContent = JSON.stringify(parsed, null, 2);
+                            document.getElementById('clients-section').style.display = 'block';
+                        } else if (key.includes('leads')) {
+                            leadsData = parsed;
+                            document.getElementById('leads-data').textContent = JSON.stringify(parsed, null, 2);
+                            document.getElementById('leads-section').style.display = 'block';
+                        }
+                    } catch (e) {
+                        console.error('Error parsing:', key, e);
+                    }
+                }
+            });
+
+            if (found) {
+                // Create combined db.json format
+                const dbJson = {
+                    clients: clientsData,
+                    leads: leadsData
+                };
+                document.getElementById('combined-data').textContent = JSON.stringify(dbJson, null, 2);
+                document.getElementById('combined-section').style.display = 'block';
+                
+                resultDiv.innerHTML = `
+                    <div class="success" style="display:block;">
+                        ✅ נמצאו נתונים!<br>
+                        - ${clientsData.length} הכנסות<br>
+                        - ${leadsData.length} לידים
+                    </div>
+                `;
+            } else {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        ❌ לא נמצאו נתונים בדפדפן הזה.<br>
+                        נסה לפתוח את הדף הזה בדפדפן שבו השתמשת במערכת.
+                    </div>
+                `;
+            }
+        }
+
+        function copyClients() {
+            const text = document.getElementById('clients-data').textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                showSuccess('נתוני הכנסות הועתקו! ✅');
+            });
+        }
+
+        function copyLeads() {
+            const text = document.getElementById('leads-data').textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                showSuccess('נתוני לידים הועתקו! ✅');
+            });
+        }
+
+        function copyCombined() {
+            const text = document.getElementById('combined-data').textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                showSuccess('הכל הועתק! עכשיו הדבק את זה בקובץ db.json ✅');
+            });
+        }
+
+        function downloadJSON() {
+            const dbJson = {
+                clients: clientsData,
+                leads: leadsData
+            };
+            const dataStr = JSON.stringify(dbJson, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'db.json';
+            link.click();
+            showSuccess('הקובץ db.json הורד! ✅');
+        }
+
+        function showSuccess(msg) {
+            const successDiv = document.getElementById('success-msg');
+            successDiv.textContent = msg;
+            successDiv.style.display = 'block';
+            setTimeout(() => {
+                successDiv.style.display = 'none';
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
