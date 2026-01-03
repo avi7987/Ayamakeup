@@ -516,6 +516,14 @@ const Navigation = {
         const selectedPage = document.getElementById('page-' + pageName);
         if (selectedPage) selectedPage.classList.remove('hidden');
         
+        // Update active state in mobile nav
+        document.querySelectorAll('.mobile-nav-item').forEach(item => {
+            item.classList.remove('active');
+            if (item.getAttribute('data-page') === pageName) {
+                item.classList.add('active');
+            }
+        });
+        
         // Trigger page-specific initialization
         if (pageName === 'home') {
             // Reload data from MongoDB to sync across devices
@@ -525,10 +533,10 @@ const Navigation = {
         if (pageName === 'leads') LeadsView.render();
         if (pageName === 'stats') StatsView.update();
         if (pageName === 'insights') InsightsView.render();
+        if (pageName === 'contracts') ContractsManager.init();
         if (pageName === 'social-strategy') SocialStrategy.init();
         if (pageName === 'social-planning') SocialPlanning.init();
         if (pageName === 'social-execution') SocialExecution.init();
-        // contracts and social pages don't need initialization (they're static coming soon pages)
         
         // Scroll to top again to ensure it worked
         setTimeout(() => {
@@ -5517,9 +5525,95 @@ async function switchPageWithMenu(pageName) {
     await switchPage(pageName);
 }
 
+// Sidebar Collapse/Expand
+function toggleSidebarCollapse() {
+    const sidebar = document.getElementById('side-menu');
+    if (sidebar) {
+        sidebar.classList.toggle('collapsed');
+    }
+}
+
+// Mobile Navigation Functions
+function switchPageMobile(pageName) {
+    // Update active state
+    document.querySelectorAll('.mobile-nav-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    const activeItem = document.querySelector(`.mobile-nav-item[data-page="${pageName}"]`);
+    if (activeItem) {
+        activeItem.classList.add('active');
+    }
+    
+    // Switch page
+    switchPage(pageName);
+}
+
+// Mobile Drawer Functions
+function toggleMobileDrawer() {
+    const drawer = document.getElementById('mobile-drawer');
+    const drawerContent = document.getElementById('mobile-drawer-content');
+    
+    if (drawer && drawerContent) {
+        drawer.classList.toggle('show');
+        drawer.classList.toggle('hidden');
+        
+        // Animate drawer
+        setTimeout(() => {
+            drawerContent.classList.toggle('-translate-x-full');
+        }, 10);
+    }
+}
+
+function closeMobileDrawer() {
+    const drawer = document.getElementById('mobile-drawer');
+    const drawerContent = document.getElementById('mobile-drawer-content');
+    
+    if (drawer && drawerContent) {
+        drawerContent.classList.add('-translate-x-full');
+        
+        setTimeout(() => {
+            drawer.classList.add('hidden');
+            drawer.classList.remove('show');
+        }, 300);
+    }
+}
+
+// Mobile Social Menu Functions
+function openMobileSocialMenu() {
+    const modal = document.getElementById('mobile-social-modal');
+    const content = document.getElementById('mobile-social-content');
+    
+    if (modal && content) {
+        modal.classList.remove('hidden');
+        modal.classList.add('show');
+        
+        setTimeout(() => {
+            content.classList.remove('translate-y-full');
+        }, 10);
+    }
+}
+
+function closeMobileSocialMenu() {
+    const modal = document.getElementById('mobile-social-modal');
+    const content = document.getElementById('mobile-social-content');
+    
+    if (modal && content) {
+        content.classList.add('translate-y-full');
+        
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            modal.classList.remove('show');
+        }, 300);
+    }
+}
+
+// Expose functions globally
 window.openSideMenu = openSideMenu;
 window.closeSideMenu = closeSideMenu;
 window.switchPageWithMenu = switchPageWithMenu;
-
-document.addEventListener('DOMContentLoaded', init);
-
+window.toggleSidebarCollapse = toggleSidebarCollapse;
+window.switchPageMobile = switchPageMobile;
+window.toggleMobileDrawer = toggleMobileDrawer;
+window.closeMobileDrawer = closeMobileDrawer;
+window.openMobileSocialMenu = openMobileSocialMenu;
+window.closeMobileSocialMenu = closeMobileSocialMenu;

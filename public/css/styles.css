@@ -509,6 +509,31 @@ tr {
 
 /* Mobile Responsive */
 @media (max-width: 768px) {
+    body {
+        padding-bottom: 80px; /* Space for bottom nav */
+        padding-top: 60px; /* Space for top header */
+    }
+
+    /* Hide desktop sidebar on mobile */
+    .sidebar-desktop {
+        display: none !important;
+    }
+
+    /* Show mobile navigation */
+    .mobile-nav-bar {
+        display: flex !important;
+    }
+
+    /* Show mobile header */
+    .mobile-header {
+        display: flex !important;
+    }
+
+    /* Hide desktop menu toggle */
+    #menu-toggle {
+        display: none !important;
+    }
+
     .week-board-container {
         grid-template-columns: 1fr;
     }
@@ -537,3 +562,91 @@ tr {
         border-color: #9333ea;
     }
 }
+
+/* Desktop Sidebar Styles */
+@media (min-width: 769px) {
+    /* Hide mobile elements on desktop */
+    .mobile-nav-bar,
+    .mobile-header {
+        display: none !important;
+    }
+
+    /* Sidebar expanded state */
+    #side-menu {
+        width: 280px;
+        transition: width 0.3s ease, transform 0.3s ease;
+    }
+
+    /* Sidebar collapsed state */
+    #side-menu.collapsed {
+        width: 80px;
+    }
+
+    #side-menu.collapsed .sidebar-logo-text,
+    #side-menu.collapsed .menu-item > div:last-child {
+        opacity: 0;
+        width: 0;
+        overflow: hidden;
+        transition: opacity 0.2s ease;
+    }
+
+    #side-menu.collapsed .menu-item {
+        justify-content: center;
+        padding: 16px;
+    }
+
+    #side-menu.collapsed .sidebar-collapse-btn svg {
+        transform: rotate(180deg);
+    }
+
+    .sidebar-logo-container {
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    body.dark-mode .sidebar-logo-container {
+        border-bottom-color: #374151;
+    }
+}
+
+/* Mobile Navigation Bar Styles */
+.mobile-nav-bar {
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+}
+
+body.dark-mode .mobile-nav-bar {
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.mobile-nav-item.active {
+    color: #9333ea;
+}
+
+body.dark-mode .mobile-nav-item.active {
+    color: #a855f7;
+}
+
+.mobile-nav-item.active svg {
+    stroke-width: 2.5;
+}
+
+.mobile-nav-item-special {
+    color: #10b981;
+}
+
+/* Mobile Header */
+.mobile-header {
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+body.dark-mode .mobile-header {
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+/* Mobile Drawer Animation */
+#mobile-drawer.show #mobile-drawer-content {
+    transform: translateX(0);
+}
+
+/* Mobile Social Modal Animation */
+#mobile-social-modal.show #mobile-social-content {
+    transform: translateY(0);
