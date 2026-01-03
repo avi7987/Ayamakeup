@@ -266,17 +266,39 @@ app.get('/contract-sign/:leadId', (req, res) => {
 
 // ==================== API ROUTES ====================
 
-// Get current user info
-app.get('/api/user', requireAuth, (req, res) => {
+// Get current user info - NO AUTH REQUIRED for fallback mode
+app.get('/api/user', (req, res) => {
+    // Check if in fallback mode (no Google credentials)
+    const isFallbackMode = !process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET;
+    
+    if (isFallbackMode) {
+        // Return fallback mode - allow access without login
+        return res.json({
+            user: null,
+            isAuthenticated: false,
+            isFallbackMode: true
+        });
+    }
+    
+    // If Google auth is configured, check if user is authenticated
+    if (req.isAuthenticated && req.isAuthenticated()) {
+        return res.json({
+            user: {
+                _id: req.user._id,
+                email: req.user.email,
+                name: req.user.name,
+                picture: req.user.picture || ''
+            },
+            isAuthenticated: true,
+            isFallbackMode: false
+        });
+    }
+    
+    // Not authenticated and not in fallback mode
     res.json({
-        user: {
-            _id: req.user._id,
-            email: req.user.email,
-            name: req.user.name,
-            picture: req.user.picture || ''
-        },
-        isAuthenticated: req.isAuthenticated ? req.isAuthenticated() : false,
-        isFallbackMode: !process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET
+        user: null,
+        isAuthenticated: false,
+        isFallbackMode: false
     });
 });
 
