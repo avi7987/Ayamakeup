@@ -5535,7 +5535,7 @@ function toggleSidebarCollapse() {
 
 // Mobile Navigation Functions
 function switchPageMobile(pageName) {
-    // Update active state
+    // Update active state in bottom nav
     document.querySelectorAll('.mobile-nav-item').forEach(item => {
         item.classList.remove('active');
     });
@@ -5543,6 +5543,14 @@ function switchPageMobile(pageName) {
     if (activeItem) {
         activeItem.classList.add('active');
     }
+    
+    // Also update side nav active state (for consistency)
+    document.querySelectorAll('.side-nav-item').forEach(item => {
+        item.classList.remove('active');
+        if (item.getAttribute('data-page') === pageName) {
+            item.classList.add('active');
+        }
+    });
     
     // Switch page
     switchPage(pageName);

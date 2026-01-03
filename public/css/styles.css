@@ -514,8 +514,10 @@ tr {
         padding-top: 60px; /* Space for top header */
     }
 
-    /* Hide desktop sidebar on mobile */
-    .sidebar-desktop {
+    /* Hide ALL desktop navigation on mobile */
+    .sidebar-desktop,
+    #side-menu,
+    .side-nav {
         display: none !important;
     }
 
@@ -529,9 +531,9 @@ tr {
         display: flex !important;
     }
 
-    /* Hide desktop menu toggle */
-    #menu-toggle {
-        display: none !important;
+    /* Remove any margin from side nav */
+    body > div.min-h-screen {
+        margin-right: 0 !important;
     }
 
     .week-board-container {
@@ -611,26 +613,42 @@ tr {
 /* Mobile Navigation Bar Styles */
 .mobile-nav-bar {
     box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
 }
 
 body.dark-mode .mobile-nav-bar {
     box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
 }
 
+.mobile-nav-item {
+    transition: all 0.2s ease;
+}
+
 .mobile-nav-item.active {
-    color: #9333ea;
+    color: #9333ea !important;
 }
 
 body.dark-mode .mobile-nav-item.active {
-    color: #a855f7;
+    color: #a855f7 !important;
 }
 
 .mobile-nav-item.active svg {
     stroke-width: 2.5;
+    transform: scale(1.1);
 }
 
 .mobile-nav-item-special {
     color: #10b981;
+    position: relative;
+}
+
+.mobile-nav-item-special:active {
+    transform: scale(0.95);
+}
+
+.mobile-nav-item:active {
+    transform: scale(0.95);
 }
 
 /* Mobile Header */

@@ -336,6 +336,17 @@
             margin-right: 60px;
             transition: margin-right 0.3s ease;
         }
+        
+        /* Hide side nav on mobile - ONLY bottom nav visible */
+        @media (max-width: 768px) {
+            .side-nav {
+                display: none !important;
+            }
+            
+            body > div.min-h-screen {
+                margin-right: 0 !important;
+            }
+        }
     </style>
 </head>
 <body>
