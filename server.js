@@ -23,6 +23,17 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname)));
 
+// ==================== AUTHENTICATION (FALLBACK MODE) ====================
+
+// User endpoint - always return fallback mode for local development
+app.get('/api/user', (req, res) => {
+    res.json({
+        isFallbackMode: true,
+        isAuthenticated: false,
+        user: null
+    });
+});
+
 // ==================== API ROUTES ====================
 
 // Health Check

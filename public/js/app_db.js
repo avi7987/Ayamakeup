@@ -245,7 +245,10 @@ if (!document.getElementById('motivational-styles')) {
 
 // Configuration
 const CONFIG = {
-    API_BASE_URL: 'https://lunabusiness.up.railway.app/api',
+    // Use Railway in production, localhost in development
+    API_BASE_URL: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        ? 'http://localhost:3000/api'  // Local development
+        : 'https://lunabusiness.up.railway.app/api',  // Production
     STORAGE_KEYS: {
         CLIENTS: 'crm_clients_v3',
         LEADS: 'crm_leads_v3',
