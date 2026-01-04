@@ -21,7 +21,6 @@ async function checkAuthStatus() {
             isAuthenticated = true;
             currentUser = data.user;
             showUserProfile(data.user);
-            hideLoginBanner();
             
             // Load user data
             await loadAllData();
@@ -139,21 +138,25 @@ async function logout() {
 
 // Show empty dashboard for non-authenticated users
 function showEmptyDashboard() {
-    // Clear all stats (check if elements exist first)
-    const statMonthlyIncome = document.getElementById('stat-monthly-income');
-    const statYearlyIncome = document.getElementById('stat-yearly-income');
-    const statMonthlyBrides = document.getElementById('stat-monthly-brides');
-    const statYearlyBrides = document.getElementById('stat-yearly-brides');
-    
-    if (statMonthlyIncome) statMonthlyIncome.textContent = '0 ₪';
-    if (statYearlyIncome) statYearlyIncome.textContent = '0 ₪';
-    if (statMonthlyBrides) statMonthlyBrides.textContent = '0';
-    if (statYearlyBrides) statYearlyBrides.textContent = '0';
-    
-    // Show message to login
-    const welcomeMsg = document.getElementById('welcome-message');
-    if (welcomeMsg) {
-        welcomeMsg.innerHTML = '🌙 התחבר כדי לראות את הנתונים שלך';
+    try {
+        // Clear all stats (check if elements exist first)
+        const statMonthlyIncome = document.getElementById('stat-monthly-income');
+        const statYearlyIncome = document.getElementById('stat-yearly-income');
+        const statMonthlyBrides = document.getElementById('stat-monthly-brides');
+        const statYearlyBrides = document.getElementById('stat-yearly-brides');
+        
+        if (statMonthlyIncome) statMonthlyIncome.textContent = '0 ₪';
+        if (statYearlyIncome) statYearlyIncome.textContent = '0 ₪';
+        if (statMonthlyBrides) statMonthlyBrides.textContent = '0';
+        if (statYearlyBrides) statYearlyBrides.textContent = '0';
+        
+        // Show message to login
+        const welcomeMsg = document.getElementById('welcome-message');
+        if (welcomeMsg) {
+            welcomeMsg.innerHTML = '🌙 התחבר כדי לראות את הנתונים שלך';
+        }
+    } catch (err) {
+        console.log('ℹ️ Dashboard elements not found (might be on different page)');
     }
 }
 
