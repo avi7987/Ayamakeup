@@ -30,7 +30,7 @@ function setupAuth(app, mongoose, User) {
         cookie: {
             maxAge: 30 * 24 * 60 * 60 * 1000, // 30 ימים
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production', // HTTPS בלבד ב-production
+            secure: true, // Railway uses HTTPS
             sameSite: 'lax'
         }
     }));
