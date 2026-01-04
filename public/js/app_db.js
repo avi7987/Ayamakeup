@@ -1628,8 +1628,8 @@ const HomeView = {
         
         // ===== NEW DASHBOARD SECTIONS =====
         
-        // Section 1: Goals & Progress
-        this.updateGoalsSection(goals, monthlyRevenue, newLeadsThisMonth, closedDeals);
+        // Section 1: Goals & Progress (goals loaded from localStorage by GoalsManager.init)
+        this.updateGoalsSection({}, monthlyRevenue, newLeadsThisMonth, closedDeals);
         
         // Section 2: Business Health Snapshot
         this.updateSnapshotSection(activeLeads, pendingResponse, monthlyRevenue, upcomingEvents);
