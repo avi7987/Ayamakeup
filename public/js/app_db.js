@@ -139,11 +139,16 @@ async function logout() {
 
 // Show empty dashboard for non-authenticated users
 function showEmptyDashboard() {
-    // Clear all stats
-    document.getElementById('stat-monthly-income').textContent = '0 ₪';
-    document.getElementById('stat-yearly-income').textContent = '0 ₪';
-    document.getElementById('stat-monthly-brides').textContent = '0';
-    document.getElementById('stat-yearly-brides').textContent = '0';
+    // Clear all stats (check if elements exist first)
+    const statMonthlyIncome = document.getElementById('stat-monthly-income');
+    const statYearlyIncome = document.getElementById('stat-yearly-income');
+    const statMonthlyBrides = document.getElementById('stat-monthly-brides');
+    const statYearlyBrides = document.getElementById('stat-yearly-brides');
+    
+    if (statMonthlyIncome) statMonthlyIncome.textContent = '0 ₪';
+    if (statYearlyIncome) statYearlyIncome.textContent = '0 ₪';
+    if (statMonthlyBrides) statMonthlyBrides.textContent = '0';
+    if (statYearlyBrides) statYearlyBrides.textContent = '0';
     
     // Show message to login
     const welcomeMsg = document.getElementById('welcome-message');
