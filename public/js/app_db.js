@@ -1561,9 +1561,9 @@ const HomeView = {
             greetingEl.textContent = GreetingMessages.get();
         }
         
-        // Load goals from MongoDB
-        const goals = await GoalsManager.load();
-        console.log('🎯 יעדים מ-MongoDB:', goals);
+        // Initialize goals (loads from localStorage)
+        GoalsManager.init();
+        console.log('🎯 יעדים נטענו מ-localStorage');
         
         // Calculate current period data
         const now = new Date();
