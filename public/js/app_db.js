@@ -4582,18 +4582,15 @@ async function init() {
     
     // Populate year filter
     const yearFilter = document.getElementById('stats-year-filter');
-    const currentYear = new Date().getFullYear();
-    const years = [currentYear - 1, currentYear, currentYear + 1]; // Previous, current, next year
-    yearFilter.innerHTML = years
-        .map(year => `<option value="${year}" ${year === currentYear ? 'selected' : ''}>${year}</option>`)
-        .join('');
+    if (yearFilter) {
+        const currentYear = new Date().getFullYear();
+        const years = [currentYear - 1, currentYear, currentYear + 1]; // Previous, current, next year
+        yearFilter.innerHTML = years
+            .map(year => `<option value="${year}" ${year === currentYear ? 'selected' : ''}>${year}</option>`)
+            .join('');
+    }
     
-    // Populate month filter
-    const filter = document.getElementById('stats-month-filter');
-    const currentMonth = CONFIG.MONTHS[new Date().getMonth()];
-    filter.innerHTML = CONFIG.MONTHS
-        .map(month => `<option value="${month}" ${month === currentMonth ? 'selected' : ''}>${month}</option>`)
-        .join('') + `<option value="ALL">הצג הכל</option>`;
+    // Month filter is already populated in HTML - no need to do anything here
     
     document.getElementById('inc-date').valueAsDate = new Date();
     

@@ -950,7 +950,7 @@
                         
                         <div class="grid grid-cols-2 gap-4">
                             <!-- Active Leads -->
-                            <div class="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl p-4">
+                            <div class="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 dark:border dark:border-blue-700/50 rounded-xl p-4">
                                 <div class="flex items-center gap-2 mb-2">
                                     <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
@@ -961,7 +961,7 @@
                             </div>
                             
                             <!-- Pending Response -->
-                            <div class="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-xl p-4">
+                            <div class="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/30 dark:to-orange-900/30 dark:border dark:border-amber-700/50 rounded-xl p-4">
                                 <div class="flex items-center gap-2 mb-2">
                                     <svg class="w-5 h-5 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -972,7 +972,7 @@
                             </div>
                             
                             <!-- Monthly Revenue -->
-                            <div class="bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-900/20 dark:to-green-900/20 rounded-xl p-4">
+                            <div class="bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-900/30 dark:to-green-900/30 dark:border dark:border-emerald-700/50 rounded-xl p-4">
                                 <div class="flex items-center gap-2 mb-2">
                                     <svg class="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -983,7 +983,7 @@
                             </div>
                             
                             <!-- Upcoming Events -->
-                            <div class="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-xl p-4">
+                            <div class="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/30 dark:to-pink-900/30 dark:border dark:border-purple-700/50 rounded-xl p-4">
                                 <div class="flex items-center gap-2 mb-2">
                                     <svg class="w-5 h-5 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
@@ -1207,10 +1207,10 @@
                         <button onclick="openManageModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl font-bold transition-all shadow-lg hover:shadow-xl">
                             📅 ניהול לוקיישנים ומחירים
                         </button>
-                        <select id="stats-year-filter" onchange="updateStats()" class="p-2 border-2 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl text-sm font-bold">
+                        <select id="stats-year-filter" onchange="updateStats()" class="w-28 p-2 border-2 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl text-sm font-bold">
                             <!-- Will be populated by JS -->
                         </select>
-                        <select id="stats-month-filter" onchange="updateStats()" class="p-2 border-2 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl text-sm font-bold">
+                        <select id="stats-month-filter" onchange="updateStats()" class="w-44 p-2 border-2 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl text-sm font-bold">
                             <option value="all">כל השנה</option>
                             <option value="1">ינואר</option>
                             <option value="2">פברואר</option>
@@ -2621,6 +2621,6 @@
     </div>
 
     <!-- Application Script -->
-    <script src="js/app_db.js?v=04012026v7"></script>
+    <script src="js/app_db.js?v=04012026v8"></script>
 </body>
 </html>
