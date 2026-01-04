@@ -3183,65 +3183,6 @@ window.checkBulkVisibility = () => ManageView.checkBulkVisibility();
 window.bulkDelete = () => { if (!requireLogin()) return; ManageView.bulkDelete(); };
 window.updateStats = () => StatsView.update();
 window.exportToExcel = () => ExcelExporter.export();
-// Goals Management
-const GoalsManager = {
-    async load() {
-        try {
-            const response = await fetch(`${CONFIG.API_BASE_URL}/goals`);
-            if (response.ok) {
-                const goals = await response.json();
-                return { income: goals.income, brides: goals.brides };
-            }
-        } catch (error) {
-            console.error('❌ שגיאה בטעינת יעדים:', error);
-        }
-        return { income: 0, brides: 0 };
-    },
-    
-    async save(income, brides) {
-        try {
-            const response = await fetch(`${CONFIG.API_BASE_URL}/goals`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ income, brides })
-            });
-            
-            if (response.ok) {
-                console.log('✅ יעדים נשמרו ב-MongoDB');
-                return true;
-            }
-        } catch (error) {
-            console.error('❌ שגיאה בשמירת יעדים:', error);
-        }
-        return false;
-    }
-};
-
-window.saveGoals = async () => {
-    const income = parseInt(document.getElementById('goal-income').value) || 0;
-    const brides = parseInt(document.getElementById('goal-brides').value) || 0;
-    
-    if (income <= 0 && brides <= 0) {
-        alert('נא להזין לפחות יעד אחד');
-        return;
-    }
-    
-    const saved = await GoalsManager.save(income, brides);
-    
-    if (saved) {
-        ModalManager.close('modal-settings');
-        await HomeView.update();
-        alert('✅ היעדים נשמרו בהצלחה ויופיעו בכל המכשירים!');
-    } else {
-        alert('❌ שגיאה בשמירת היעדים');
-    }
-};
-
-window.loadGoalsToModal = async () => {
-    const goals = await GoalsManager.load();
-    document.getElementById('goal-income').value = goals.income || '';
-    document.getElementById('goal-brides').value = goals.brides || '';
-};
 
 window.toggleEscortFields = () => {
     const checked = document.getElementById('contract-hasEscort').checked;
