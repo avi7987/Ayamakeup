@@ -30,7 +30,6 @@ async function checkAuthStatus() {
             isAuthenticated = false;
             currentUser = null;
             showLoginButton();
-            showLoginBanner();
             showEmptyDashboard();
             console.log('ℹ️ User not authenticated - showing empty dashboard');
         }
@@ -40,7 +39,6 @@ async function checkAuthStatus() {
         isAuthenticated = false;
         currentUser = null;
         showLoginButton();
-        showLoginBanner();
         showEmptyDashboard();
     }
 }
@@ -72,21 +70,7 @@ function hideLoginPopup() {
     }
 }
 
-// Show login banner
-function showLoginBanner() {
-    const banner = document.getElementById('login-banner');
-    if (banner) {
-        banner.classList.remove('hidden');
-    }
-}
 
-// Hide login banner
-function hideLoginBanner() {
-    const banner = document.getElementById('login-banner');
-    if (banner) {
-        banner.classList.add('hidden');
-    }
-}
 
 // Show user profile in header
 function showUserProfile(user) {
