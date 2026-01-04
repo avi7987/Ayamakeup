@@ -192,6 +192,10 @@ const upload = multer({
 
 // ==================== AUTHENTICATION SETUP ====================
 // Setup authentication system (if credentials are configured)
+console.log('🔍 Checking OAuth credentials...');
+console.log('   GOOGLE_CLIENT_ID:', process.env.GOOGLE_CLIENT_ID ? 'SET (' + process.env.GOOGLE_CLIENT_ID.substring(0, 20) + '...)' : 'MISSING');
+console.log('   GOOGLE_CLIENT_SECRET:', process.env.GOOGLE_CLIENT_SECRET ? 'SET (length: ' + process.env.GOOGLE_CLIENT_SECRET.length + ')' : 'MISSING');
+
 if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
     console.log('🔐 Initializing authentication system...');
     setupAuth(app, mongoose, User);
