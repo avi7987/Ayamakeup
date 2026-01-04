@@ -31,7 +31,8 @@ function setupAuth(app, mongoose, User) {
             maxAge: 30 * 24 * 60 * 60 * 1000, // 30 ימים
             httpOnly: true,
             secure: true, // Railway uses HTTPS
-            sameSite: 'lax'
+            sameSite: 'none', // Allow cross-site cookies
+            domain: '.railway.app' // Railway domain
         }
     }));
 
