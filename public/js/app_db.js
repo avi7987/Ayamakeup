@@ -7,7 +7,6 @@
 // ==================== AUTHENTICATION ====================
 let currentUser = null;
 let isAuthenticated = false;
-let isFallbackMode = false; // Track fallback mode separately
 
 // Check authentication status on page load
 async function checkAuthStatus() {
@@ -17,39 +16,75 @@ async function checkAuthStatus() {
         
         console.log('🔐 Auth status:', data);
         
-        // Store fallback mode status
-        isFallbackMode = data.isFallbackMode || false;
-        
-        // In fallback mode or authenticated - show data
-        if (data.isFallbackMode || data.isAuthenticated) {
+        // STRICT MODE: Only load data if authenticated
+        if (data.isAuthenticated && data.user) {
             isAuthenticated = true;
             currentUser = data.user;
-            
-            // In fallback mode, don't show user menu
-            if (data.isFallbackMode) {
-                console.log('✅ Fallback mode enabled - loading data without auth');
-                showLoginButton();
-            } else {
-                showUserProfile(data.user);
-            }
+            showUserProfile(data.user);
+            hideLoginBanner();
             
             // Load user data
             await loadAllData();
         } else {
+            // Not authenticated - show login UI
             isAuthenticated = false;
             currentUser = null;
             showLoginButton();
-            // Show empty dashboard
+            showLoginBanner();
             showEmptyDashboard();
+            console.log('ℹ️ User not authenticated - showing empty dashboard');
         }
     } catch (error) {
         console.error('❌ Error checking auth status:', error);
-        // On error, assume fallback mode
-        isAuthenticated = true;
-        isFallbackMode = true;
+        // On error, DO NOT load data
+        isAuthenticated = false;
+        currentUser = null;
         showLoginButton();
-        console.log('⚠️ Error fetching auth - attempting fallback mode');
-        await loadAllData();
+        showLoginBanner();
+        showEmptyDashboard();
+    }
+}
+
+// Show login popup when trying to perform action without auth
+function requireLogin() {
+    if (!isAuthenticated) {
+        showLoginPopup();
+        return false;
+    }
+    return true;
+}
+
+// Show login popup
+function showLoginPopup() {
+    const popup = document.getElementById('login-popup');
+    if (popup) {
+        popup.classList.remove('hidden');
+        popup.classList.add('flex');
+    }
+}
+
+// Hide login popup
+function hideLoginPopup() {
+    const popup = document.getElementById('login-popup');
+    if (popup) {
+        popup.classList.add('hidden');
+        popup.classList.remove('flex');
+    }
+}
+
+// Show login banner
+function showLoginBanner() {
+    const banner = document.getElementById('login-banner');
+    if (banner) {
+        banner.classList.remove('hidden');
+    }
+}
+
+// Hide login banner
+function hideLoginBanner() {
+    const banner = document.getElementById('login-banner');
+    if (banner) {
+        banner.classList.add('hidden');
     }
 }
 
@@ -314,9 +349,9 @@ const State = {
     },
     
     async loadFromDatabase() {
-        // In fallback mode OR authenticated - load data
-        if (!isAuthenticated && !isFallbackMode) {
-            console.log('ℹ️ משתמש לא מחובר ולא במצב fallback - לא טוען נתונים');
+        // STRICT MODE: Only load if authenticated
+        if (!isAuthenticated) {
+            console.log('ℹ️ משתמש לא מחובר - לא טוען נתונים');
             this.clients = [];
             this.leads = [];
             return;
@@ -324,7 +359,7 @@ const State = {
         
         try {
             console.log('🔄 טוען נתונים מ-MongoDB...');
-            console.log('   isAuthenticated:', isAuthenticated, '| isFallbackMode:', isFallbackMode);
+            console.log('   isAuthenticated:', isAuthenticated);
             // Always load from database
             const [clientsRes, leadsRes] = await Promise.all([
                 fetch(`${CONFIG.API_BASE_URL}/clients`),
@@ -3040,17 +3075,17 @@ window.openModal = (id) => {
     ModalManager.open(id);
 };
 window.closeModal = (id) => ModalManager.close(id);
-window.saveIncome = () => IncomeManager.save();
-window.addLead = () => LeadsManager.add();
+window.saveIncome = () => { if (!requireLogin()) return; IncomeManager.save(); };
+window.addLead = () => { if (!requireLogin()) return; LeadsManager.add(); };
 window.viewLead = (id) => LeadsManager.view(id);
-window.deleteLead = (id) => LeadsManager.delete(id);
+window.deleteLead = (id) => { if (!requireLogin()) return; LeadsManager.delete(id); };
 window.openManageModal = () => ManageView.open();
-window.startEdit = (id) => IncomeManager.startEdit(id);
-window.submitEdit = () => IncomeManager.update();
-window.deleteRow = (id) => IncomeManager.delete(id);
+window.startEdit = (id) => { if (!requireLogin()) return; IncomeManager.startEdit(id); };
+window.submitEdit = () => { if (!requireLogin()) return; IncomeManager.update(); };
+window.deleteRow = (id) => { if (!requireLogin()) return; IncomeManager.delete(id); };
 window.toggleSelectAll = (checkbox) => ManageView.toggleSelectAll(checkbox);
 window.checkBulkVisibility = () => ManageView.checkBulkVisibility();
-window.bulkDelete = () => ManageView.bulkDelete();
+window.bulkDelete = () => { if (!requireLogin()) return; ManageView.bulkDelete(); };
 window.updateStats = () => StatsView.update();
 window.exportToExcel = () => ExcelExporter.export();
 // Goals Management
@@ -5639,6 +5674,9 @@ window.toggleMobileDrawer = toggleMobileDrawer;
 window.closeMobileDrawer = closeMobileDrawer;
 window.openMobileSocialMenu = openMobileSocialMenu;
 window.closeMobileSocialMenu = closeMobileSocialMenu;
+window.requireLogin = requireLogin;
+window.showLoginPopup = showLoginPopup;
+window.hideLoginPopup = hideLoginPopup;
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', checkAuthStatus);
