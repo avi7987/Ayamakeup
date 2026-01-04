@@ -2493,7 +2493,7 @@
             </div>
             
             <button onclick="saveGoals()" class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all duration-300 mt-6">
-                ╫⌐╫₧╫ץ╫¿ ╫ש╫ó╫ף╫ש╫¥
+                שמור הגדרות
             </button>
         </div>
     </div>
@@ -2503,9 +2503,9 @@
         <div class="bg-gray-800 dark:bg-gray-900 text-white rounded-3xl w-full max-w-5xl max-h-[85vh] overflow-hidden flex flex-col p-6 shadow-2xl">
             <div class="flex justify-between items-center mb-4">
                 <button id="bulk-del-btn" onclick="bulkDelete()" class="hidden bg-red-500 hover:bg-red-600 text-white px-4 py-1 rounded-lg text-sm font-bold">
-                    ╫₧╫ק╫º ╫₧╫í╫ץ╫₧╫á╫ש╫¥
+                    מחק נבחרים
                 </button>
-                <h3 class="text-xl font-bold text-white">╫á╫ש╫פ╫ץ╫£ ╫á╫¬╫ץ╫á╫ש ╫פ╫¢╫á╫í╫ץ╫¬</h3>
+                <h3 class="text-xl font-bold text-white">ניהול רשימת הכנסות</h3>
                 <button onclick="closeModal('modal-manage')" class="text-3xl text-gray-300 hover:text-white">&times;</button>
             </div>
             
@@ -2516,13 +2516,13 @@
                             <th class="p-3 text-gray-200">
                                 <input type="checkbox" id="master-check" onclick="toggleSelectAll(this)" class="cursor-pointer">
                             </th>
-                            <th class="p-3 text-gray-200">╫¬╫נ╫¿╫ש╫ת</th>
-                            <th class="p-3 text-gray-200">╫⌐╫¥</th>
-                            <th class="p-3 text-gray-200">╫⌐╫ש╫¿╫ץ╫¬</th>
-                            <th class="p-3 text-gray-200">╫í╫¢╫ץ╫¥</th>
-                            <th class="p-3 text-gray-200">╫¬╫⌐╫£╫ץ╫¥</th>
-                            <th class="p-3 text-gray-200">╫¢╫£╫פ</th>
-                            <th class="p-3 text-gray-200">╫ñ╫ó╫ץ╫£╫ץ╫¬</th>
+                            <th class="p-3 text-gray-200">תאריך</th>
+                            <th class="p-3 text-gray-200">שם</th>
+                            <th class="p-3 text-gray-200">שירות</th>
+                            <th class="p-3 text-gray-200">סכום</th>
+                            <th class="p-3 text-gray-200">תשלום</th>
+                            <th class="p-3 text-gray-200">כלה</th>
+                            <th class="p-3 text-gray-200">פעולות</th>
                         </tr>
                     </thead>
                     <tbody id="manage-tbody"></tbody>
@@ -2534,32 +2534,32 @@
     <!-- Modal: Edit Income Row -->
     <div id="modal-edit-row" class="modal">
         <div class="bg-gray-800 dark:bg-gray-900 text-white p-6 rounded-3xl w-full max-w-sm shadow-2xl text-right">
-            <h3 class="text-xl font-bold mb-4 text-white">╫ó╫¿╫ש╫¢╫¬ ╫ó╫í╫º╫פ</h3>
+            <h3 class="text-xl font-bold mb-4 text-white">עריכת שורה</h3>
             
             <input type="hidden" id="edit-id">
-            <input type="text" id="edit-name" placeholder="╫⌐╫¥ ╫פ╫£╫º╫ץ╫ק╫פ" class="bg-gray-700 text-white border-gray-600 placeholder-gray-400">
-            <input type="number" id="edit-amount" placeholder="╫í╫¢╫ץ╫¥" class="bg-gray-700 text-white border-gray-600 placeholder-gray-400">
-            <input type="text" id="edit-service" placeholder="╫í╫ץ╫ע ╫⌐╫ש╫¿╫ץ╫¬" class="bg-gray-700 text-white border-gray-600 placeholder-gray-400">
+            <input type="text" id="edit-name" placeholder="שם הלקוחה" class="bg-gray-700 text-white border-gray-600 placeholder-gray-400">
+            <input type="number" id="edit-amount" placeholder="סכום" class="bg-gray-700 text-white border-gray-600 placeholder-gray-400">
+            <input type="text" id="edit-service" placeholder="סוג שירות" class="bg-gray-700 text-white border-gray-600 placeholder-gray-400">
             <input type="date" id="edit-date" class="bg-gray-700 text-white border-gray-600">
             
             <select id="edit-payment" class="mb-4 bg-gray-700 text-white border-gray-600">
-                <option value="╫₧╫צ╫ץ╫₧╫ƒ">╫₧╫צ╫ץ╫₧╫ƒ</option>
-                <option value="╫ס╫ש╫ר">╫ס╫ש╫ר / ╫ñ╫ש╫ש╫ס╫ץ╫º╫í</option>
-                <option value="╫פ╫ó╫ס╫¿╫פ">╫פ╫ó╫ס╫¿╫פ ╫ס╫á╫º╫נ╫ש╫¬</option>
-                <option value="╫¢╫¿╫ר╫ש╫í ╫נ╫⌐╫¿╫נ╫ש">╫¢╫¿╫ר╫ש╫í ╫נ╫⌐╫¿╫נ╫ש</option>
-                <option value="╫פ╫₧╫ק╫נ╫פ">╫פ╫₧╫ק╫נ╫פ</option>
+                <option value="מזומן">מזומן</option>
+                <option value="ביט">ביט / העברה</option>
+                <option value="אשראי">אשראי בתשלום</option>
+                <option value="צ'קים">צ'קים מזומנים</option>
+                <option value="פייבוקס">פייבוקס</option>
             </select>
             
             <label class="flex items-center gap-2 p-3 bg-purple-900/30 border border-purple-700 rounded-xl mb-4">
                 <input type="checkbox" id="edit-isbride" class="cursor-pointer">
-                <span class="font-bold text-purple-200">╫ó╫í╫º╫¬ ╫¢╫£╫פ</span>
+                <span class="font-bold text-purple-200">עריכת כלה</span>
             </label>
             
             <button onclick="submitEdit()" id="btn-edit-save" class="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-xl font-bold transition-all">
-                ╫⌐╫₧╫ץ╫¿ ╫⌐╫ש╫á╫ץ╫ש╫ש╫¥
+                שמור שינויים
             </button>
             <button onclick="closeModal('modal-edit-row')" class="w-full text-gray-400 hover:text-gray-200 mt-2 transition-all">
-                ╫ס╫ש╫ר╫ץ╫£
+                ביטול
             </button>
         </div>
     </div>
@@ -2578,7 +2578,7 @@
             
             <div class="sticky bottom-0 bg-white dark:bg-gray-800 pt-4 border-t border-gray-200 dark:border-gray-700 mt-6">
                 <button onclick="MessageSettings.save()" class="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-xl font-bold transition-all">
-                    ╫⌐╫₧╫ץ╫¿ הגדרות
+                    שמור הגדרות
                 </button>
             </div>
         </div>
@@ -2598,13 +2598,13 @@
             
             <div class="sticky bottom-0 bg-white dark:bg-gray-800 pt-4 border-t border-gray-200 dark:border-gray-700 mt-6">
                 <button onclick="TimerSettings.save()" class="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-xl font-bold transition-all">
-                    ╫⌐╫₧╫ץ╫¿ הגדרות
+                    שמור הגדרות
                 </button>
             </div>
         </div>
     </div>
 
     <!-- Application Script -->
-    <script src="js/app_db.js?v=04012026v5"></script>
+    <script src="js/app_db.js?v=04012026v6"></script>
 </body>
 </html>
