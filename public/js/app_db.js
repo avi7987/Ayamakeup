@@ -5639,3 +5639,6 @@ window.toggleMobileDrawer = toggleMobileDrawer;
 window.closeMobileDrawer = closeMobileDrawer;
 window.openMobileSocialMenu = openMobileSocialMenu;
 window.closeMobileSocialMenu = closeMobileSocialMenu;
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', checkAuthStatus);
