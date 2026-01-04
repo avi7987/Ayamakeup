@@ -1657,39 +1657,96 @@ const HomeView = {
     },
     
     updateGoalsSection(goals, currentIncome, currentLeads, currentDeals) {
-        const incomeGoal = goals.monthlyIncome || 200000;
-        const leadsGoal = goals.monthlyLeads || 50;
-        const dealsGoal = goals.monthlyDeals || 20;
+        // Use new dynamic goals system
+        const savedGoals = JSON.parse(localStorage.getItem('userGoals') || '[]');
         
-        // Income goal
-        const incomePercent = Math.min(100, Math.round((currentIncome / incomeGoal) * 100));
-        const incomeStatus = incomePercent >= 90 ? 'עומד ביעד ✔️' : incomePercent >= 70 ? 'קרוב ליעד ⚠️' : 'רחוק מהיעד';
+        if (savedGoals.length === 0) {
+            // Fallback to old system if no goals saved yet
+            const incomeGoal = goals.monthlyIncome || 200000;
+            const leadsGoal = goals.monthlyLeads || 50;
+            const dealsGoal = goals.monthlyDeals || 20;
+            
+            // Income goal
+            const incomePercent = Math.min(100, Math.round((currentIncome / incomeGoal) * 100));
+            const incomeStatus = incomePercent >= 90 ? 'עומד ביעד ✔️' : incomePercent >= 70 ? 'קרוב ליעד ⚠️' : 'רחוק מהיעד';
+            
+            if (document.getElementById('income-goal-current-display')) {
+                document.getElementById('income-goal-current-display').innerText = `₪${currentIncome.toLocaleString()}`;
+                document.getElementById('income-goal-target-display').innerText = `₪${incomeGoal.toLocaleString()}`;
+                document.getElementById('income-goal-percentage-display').innerText = `${incomePercent}%`;
+                document.getElementById('income-goal-status').innerText = incomeStatus;
+                document.getElementById('income-goal-bar-new').style.width = `${incomePercent}%`;
+            }
+            
+            // Leads goal
+            const leadsPercent = Math.min(100, Math.round((currentLeads / leadsGoal) * 100));
+            const leadsStatus = leadsPercent >= 90 ? 'עומד ביעד ✔️' : leadsPercent >= 70 ? 'קרוב ליעד ⚠️' : 'רחוק מהיעד';
+            
+            if (document.getElementById('leads-goal-current-display')) {
+                document.getElementById('leads-goal-current-display').innerText = currentLeads;
+                document.getElementById('leads-goal-target-display').innerText = leadsGoal;
+                document.getElementById('leads-goal-percentage-display').innerText = `${leadsPercent}%`;
+                document.getElementById('leads-goal-status').innerText = leadsStatus;
+                document.getElementById('leads-goal-bar-new').style.width = `${leadsPercent}%`;
+            }
+            
+            // Deals goal
+            const dealsPercent = Math.min(100, Math.round((currentDeals / dealsGoal) * 100));
+            const dealsStatus = dealsPercent >= 90 ? 'עומד ביעד ✔️' : dealsPercent >= 70 ? 'קרוב ליעד ⚠️' : 'רחוק מהיעד';
+            
+            if (document.getElementById('deals-goal-current-display')) {
+                document.getElementById('deals-goal-current-display').innerText = currentDeals;
+                document.getElementById('deals-goal-target-display').innerText = dealsGoal;
+                document.getElementById('deals-goal-percentage-display').innerText = `${dealsPercent}%`;
+                document.getElementById('deals-goal-status').innerText = dealsStatus;
+                document.getElementById('deals-goal-bar-new').style.width = `${dealsPercent}%`;
+            }
+            return;
+        }
         
-        document.getElementById('income-goal-current-display').innerText = `₪${currentIncome.toLocaleString()}`;
-        document.getElementById('income-goal-target-display').innerText = `₪${incomeGoal.toLocaleString()}`;
-        document.getElementById('income-goal-percentage-display').innerText = `${incomePercent}%`;
-        document.getElementById('income-goal-status').innerText = incomeStatus;
-        document.getElementById('income-goal-bar-new').style.width = `${incomePercent}%`;
+        // Use dynamic goals from settings
+        const goalsSection = document.querySelector('.bg-white.dark\\:bg-slate-800.rounded-2xl.shadow-lg.p-6.fade-in .space-y-5');
+        if (!goalsSection) return;
         
-        // Leads goal
-        const leadsPercent = Math.min(100, Math.round((currentLeads / leadsGoal) * 100));
-        const leadsStatus = leadsPercent >= 90 ? 'עומד ביעד ✔️' : leadsPercent >= 70 ? 'קרוב ליעד ⚠️' : 'רחוק מהיעד';
+        // Take only first 3 goals for display
+        const displayGoals = savedGoals.slice(0, 3);
         
-        document.getElementById('leads-goal-current-display').innerText = currentLeads;
-        document.getElementById('leads-goal-target-display').innerText = leadsGoal;
-        document.getElementById('leads-goal-percentage-display').innerText = `${leadsPercent}%`;
-        document.getElementById('leads-goal-status').innerText = leadsStatus;
-        document.getElementById('leads-goal-bar-new').style.width = `${leadsPercent}%`;
+        const goalsHTML = displayGoals.map((goal, index) => {
+            const selectedGoalDef = GoalsManager.predefinedGoals.find(g => g.id === goal.goalType);
+            if (!selectedGoalDef || !selectedGoalDef.calculate) return '';
+            
+            const currentValue = selectedGoalDef.calculate();
+            const targetValue = goal.target || 0;
+            const percentage = targetValue > 0 ? Math.min(100, Math.round((currentValue / targetValue) * 100)) : 0;
+            const status = percentage >= 90 ? 'עומד ביעד ✔️' : percentage >= 70 ? 'קרוב ליעד ⚠️' : 'רחוק מהיעד';
+            
+            const colors = ['emerald', 'blue', 'purple'];
+            const color = colors[index % colors.length];
+            
+            const displayLabel = goal.goalType === 'custom' ? (goal.customLabel || goal.label) : goal.label;
+            
+            return `
+                <div>
+                    <div class="flex justify-between items-baseline mb-2">
+                        <div>
+                            <div class="text-sm font-semibold text-gray-800 dark:text-gray-100">${displayLabel}</div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                <span id="goal-${index}-current">${currentValue.toLocaleString()}</span> / <span id="goal-${index}-target">${targetValue.toLocaleString()}</span> ${selectedGoalDef.unit}
+                            </div>
+                        </div>
+                        <div class="text-left">
+                            <div class="text-xl font-bold text-${color}-600 dark:text-${color}-400" id="goal-${index}-percentage">${percentage}%</div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400" id="goal-${index}-status">${status}</div>
+                        </div>
+                    </div>
+                    <div class="h-2.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                        <div id="goal-${index}-bar" class="h-full bg-gradient-to-r from-${color}-400 to-${color}-500 rounded-full transition-all duration-1000" style="width: ${percentage}%"></div>
+                    </div>
+                </div>
+            `;
+        }).join('');
         
-        // Deals goal
-        const dealsPercent = Math.min(100, Math.round((currentDeals / dealsGoal) * 100));
-        const dealsStatus = dealsPercent >= 90 ? 'עומד ביעד ✔️' : dealsPercent >= 70 ? 'קרוב ליעד ⚠️' : 'רחוק מהיעד';
-        
-        document.getElementById('deals-goal-current-display').innerText = currentDeals;
-        document.getElementById('deals-goal-target-display').innerText = dealsGoal;
-        document.getElementById('deals-goal-percentage-display').innerText = `${dealsPercent}%`;
-        document.getElementById('deals-goal-status').innerText = dealsStatus;
-        document.getElementById('deals-goal-bar-new').style.width = `${dealsPercent}%`;
+        goalsSection.innerHTML = goalsHTML;
     },
     
     updateSnapshotSection(activeLeads, pendingResponse, monthlyRevenue, upcomingEvents) {
@@ -3106,6 +3163,9 @@ window.switchPage = async (page) => await Navigation.switchPage(page);
 window.openModal = (id) => {
     if (id === 'modal-timer-settings') {
         TimerSettings.render();
+    }
+    if (id === 'modal-settings') {
+        GoalsManager.init();
     }
     ModalManager.open(id);
 };
@@ -5696,6 +5756,222 @@ function closeMobileSocialMenu() {
     }
 }
 
+// Goals Management System
+const GoalsManager = {
+    predefinedGoals: [
+        { id: 'monthly-income', label: '💰 הכנסה חודשית', unit: '₪', calculate: () => {
+            const now = new Date();
+            const monthlyClients = State.clients.filter(c => {
+                const cDate = new Date(c.date);
+                return cDate.getMonth() === now.getMonth() && cDate.getFullYear() === now.getFullYear();
+            });
+            return monthlyClients.reduce((sum, c) => sum + (parseFloat(c.amount) || parseFloat(c.income) || parseFloat(c.price) || 0), 0);
+        }},
+        { id: 'monthly-leads', label: '📊 לידים חדשים (חודשי)', unit: 'לידים', calculate: () => {
+            const now = new Date();
+            const monthlyLeads = State.leads.filter(l => {
+                const cDate = new Date(l.createdAt || l.date);
+                return cDate.getMonth() === now.getMonth() && cDate.getFullYear() === now.getFullYear();
+            });
+            return monthlyLeads.length;
+        }},
+        { id: 'monthly-deals', label: '✅ עסקאות שנסגרו (חודשי)', unit: 'עסקאות', calculate: () => {
+            const now = new Date();
+            const monthlyClients = State.clients.filter(c => {
+                const cDate = new Date(c.date);
+                return cDate.getMonth() === now.getMonth() && cDate.getFullYear() === now.getFullYear();
+            });
+            return monthlyClients.length;
+        }},
+        { id: 'annual-income', label: '💎 הכנסה שנתית', unit: '₪', calculate: () => {
+            const now = new Date();
+            const yearlyClients = State.clients.filter(c => {
+                const cDate = new Date(c.date);
+                return cDate.getFullYear() === now.getFullYear();
+            });
+            return yearlyClients.reduce((sum, c) => sum + (parseFloat(c.amount) || parseFloat(c.income) || parseFloat(c.price) || 0), 0);
+        }},
+        { id: 'annual-brides', label: '👰 כלות בשנה', unit: 'כלות', calculate: () => {
+            const now = new Date();
+            const yearlyBrides = State.clients.filter(c => {
+                const cDate = new Date(c.date);
+                return cDate.getFullYear() === now.getFullYear() && (c.isBride || c.notes?.includes('כלה'));
+            });
+            return yearlyBrides.length;
+        }},
+        { id: 'active-leads', label: '🎯 לידים פעילים', unit: 'לידים', calculate: () => {
+            return State.leads.filter(l => l.stage && !['won', 'lost'].includes(l.stage)).length;
+        }},
+        { id: 'conversion-rate', label: '📈 אחוז המרה', unit: '%', calculate: () => {
+            const totalLeads = State.leads.length;
+            const wonLeads = State.leads.filter(l => l.stage === 'won').length;
+            return totalLeads > 0 ? Math.round((wonLeads / totalLeads) * 100) : 0;
+        }},
+        { id: 'custom', label: '⚙️ יעד מותאם אישית', unit: '', calculate: null }
+    ],
+    
+    init() {
+        const savedGoals = JSON.parse(localStorage.getItem('userGoals') || '[]');
+        
+        // Default goals if nothing saved
+        if (savedGoals.length === 0) {
+            savedGoals.push(
+                { goalType: 'monthly-income', target: 200000, label: '💰 הכנסה חודשית' },
+                { goalType: 'monthly-leads', target: 50, label: '📊 לידים חדשים (חודשי)' },
+                { goalType: 'monthly-deals', target: 20, label: '✅ עסקאות שנסגרו (חודשי)' }
+            );
+            localStorage.setItem('userGoals', JSON.stringify(savedGoals));
+        }
+        
+        this.renderGoals(savedGoals);
+    },
+    
+    renderGoals(goals) {
+        const container = document.getElementById('goals-container');
+        if (!container) return;
+        
+        container.innerHTML = goals.map((goal, index) => `
+            <div class="bg-white dark:bg-slate-700 p-4 rounded-xl border-2 border-gray-200 dark:border-slate-600 goal-row" data-index="${index}">
+                <div class="flex gap-3 items-start">
+                    <div class="flex-1">
+                        <label class="block text-xs font-bold text-gray-600 dark:text-gray-300 mb-2">סוג היעד</label>
+                        <select class="goal-type-select w-full p-2 border border-gray-300 dark:border-slate-500 dark:bg-slate-600 dark:text-white rounded-lg text-sm" data-index="${index}" onchange="GoalsManager.handleGoalTypeChange(${index}, this.value)">
+                            ${this.predefinedGoals.map(pg => `
+                                <option value="${pg.id}" ${goal.goalType === pg.id ? 'selected' : ''}>${pg.label}</option>
+                            `).join('')}
+                        </select>
+                        ${goal.goalType === 'custom' ? `
+                            <input type="text" placeholder="שם היעד" value="${goal.customLabel || ''}" class="custom-label-input w-full mt-2 p-2 border border-gray-300 dark:border-slate-500 dark:bg-slate-600 dark:text-white rounded-lg text-sm" data-index="${index}">
+                        ` : ''}
+                    </div>
+                    <div class="w-32">
+                        <label class="block text-xs font-bold text-gray-600 dark:text-gray-300 mb-2">יעד</label>
+                        <input type="number" value="${goal.target}" placeholder="0" class="goal-target-input w-full p-2 border border-gray-300 dark:border-slate-500 dark:bg-slate-600 dark:text-white rounded-lg text-sm" data-index="${index}">
+                    </div>
+                    <div class="pt-7">
+                        <button onclick="GoalsManager.removeGoal(${index})" class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-all">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    },
+    
+    handleGoalTypeChange(index, value) {
+        const goals = JSON.parse(localStorage.getItem('userGoals') || '[]');
+        const selectedGoal = this.predefinedGoals.find(g => g.id === value);
+        
+        goals[index].goalType = value;
+        goals[index].label = selectedGoal.label;
+        
+        localStorage.setItem('userGoals', JSON.stringify(goals));
+        this.renderGoals(goals);
+    },
+    
+    removeGoal(index) {
+        const goals = JSON.parse(localStorage.getItem('userGoals') || '[]');
+        goals.splice(index, 1);
+        localStorage.setItem('userGoals', JSON.stringify(goals));
+        this.renderGoals(goals);
+    }
+};
+
+window.addGoalRow = function() {
+    const goals = JSON.parse(localStorage.getItem('userGoals') || '[]');
+    goals.push({ goalType: 'monthly-income', target: 0, label: '💰 הכנסה חודשית' });
+    localStorage.setItem('userGoals', JSON.stringify(goals));
+    GoalsManager.renderGoals(goals);
+};
+
+window.saveGoals = function() {
+    const goals = [];
+    const rows = document.querySelectorAll('.goal-row');
+    
+    rows.forEach((row, index) => {
+        const goalType = row.querySelector('.goal-type-select').value;
+        const target = parseFloat(row.querySelector('.goal-target-input').value) || 0;
+        const customLabelInput = row.querySelector('.custom-label-input');
+        const selectedGoal = GoalsManager.predefinedGoals.find(g => g.id === goalType);
+        
+        const goal = {
+            goalType,
+            target,
+            label: selectedGoal.label
+        };
+        
+        if (goalType === 'custom' && customLabelInput) {
+            goal.customLabel = customLabelInput.value || 'יעד מותאם';
+        }
+        
+        goals.push(goal);
+    });
+    
+    localStorage.setItem('userGoals', JSON.stringify(goals));
+    alert('✅ היעדים נשמרו בהצלחה!');
+    closeModal('modal-settings');
+    
+    // Refresh dashboard to show new goals
+    if (typeof DashboardView !== 'undefined' && DashboardView.update) {
+        DashboardView.update();
+    }
+};
+
+// Update the Goals section in HTML
+function updateGoalsSectionDynamic() {
+    const goalsContainer = document.querySelector('.grid.grid-cols-1.lg\\:grid-cols-2.gap-4');
+    if (!goalsContainer) return;
+    
+    const goalsSection = goalsContainer.querySelector('.bg-white.dark\\:bg-slate-800.rounded-2xl.shadow-lg.p-6.fade-in');
+    if (!goalsSection) return;
+    
+    const savedGoals = JSON.parse(localStorage.getItem('userGoals') || '[]');
+    if (savedGoals.length === 0) return;
+    
+    // Take only first 3 goals for display
+    const displayGoals = savedGoals.slice(0, 3);
+    
+    const goalsHTML = displayGoals.map((goal, index) => {
+        const selectedGoalDef = GoalsManager.predefinedGoals.find(g => g.id === goal.goalType);
+        if (!selectedGoalDef || !selectedGoalDef.calculate) return '';
+        
+        const currentValue = selectedGoalDef.calculate();
+        const targetValue = goal.target || 0;
+        const percentage = targetValue > 0 ? Math.min(100, Math.round((currentValue / targetValue) * 100)) : 0;
+        const status = percentage >= 90 ? 'עומד ביעד ✔️' : percentage >= 70 ? 'קרוב ליעד ⚠️' : 'רחוק מהיעד';
+        
+        const colors = ['emerald', 'blue', 'purple'];
+        const color = colors[index % colors.length];
+        
+        return `
+            <div>
+                <div class="flex justify-between items-baseline mb-2">
+                    <div>
+                        <div class="text-sm font-semibold text-gray-800 dark:text-gray-100">${goal.label}</div>
+                        <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                            <span>${currentValue.toLocaleString()}</span> / <span>${targetValue.toLocaleString()}</span> ${selectedGoalDef.unit}
+                        </div>
+                    </div>
+                    <div class="text-left">
+                        <div class="text-xl font-bold text-${color}-600 dark:text-${color}-400">${percentage}%</div>
+                        <div class="text-xs text-gray-500 dark:text-gray-400">${status}</div>
+                    </div>
+                </div>
+                <div class="h-2.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                    <div class="h-full bg-gradient-to-r from-${color}-400 to-${color}-500 rounded-full transition-all duration-1000" style="width: ${percentage}%"></div>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    const contentDiv = goalsSection.querySelector('.space-y-5');
+    if (contentDiv) {
+        contentDiv.innerHTML = goalsHTML;
+    }
+}
+
 // Expose functions globally
 window.openSideMenu = openSideMenu;
 window.closeSideMenu = closeSideMenu;
@@ -5709,6 +5985,7 @@ window.closeMobileSocialMenu = closeMobileSocialMenu;
 window.requireLogin = requireLogin;
 window.showLoginPopup = showLoginPopup;
 window.hideLoginPopup = hideLoginPopup;
+window.GoalsManager = GoalsManager;
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', initApp);

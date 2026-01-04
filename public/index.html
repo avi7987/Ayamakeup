@@ -2489,26 +2489,33 @@
 
     <!-- Modal: Settings -->
     <div id="modal-settings" class="modal">
-        <div class="bg-white dark:bg-gray-800 p-8 rounded-3xl w-full max-w-md shadow-2xl text-right">
+        <div class="bg-white dark:bg-gray-800 p-8 rounded-3xl w-full max-w-2xl shadow-2xl text-right max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-6">
-                <h3 class="text-2xl font-bold text-purple-800 dark:text-purple-300">📋 ניהול הגדרות שדרוג ומחירים</h3>
+                <h3 class="text-2xl font-bold text-purple-800 dark:text-purple-300">🎯 הגדרות יעדים</h3>
                 <button onclick="closeModal('modal-settings')" class="text-3xl text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">&times;</button>
             </div>
             
             <div class="space-y-6">
-                <div>
-                    <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">💰 סכום שדרוג הכנסות ומחיר (₪)</label>
-                    <input type="number" id="goal-income" placeholder="לדוגמה: 500000" class="w-full p-3 border-2 border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-xl focus:border-purple-500 focus:outline-none">
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">📊 יעד כמות כלות שנתי</label>
-                    <input type="number" id="goal-brides" placeholder="לדוגמה: 50" class="w-full p-3 border-2 border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-xl focus:border-purple-500 focus:outline-none">
+                <!-- Goals Section -->
+                <div class="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 p-6 rounded-xl border-2 border-purple-200 dark:border-purple-700">
+                    <div class="flex justify-between items-center mb-4">
+                        <h4 class="text-lg font-bold text-gray-900 dark:text-white">📊 היעדים שלי</h4>
+                        <button onclick="addGoalRow()" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-bold transition-all flex items-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                            </svg>
+                            הוסף יעד
+                        </button>
+                    </div>
+                    
+                    <div id="goals-container" class="space-y-4">
+                        <!-- Goals will be dynamically added here -->
+                    </div>
                 </div>
                 
                 <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-200 dark:border-blue-700">
                     <p class="text-sm text-blue-800 dark:text-blue-300">
-                        💡 <strong>טיפ:</strong> הגדרות יעדים אוטומטיות את ריבויים. מעקב אחר התקדמות יעזור לך להישאר ממוקדים!
+                        💡 <strong>טיפ:</strong> הגדירו יעדים שמתאימים לעסק שלכם. היעדים יוצגו בדשבורד ויעזרו לכם לעקוב אחר ההתקדמות!
                     </p>
                 </div>
             </div>
@@ -2626,6 +2633,6 @@
     </div>
 
     <!-- Application Script -->
-    <script src="js/app_db.js?v=04012026v16"></script>
+    <script src="js/app_db.js?v=04012026v17"></script>
 </body>
 </html>
