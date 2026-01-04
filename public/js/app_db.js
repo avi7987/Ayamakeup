@@ -7,12 +7,18 @@
 // ==================== AUTHENTICATION ====================
 let currentUser = null;
 let isAuthenticated = false;
+let isFallbackMode = false; // Track fallback mode separately
 
 // Check authentication status on page load
 async function checkAuthStatus() {
     try {
         const response = await fetch('/api/user');
         const data = await response.json();
+        
+        console.log('🔐 Auth status:', data);
+        
+        // Store fallback mode status
+        isFallbackMode = data.isFallbackMode || false;
         
         // In fallback mode or authenticated - show data
         if (data.isFallbackMode || data.isAuthenticated) {
@@ -21,6 +27,7 @@ async function checkAuthStatus() {
             
             // In fallback mode, don't show user menu
             if (data.isFallbackMode) {
+                console.log('✅ Fallback mode enabled - loading data without auth');
                 showLoginButton();
             } else {
                 showUserProfile(data.user);
@@ -37,9 +44,12 @@ async function checkAuthStatus() {
         }
     } catch (error) {
         console.error('❌ Error checking auth status:', error);
-        isAuthenticated = false;
+        // On error, assume fallback mode
+        isAuthenticated = true;
+        isFallbackMode = true;
         showLoginButton();
-        showEmptyDashboard();
+        console.log('⚠️ Error fetching auth - attempting fallback mode');
+        await loadAllData();
     }
 }
 
@@ -304,9 +314,9 @@ const State = {
     },
     
     async loadFromDatabase() {
-        // Don't load data if user is not authenticated
-        if (!isAuthenticated) {
-            console.log('ℹ️ משתמש לא מחובר - לא טוען נתונים');
+        // In fallback mode OR authenticated - load data
+        if (!isAuthenticated && !isFallbackMode) {
+            console.log('ℹ️ משתמש לא מחובר ולא במצב fallback - לא טוען נתונים');
             this.clients = [];
             this.leads = [];
             return;
@@ -314,6 +324,7 @@ const State = {
         
         try {
             console.log('🔄 טוען נתונים מ-MongoDB...');
+            console.log('   isAuthenticated:', isAuthenticated, '| isFallbackMode:', isFallbackMode);
             // Always load from database
             const [clientsRes, leadsRes] = await Promise.all([
                 fetch(`${CONFIG.API_BASE_URL}/clients`),
