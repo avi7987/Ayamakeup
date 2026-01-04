@@ -1741,11 +1741,11 @@ const HomeView = {
             `;
         } else {
             attentionList.innerHTML = items.map(item => `
-                <div class="flex items-start gap-3 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-xl">
+                <div class="flex items-start gap-3 p-4 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900 dark:to-orange-900 rounded-xl border-l-4 border-amber-500 dark:border-amber-400 shadow-md dark:shadow-lg">
                     ${item.icon}
                     <div class="flex-1">
-                        <div class="text-sm font-semibold text-gray-900 dark:text-white">${item.title}</div>
-                        <div class="text-xs text-gray-600 dark:text-gray-400 mt-0.5">${item.subtitle}</div>
+                        <div class="text-sm font-bold text-gray-900 dark:text-amber-100">${item.title}</div>
+                        <div class="text-xs text-gray-700 dark:text-amber-200 mt-1 font-medium">${item.subtitle}</div>
                     </div>
                 </div>
             `).join('');
@@ -1806,11 +1806,11 @@ const HomeView = {
                 const amountText = activity.amount ? `<span class="text-emerald-600 dark:text-emerald-400 font-semibold">₪${activity.amount.toLocaleString()}</span>` : '';
                 
                 return `
-                    <div class="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-700/30 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors">
+                    <div class="flex items-start gap-3 p-3 bg-gray-50 dark:bg-slate-700 rounded-xl hover:bg-gray-100 dark:hover:bg-slate-600 transition-colors border dark:border-slate-600">
                         <div class="mt-0.5">${activity.icon}</div>
                         <div class="flex-1 min-w-0">
-                            <div class="text-sm font-medium text-gray-900 dark:text-white truncate">${activity.title}</div>
-                            <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 flex items-center gap-2">
+                            <div class="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">${activity.title}</div>
+                            <div class="text-xs text-gray-600 dark:text-gray-300 mt-0.5 flex items-center gap-2">
                                 <span>${timeAgo}</span>
                                 ${amountText}
                             </div>
