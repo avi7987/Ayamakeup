@@ -615,7 +615,7 @@ const ModalManager = {
             
             // Load goals when opening settings modal
             if (modalId === 'modal-settings') {
-                window.loadGoalsToModal();
+                GoalsManager.init();
             }
             
             // Render message settings when opening that modal
@@ -5990,17 +5990,39 @@ window.saveGoals = function() {
 
 // Update the Goals section in HTML
 function updateGoalsSectionDynamic() {
-    const goalsContainer = document.querySelector('.grid.grid-cols-1.lg\\:grid-cols-2.gap-4');
-    if (!goalsContainer) return;
+    console.log('🎯 updateGoalsSectionDynamic called');
     
-    const goalsSection = goalsContainer.querySelector('.bg-white.dark\\:bg-slate-800.rounded-2xl.shadow-lg.p-6.fade-in');
-    if (!goalsSection) return;
+    // Try multiple selectors to find the goals section
+    let goalsSection = document.querySelector('.bg-white.dark\\:bg-slate-800.rounded-2xl.shadow-lg.p-6.fade-in .space-y-5');
+    
+    if (!goalsSection) {
+        // Alternative: look for goals section by searching for specific text
+        const allSections = document.querySelectorAll('.bg-white.dark\\:bg-slate-800.rounded-2xl.shadow-lg.p-6');
+        for (const section of allSections) {
+            const heading = section.querySelector('h3');
+            if (heading && (heading.textContent.includes('יעדים') || heading.textContent.includes('התקדמות'))) {
+                goalsSection = section.querySelector('.space-y-5');
+                break;
+            }
+        }
+    }
+    
+    if (!goalsSection) {
+        console.warn('⚠️ Goals section not found in DOM');
+        return;
+    }
     
     const savedGoals = JSON.parse(localStorage.getItem('userGoals') || '[]');
-    if (savedGoals.length === 0) return;
+    console.log('📊 Saved goals:', savedGoals);
     
-    // Take only first 3 goals for display
-    const displayGoals = savedGoals.slice(0, 3);
+    if (savedGoals.length === 0) {
+        console.warn('⚠️ No goals configured');
+        goalsSection.innerHTML = '<div class="text-center text-gray-500 dark:text-gray-400 py-8">לא הוגדרו יעדים עדיין. לחץ על ההגדרות כדי להוסיף יעדים.</div>';
+        return;
+    }
+    
+    // Display all goals
+    const displayGoals = savedGoals;
     
     const goalsHTML = displayGoals.map((goal, index) => {
         // Check predefined goals first
@@ -6022,7 +6044,9 @@ function updateGoalsSectionDynamic() {
         const percentage = targetValue > 0 ? Math.min(100, Math.round((currentValue / targetValue) * 100)) : 0;
         const status = percentage >= 90 ? 'עומד ביעד ✔️' : percentage >= 70 ? 'קרוב ליעד ⚠️' : 'רחוק מהיעד';
         
-        const colors = ['emerald', 'blue', 'purple'];
+        console.log(`📈 Goal: ${goal.label}, Current: ${currentValue}, Target: ${targetValue}, Percentage: ${percentage}%`);
+        
+        const colors = ['emerald', 'blue', 'purple', 'rose', 'amber', 'teal'];
         const color = colors[index % colors.length];
         
         return `
@@ -6046,10 +6070,8 @@ function updateGoalsSectionDynamic() {
         `;
     }).join('');
     
-    const contentDiv = goalsSection.querySelector('.space-y-5');
-    if (contentDiv) {
-        contentDiv.innerHTML = goalsHTML;
-    }
+    console.log('✅ Updating goals HTML with', displayGoals.length, 'goals');
+    goalsSection.innerHTML = goalsHTML;
 }
 
 // Expose functions globally
@@ -6066,6 +6088,7 @@ window.requireLogin = requireLogin;
 window.showLoginPopup = showLoginPopup;
 window.hideLoginPopup = hideLoginPopup;
 window.GoalsManager = GoalsManager;
+window.updateGoalsSectionDynamic = updateGoalsSectionDynamic;
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', initApp);
