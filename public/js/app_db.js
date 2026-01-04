@@ -4613,7 +4613,7 @@ const InsightsView = {
 };
 
 // Initialize app
-async function init() {
+async function initApp() {
     console.log('🚀 Initializing CRM...');
     loadDarkMode(); // Load dark mode preference first
     
@@ -4638,6 +4638,12 @@ async function init() {
     document.getElementById('inc-date').valueAsDate = new Date();
     
     // Check authentication status AFTER UI is ready
+    await checkAuthStatus();
+    
+    // Initial render - Show home page by default
+    await switchPage('home');
+    console.log('✅ CRM Ready!');
+}
     await checkAuthStatus();
     
     // Initial render - Show home page by default
@@ -5120,7 +5126,7 @@ const SocialExecution = {
                 <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">כל הכבוד!</h3>
                 <p class="text-gray-600 dark:text-gray-400">אין תוכן מתוכנן להיום</p>
                 <button onclick="window.switchPageNav('social-planning')" class="mt-4 px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold transition-all">
-                    ← חזרה לתכנון
+                    חזור לתכנון תוכן
                 </button>
             </div>
         `;
@@ -5711,4 +5717,4 @@ window.showLoginPopup = showLoginPopup;
 window.hideLoginPopup = hideLoginPopup;
 
 // Initialize on page load
-document.addEventListener('DOMContentLoaded', checkAuthStatus);
+document.addEventListener('DOMContentLoaded', initApp);
