@@ -1207,8 +1207,24 @@
                         <button onclick="openManageModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl font-bold transition-all shadow-lg hover:shadow-xl">
                             📅 ניהול לוקיישנים ומחירים
                         </button>
-                        <select id="stats-year-filter" onchange="updateStats()" class="!w-28 !mb-0 font-bold dark:bg-gray-700 dark:text-white dark:border-gray-600"></select>
-                        <select id="stats-month-filter" onchange="updateStats()" class="!w-44 !mb-0 font-bold dark:bg-gray-700 dark:text-white dark:border-gray-600"></select>
+                        <select id="stats-year-filter" onchange="updateStats()" class="p-2 border-2 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl text-sm font-bold">
+                            <!-- Will be populated by JS -->
+                        </select>
+                        <select id="stats-month-filter" onchange="updateStats()" class="p-2 border-2 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl text-sm font-bold">
+                            <option value="all">כל השנה</option>
+                            <option value="1">ינואר</option>
+                            <option value="2">פברואר</option>
+                            <option value="3">מרץ</option>
+                            <option value="4">אפריל</option>
+                            <option value="5">מאי</option>
+                            <option value="6">יוני</option>
+                            <option value="7">יולי</option>
+                            <option value="8">אוגוסט</option>
+                            <option value="9">ספטמבר</option>
+                            <option value="10">אוקטובר</option>
+                            <option value="11">נובמבר</option>
+                            <option value="12">דצמבר</option>
+                        </select>
                     </div>
                 </div>
                 
@@ -2000,8 +2016,8 @@
 
     <!-- Modal: New Lead -->
     <div id="modal-new-lead" class="modal">
-        <div class="bg-white p-6 rounded-3xl w-full max-w-md shadow-2xl text-right overflow-y-auto max-h-[90vh]">
-            <h3 class="text-xl font-bold mb-4 text-purple-800 text-center">➕ הוספת ליד חדש</h3>
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-3xl w-full max-w-md shadow-2xl text-right overflow-y-auto max-h-[90vh]">
+            <h3 class="text-xl font-bold mb-4 text-purple-800 dark:text-purple-300 text-center">➕ הוספת ליד חדש</h3>
             
             <input type="text" id="lead-name" placeholder="שם פרטי *">
             <input type="text" id="lead-last-name" placeholder="שם משפחה *">
@@ -2026,10 +2042,10 @@
             </label>
             
             <div class="flex gap-2">
-                <button onclick="addLead()" id="btn-save-lead" class="flex-1 bg-purple-600 text-white py-3 rounded-xl font-bold">
+                <button onclick="addLead()" id="btn-save-lead" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-xl font-bold transition-all">
                     ➕ שמור ליד
                 </button>
-                <button onclick="closeModal('modal-new-lead')" class="flex-1 bg-gray-100 text-gray-400 py-3 rounded-xl font-bold">
+                <button onclick="closeModal('modal-new-lead')" class="flex-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 py-3 rounded-xl font-bold transition-all">
                     ❌ ביטול
                 </button>
             </div>
@@ -2037,13 +2053,13 @@
     </div>
     <!-- Modal: View Lead Details (OLD - will be replaced by LeadProfile) -->
     <div id="modal-view-lead" class="modal" style="display: none;">
-        <div class="bg-white p-8 rounded-3xl w-full max-w-sm shadow-2xl text-right">
+        <div class="bg-white dark:bg-gray-800 p-8 rounded-3xl w-full max-w-sm shadow-2xl text-right">
             <div class="mb-4">
-                <h3 id="view-name" class="text-2xl font-bold text-purple-800"></h3>
-                <span id="view-tag-bride" class="hidden text-pink-500 font-bold text-sm">👰 לקוחה כלה</span>
+                <h3 id="view-name" class="text-2xl font-bold text-purple-800 dark:text-purple-300"></h3>
+                <span id="view-tag-bride" class="hidden text-pink-500 dark:text-pink-400 font-bold text-sm">👰 לקוחה כלה</span>
             </div>
             
-            <div class="space-y-3 text-sm border-t pt-4">
+            <div class="space-y-3 text-sm border-t dark:border-gray-700 pt-4 dark:text-gray-300">
                 <p><b>טלפון:</b> <span id="view-phone"></span></p>
                 <p><b>מקור העברת:</b> <span id="view-source"></span></p>
                 <p><b>שירות:</b> <span id="view-service"></span></p>
@@ -2052,10 +2068,10 @@
             </div>
             
             <div class="mt-8 flex flex-col gap-2">
-                <a id="view-wa-link" target="_blank" class="w-full bg-green-500 text-white py-3 rounded-xl font-bold text-center">
+                <a id="view-wa-link" target="_blank" class="w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl font-bold text-center transition-all">
                     💬 שלח WhatsApp
                 </a>
-                <button onclick="closeModal('modal-view-lead')" class="text-gray-400 font-bold py-2">
+                <button onclick="closeModal('modal-view-lead')" class="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 font-bold py-2 transition-all">
                     סגור
                 </button>
             </div>
@@ -2069,10 +2085,10 @@
 
     <!-- Modal: WhatsApp Confirmation -->
     <div id="modal-whatsapp-confirm" class="modal" onclick="if(event.target === this) WhatsAppAutomation.skipMessage()">
-        <div class="bg-white p-6 rounded-2xl w-full max-w-md shadow-2xl text-right max-h-[90vh] overflow-y-auto">
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl w-full max-w-md shadow-2xl text-right max-h-[90vh] overflow-y-auto">
             <div class="text-center mb-4">
-                <div class="text-5xl mb-3">≡ƒע¼</div>
-                <h3 class="text-xl font-bold text-gray-800">שליחת הודעת WhatsApp</h3>
+                <div class="text-5xl mb-3">💬</div>
+                <h3 class="text-xl font-bold text-gray-800 dark:text-gray-100">שליחת הודעת WhatsApp</h3>
             </div>
             
             <!-- Additional fields for contract stage -->
@@ -2194,14 +2210,14 @@
 
     <!-- Modal: Set Price (In-Process Stage) -->
     <div id="modal-set-price" class="modal" onclick="if(event.target === this) StageManager.skipPrice()">
-        <div class="bg-white p-6 rounded-2xl w-full max-w-md shadow-2xl text-right">
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl w-full max-w-md shadow-2xl text-right">
             <div class="text-center mb-4">
-                <div class="text-5xl mb-3">≡ƒע░</div>
-                <h3 class="text-xl font-bold text-gray-800">הגדרת מחיר</h3>
+                <div class="text-5xl mb-3">💰</div>
+                <h3 class="text-xl font-bold text-gray-800 dark:text-gray-100">הגדרת מחיר</h3>
             </div>
             
             <div class="mb-4">
-                <label class="block text-sm font-bold text-gray-700 mb-2">מחיר מוצע ללקוחה (₪):</label>
+                <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">מחיר מוצע ללקוחה (₪):</label>
                 <input type="number" id="price-input" placeholder="לדוגמה: 3500" class="w-full p-3 border-2 border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-xl text-lg" min="0">
             </div>
             
@@ -2213,7 +2229,7 @@
                 </button>
                 <button 
                     onclick="StageManager.skipPrice()" 
-                    class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-3 rounded-xl font-bold transition-all">
+                    class="flex-1 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 py-3 rounded-xl font-bold transition-all">
                     דלג (יישאר 0)
                 </button>
             </div>
@@ -2222,32 +2238,32 @@
 
     <!-- Modal: Deal Closed (Deposit Recording) -->
     <div id="modal-deal-closed" class="modal" onclick="if(event.target === this) StageManager.skipDealClosed()">
-        <div class="bg-white p-6 rounded-2xl w-full max-w-md shadow-2xl text-right">
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl w-full max-w-md shadow-2xl text-right">
             <div class="text-center mb-4">
-                <div class="text-5xl mb-3">≡ƒñ¥</div>
-                <h3 class="text-xl font-bold text-gray-800">עסקה נסגרה!</h3>
-                <p class="text-sm text-gray-600 mt-2">תודה רבה! זה המקדמה שהתקבלה</p>
+                <div class="text-5xl mb-3">🎉</div>
+                <h3 class="text-xl font-bold text-gray-800 dark:text-gray-100">עסקה נסגרה!</h3>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">תודה רבה! זה המקדמה שהתקבלה</p>
             </div>
             
-            <div class="bg-purple-50 rounded-xl p-4 mb-4">
+            <div class="bg-purple-50 dark:bg-purple-900/20 rounded-xl p-4 mb-4">
                 <div class="flex justify-between items-center mb-2">
-                    <span class="text-sm text-gray-600">סה"כ מחיר חוזה:</span>
-                    <span id="closed-totalPrice" class="text-lg font-bold text-purple-700">0 ₪</span>
+                    <span class="text-sm text-gray-600 dark:text-gray-400">סה"כ מחיר חוזה:</span>
+                    <span id="closed-totalPrice" class="text-lg font-bold text-purple-700 dark:text-purple-400">0 ₪</span>
                 </div>
                 <div class="flex justify-between items-center">
-                    <span class="text-sm text-gray-600">מקדמה מוצעת בחוזה:</span>
-                    <span id="closed-proposedDeposit" class="text-sm font-bold text-gray-600">0 ₪</span>
+                    <span class="text-sm text-gray-600 dark:text-gray-400">מקדמה מוצעת בחוזה:</span>
+                    <span id="closed-proposedDeposit" class="text-sm font-bold text-gray-600 dark:text-gray-400">0 ₪</span>
                 </div>
             </div>
             
             <div class="mb-4">
-                <label class="block text-sm font-bold text-gray-700 mb-2">💰 סכום מקדמה שהתקבלה בפועל (₪):</label>
+                <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">💰 סכום מקדמה שהתקבלה בפועל (₪):</label>
                 <input type="number" id="closed-actualDeposit" placeholder="כמה שולם?" class="w-full p-3 border-2 border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-xl text-lg" min="0">
-                <p class="text-xs text-gray-500 mt-1">זה הסכום שהגיע בפועל למקדמה</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">זה הסכום שהגיע בפועל למקדמה</p>
             </div>
             
             <div class="mb-4">
-                <label class="block text-sm font-bold text-gray-700 mb-2">💳 אמצעי תשלום:</label>
+                <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">💳 אמצעי תשלום:</label>
                 <select id="closed-paymentMethod" class="w-full p-3 border-2 border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-xl text-lg">
                     <option value="מזומן">מזומן</option>
                     <option value="ביט">ביט / פייבוקס</option>
@@ -2272,26 +2288,26 @@
 
     <!-- Modal: Set Calendar Date (After Deal Closed) -->
     <div id="modal-calendar-date" class="modal" onclick="if(event.target === this) StageManager.skipCalendarDate()">
-        <div class="bg-white p-6 rounded-2xl w-full max-w-md shadow-2xl text-right" style="max-height: 90vh; overflow-y: auto;">
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl w-full max-w-md shadow-2xl text-right" style="max-height: 90vh; overflow-y: auto;">
             <div class="text-center mb-4">
-                <div class="text-5xl mb-3">≡ƒףו</div>
-                <h3 class="text-xl font-bold text-gray-800">קביעת תאריך ביומן</h3>
-                <p class="text-sm text-gray-600 mt-2">תודה רבה! זה האירוע ביומן</p>
+                <div class="text-5xl mb-3">📅</div>
+                <h3 class="text-xl font-bold text-gray-800 dark:text-gray-100">קביעת תאריך ביומן</h3>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">תודה רבה! זה האירוע ביומן</p>
             </div>
             
-            <div class="bg-blue-50 rounded-xl p-4 mb-4">
+            <div class="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 mb-4">
                 <div class="mb-2">
-                    <span class="text-sm font-bold text-gray-700">👰 שם הלקוחה:</span>
-                    <span id="calendar-clientName" class="text-sm text-gray-600 mr-2">-</span>
+                    <span class="text-sm font-bold text-gray-700 dark:text-gray-300">👰 שם הלקוחה:</span>
+                    <span id="calendar-clientName" class="text-sm text-gray-600 dark:text-gray-400 mr-2">-</span>
                 </div>
                 <div>
-                    <span class="text-sm font-bold text-gray-700">📅 תאריך האירוע:</span>
-                    <span id="calendar-eventDate" class="text-sm text-gray-600 mr-2">-</span>
+                    <span class="text-sm font-bold text-gray-700 dark:text-gray-300">📅 תאריך האירוע:</span>
+                    <span id="calendar-eventDate" class="text-sm text-gray-600 dark:text-gray-400 mr-2">-</span>
                 </div>
             </div>
             
             <div class="mb-4">
-                <label class="block text-sm font-bold text-gray-700 mb-2">🕐 שעת ההתחלה:</label>
+                <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">🕐 שעת ההתחלה:</label>
                 <input 
                     type="time" 
                     id="calendar-startTime" 
@@ -2468,25 +2484,25 @@
 
     <!-- Modal: Settings -->
     <div id="modal-settings" class="modal">
-        <div class="bg-white p-8 rounded-3xl w-full max-w-md shadow-2xl text-right">
+        <div class="bg-white dark:bg-gray-800 p-8 rounded-3xl w-full max-w-md shadow-2xl text-right">
             <div class="flex justify-between items-center mb-6">
-                <h3 class="text-2xl font-bold text-purple-800">📋 ניהול הגדרות שדרוג ומחירים</h3>
-                <button onclick="closeModal('modal-settings')" class="text-3xl text-gray-400 hover:text-gray-600">&times;</button>
+                <h3 class="text-2xl font-bold text-purple-800 dark:text-purple-300">📋 ניהול הגדרות שדרוג ומחירים</h3>
+                <button onclick="closeModal('modal-settings')" class="text-3xl text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">&times;</button>
             </div>
             
             <div class="space-y-6">
                 <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2">💰 סכום שדרוג הכנסות ומחיר (₪)</label>
+                    <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">💰 סכום שדרוג הכנסות ומחיר (₪)</label>
                     <input type="number" id="goal-income" placeholder="לדוגמה: 500000" class="w-full p-3 border-2 border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-xl focus:border-purple-500 focus:outline-none">
                 </div>
                 
                 <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2">📊 יעד כמות כלות שנתי</label>
+                    <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">📊 יעד כמות כלות שנתי</label>
                     <input type="number" id="goal-brides" placeholder="לדוגמה: 50" class="w-full p-3 border-2 border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-xl focus:border-purple-500 focus:outline-none">
                 </div>
                 
-                <div class="bg-blue-50 p-4 rounded-xl border border-blue-200">
-                    <p class="text-sm text-blue-800">
+                <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-200 dark:border-blue-700">
+                    <p class="text-sm text-blue-800 dark:text-blue-300">
                         💡 <strong>טיפ:</strong> הגדרות יעדים אוטומטיות את ריבויים. מעקב אחר התקדמות יעזור לך להישאר ממוקדים!
                     </p>
                 </div>
@@ -2605,6 +2621,6 @@
     </div>
 
     <!-- Application Script -->
-    <script src="js/app_db.js?v=04012026v6"></script>
+    <script src="js/app_db.js?v=04012026v7"></script>
 </body>
 </html>
