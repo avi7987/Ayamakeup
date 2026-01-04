@@ -1631,6 +1631,11 @@ const HomeView = {
         // Section 1: Goals & Progress (goals loaded from localStorage by GoalsManager.init)
         this.updateGoalsSection({}, monthlyRevenue, newLeadsThisMonth, closedDeals);
         
+        // Update goals section with real-time data
+        if (typeof updateGoalsSectionDynamic === 'function') {
+            updateGoalsSectionDynamic();
+        }
+        
         // Section 2: Business Health Snapshot
         this.updateSnapshotSection(activeLeads, pendingResponse, monthlyRevenue, upcomingEvents);
         
@@ -5732,14 +5737,6 @@ const GoalsManager = {
             });
             return yearlyClients.reduce((sum, c) => sum + (parseFloat(c.amount) || parseFloat(c.income) || parseFloat(c.price) || 0), 0);
         }},
-        { id: 'annual-brides', label: '👰 כלות בשנה', unit: 'כלות', calculate: () => {
-            const now = new Date();
-            const yearlyBrides = State.clients.filter(c => {
-                const cDate = new Date(c.date);
-                return cDate.getFullYear() === now.getFullYear() && (c.isBride || c.notes?.includes('כלה'));
-            });
-            return yearlyBrides.length;
-        }},
         { id: 'active-leads', label: '🎯 לידים פעילים', unit: 'לידים', calculate: () => {
             return State.leads.filter(l => l.stage && !['won', 'lost'].includes(l.stage)).length;
         }},
@@ -5747,8 +5744,112 @@ const GoalsManager = {
             const totalLeads = State.leads.length;
             const wonLeads = State.leads.filter(l => l.stage === 'won').length;
             return totalLeads > 0 ? Math.round((wonLeads / totalLeads) * 100) : 0;
-        }},
-        { id: 'custom', label: '⚙️ יעד מותאם אישית', unit: '', calculate: null }
+        }}
+    ],
+    
+    // Custom goal options - אפשרויות למדידה ביעדים מותאמים אישית
+    customGoalOptions: [
+        { 
+            id: 'annual-brides', 
+            label: '👰 כמות כלות בשנה', 
+            unit: 'כלות',
+            description: 'ספירת לקוחות שמסומנים ככלות (לעסקי איפור ושיער)',
+            calculate: () => {
+                const now = new Date();
+                const yearlyBrides = State.clients.filter(c => {
+                    const cDate = new Date(c.date);
+                    return cDate.getFullYear() === now.getFullYear() && (c.isBride || c.notes?.includes('כלה'));
+                });
+                return yearlyBrides.length;
+            }
+        },
+        { 
+            id: 'monthly-events', 
+            label: '📅 אירועים חודשיים', 
+            unit: 'אירועים',
+            description: 'כמות האירועים שנקבעו בחודש הנוכחי',
+            calculate: () => {
+                const now = new Date();
+                const monthlyEvents = State.events.filter(e => {
+                    const eDate = new Date(e.date || e.start);
+                    return eDate.getMonth() === now.getMonth() && eDate.getFullYear() === now.getFullYear();
+                });
+                return monthlyEvents.length;
+            }
+        },
+        { 
+            id: 'annual-events', 
+            label: '🎉 אירועים שנתיים', 
+            unit: 'אירועים',
+            description: 'כמות כל האירועים שנקבעו השנה',
+            calculate: () => {
+                const now = new Date();
+                const yearlyEvents = State.events.filter(e => {
+                    const eDate = new Date(e.date || e.start);
+                    return eDate.getFullYear() === now.getFullYear();
+                });
+                return yearlyEvents.length;
+            }
+        },
+        { 
+            id: 'returning-clients', 
+            label: '🔄 לקוחות חוזרים', 
+            unit: 'לקוחות',
+            description: 'לקוחות שביצעו יותר מרכישה אחת',
+            calculate: () => {
+                const clientNames = {};
+                State.clients.forEach(c => {
+                    const name = (c.name || '').trim().toLowerCase();
+                    if (name) {
+                        clientNames[name] = (clientNames[name] || 0) + 1;
+                    }
+                });
+                return Object.values(clientNames).filter(count => count > 1).length;
+            }
+        },
+        { 
+            id: 'avg-deal-size', 
+            label: '💵 גודל עסקה ממוצע', 
+            unit: '₪',
+            description: 'הכנסה ממוצעת לעסקה',
+            calculate: () => {
+                if (State.clients.length === 0) return 0;
+                const totalIncome = State.clients.reduce((sum, c) => sum + (parseFloat(c.amount) || parseFloat(c.income) || parseFloat(c.price) || 0), 0);
+                return Math.round(totalIncome / State.clients.length);
+            }
+        },
+        { 
+            id: 'contracts-signed', 
+            label: '📝 חוזים שנחתמו', 
+            unit: 'חוזים',
+            description: 'כמות החוזים שנחתמו השנה',
+            calculate: () => {
+                const now = new Date();
+                return State.contracts.filter(c => {
+                    const cDate = new Date(c.createdAt || c.signedAt);
+                    return c.signed && cDate.getFullYear() === now.getFullYear();
+                }).length;
+            }
+        },
+        { 
+            id: 'leads-response-time', 
+            label: '⏱️ זמן תגובה ללידים', 
+            unit: 'שעות',
+            description: 'ממוצע זמן תגובה ראשונית ללידים חדשים',
+            calculate: () => {
+                const leadsWithResponse = State.leads.filter(l => l.firstResponseTime);
+                if (leadsWithResponse.length === 0) return 0;
+                const totalHours = leadsWithResponse.reduce((sum, l) => sum + (l.firstResponseTime || 0), 0);
+                return Math.round(totalHours / leadsWithResponse.length);
+            }
+        },
+        { 
+            id: 'total-clients', 
+            label: '👥 סך הכל לקוחות', 
+            unit: 'לקוחות',
+            description: 'מספר כל הלקוחות במערכת',
+            calculate: () => State.clients.length
+        }
     ],
     
     init() {
@@ -5765,25 +5866,40 @@ const GoalsManager = {
         }
         
         this.renderGoals(savedGoals);
+        
+        // Update dashboard display with real data
+        if (typeof updateGoalsSectionDynamic === 'function') {
+            updateGoalsSectionDynamic();
+        }
     },
     
     renderGoals(goals) {
         const container = document.getElementById('goals-container');
         if (!container) return;
         
-        container.innerHTML = goals.map((goal, index) => `
+        container.innerHTML = goals.map((goal, index) => {
+            // Find if it's a custom goal option
+            const isCustomOption = this.customGoalOptions.find(cg => cg.id === goal.goalType);
+            const goalDescription = isCustomOption ? `<div class="text-xs text-gray-500 dark:text-gray-400 mt-1">ℹ️ ${isCustomOption.description}</div>` : '';
+            
+            return `
             <div class="bg-white dark:bg-slate-800 p-4 rounded-xl border-2 border-gray-200 dark:border-slate-500 goal-row" data-index="${index}">
                 <div class="flex gap-3 items-start">
                     <div class="flex-1">
                         <label class="block text-xs font-bold text-gray-600 dark:text-gray-300 mb-2">סוג היעד</label>
                         <select class="goal-type-select w-full p-2 border border-gray-300 dark:border-slate-500 dark:bg-slate-600 dark:text-white rounded-lg text-sm" data-index="${index}" onchange="GoalsManager.handleGoalTypeChange(${index}, this.value)">
-                            ${this.predefinedGoals.map(pg => `
-                                <option value="${pg.id}" ${goal.goalType === pg.id ? 'selected' : ''}>${pg.label}</option>
-                            `).join('')}
+                            <optgroup label="יעדים סטנדרטיים">
+                                ${this.predefinedGoals.map(pg => `
+                                    <option value="${pg.id}" ${goal.goalType === pg.id ? 'selected' : ''}>${pg.label}</option>
+                                `).join('')}
+                            </optgroup>
+                            <optgroup label="יעדים מותאמים אישית">
+                                ${this.customGoalOptions.map(cg => `
+                                    <option value="${cg.id}" ${goal.goalType === cg.id ? 'selected' : ''}>${cg.label}</option>
+                                `).join('')}
+                            </optgroup>
                         </select>
-                        ${goal.goalType === 'custom' ? `
-                            <input type="text" placeholder="שם היעד" value="${goal.customLabel || ''}" class="custom-label-input w-full mt-2 p-2 border border-gray-300 dark:border-slate-500 dark:bg-slate-600 dark:text-white rounded-lg text-sm" data-index="${index}">
-                        ` : ''}
+                        ${goalDescription}
                     </div>
                     <div class="w-32">
                         <label class="block text-xs font-bold text-gray-600 dark:text-gray-300 mb-2">יעד</label>
@@ -5798,15 +5914,23 @@ const GoalsManager = {
                     </div>
                 </div>
             </div>
-        `).join('');
+        `;
+        }).join('');
     },
     
     handleGoalTypeChange(index, value) {
         const goals = JSON.parse(localStorage.getItem('userGoals') || '[]');
-        const selectedGoal = this.predefinedGoals.find(g => g.id === value);
+        let selectedGoal = this.predefinedGoals.find(g => g.id === value);
         
-        goals[index].goalType = value;
-        goals[index].label = selectedGoal.label;
+        // If not found in predefined, check custom options
+        if (!selectedGoal) {
+            selectedGoal = this.customGoalOptions.find(g => g.id === value);
+        }
+        
+        if (selectedGoal) {
+            goals[index].goalType = value;
+            goals[index].label = selectedGoal.label;
+        }
         
         localStorage.setItem('userGoals', JSON.stringify(goals));
         this.renderGoals(goals);
@@ -5834,20 +5958,21 @@ window.saveGoals = function() {
     rows.forEach((row, index) => {
         const goalType = row.querySelector('.goal-type-select').value;
         const target = parseFloat(row.querySelector('.goal-target-input').value) || 0;
-        const customLabelInput = row.querySelector('.custom-label-input');
-        const selectedGoal = GoalsManager.predefinedGoals.find(g => g.id === goalType);
         
-        const goal = {
-            goalType,
-            target,
-            label: selectedGoal.label
-        };
-        
-        if (goalType === 'custom' && customLabelInput) {
-            goal.customLabel = customLabelInput.value || 'יעד מותאם';
+        // Find goal in predefined or custom options
+        let selectedGoal = GoalsManager.predefinedGoals.find(g => g.id === goalType);
+        if (!selectedGoal) {
+            selectedGoal = GoalsManager.customGoalOptions.find(g => g.id === goalType);
         }
         
-        goals.push(goal);
+        if (selectedGoal) {
+            const goal = {
+                goalType,
+                target,
+                label: selectedGoal.label
+            };
+            goals.push(goal);
+        }
     });
     
     localStorage.setItem('userGoals', JSON.stringify(goals));
@@ -5855,6 +5980,9 @@ window.saveGoals = function() {
     closeModal('modal-settings');
     
     // Refresh dashboard to show new goals
+    if (typeof updateGoalsSectionDynamic === 'function') {
+        updateGoalsSectionDynamic();
+    }
     if (typeof DashboardView !== 'undefined' && DashboardView.update) {
         DashboardView.update();
     }
@@ -5875,8 +6003,19 @@ function updateGoalsSectionDynamic() {
     const displayGoals = savedGoals.slice(0, 3);
     
     const goalsHTML = displayGoals.map((goal, index) => {
-        const selectedGoalDef = GoalsManager.predefinedGoals.find(g => g.id === goal.goalType);
-        if (!selectedGoalDef || !selectedGoalDef.calculate) return '';
+        // Check predefined goals first
+        let selectedGoalDef = GoalsManager.predefinedGoals.find(g => g.id === goal.goalType);
+        
+        // If not found in predefined, check custom goal options
+        if (!selectedGoalDef) {
+            selectedGoalDef = GoalsManager.customGoalOptions.find(g => g.id === goal.goalType);
+        }
+        
+        // If still not found or no calculate function, skip
+        if (!selectedGoalDef || !selectedGoalDef.calculate) {
+            console.warn('⚠️ Goal not found or no calculate function:', goal.goalType);
+            return '';
+        }
         
         const currentValue = selectedGoalDef.calculate();
         const targetValue = goal.target || 0;
