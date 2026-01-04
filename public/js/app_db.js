@@ -404,20 +404,39 @@ const State = {
     // Remove localStorage functions - use MongoDB only
     // Goals are still saved in localStorage in separate functions
     
-    getFilteredClients(monthName, year = new Date().getFullYear()) {
-        if (monthName === 'ALL') {
+    getFilteredClients(monthValue, year = new Date().getFullYear()) {
+        const months = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
+        
+        // Handle 'all' or 'ALL' - show all year
+        if (monthValue === 'all' || monthValue === 'ALL') {
             return this.clients.filter(c => {
                 const date = new Date(c.date);
                 return date.getFullYear() === year;
             });
         }
-        const months = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
-        const monthIndex = months.indexOf(monthName);
-        if (monthIndex === -1) return this.clients;
         
+        // Handle numeric month (1-12)
+        const numericMonth = parseInt(monthValue);
+        if (!isNaN(numericMonth) && numericMonth >= 1 && numericMonth <= 12) {
+            return this.clients.filter(c => {
+                const date = new Date(c.date);
+                return date.getMonth() === (numericMonth - 1) && date.getFullYear() === year;
+            });
+        }
+        
+        // Handle month name in Hebrew (legacy support)
+        const monthIndex = months.indexOf(monthValue);
+        if (monthIndex !== -1) {
+            return this.clients.filter(c => {
+                const date = new Date(c.date);
+                return date.getMonth() === monthIndex && date.getFullYear() === year;
+            });
+        }
+        
+        // Default: return all clients for the year
         return this.clients.filter(c => {
             const date = new Date(c.date);
-            return date.getMonth() === monthIndex && date.getFullYear() === year;
+            return date.getFullYear() === year;
         });
     }
 };
@@ -1822,8 +1841,22 @@ const StatsView = {
     },
     
     update() {
-        const filterVal = document.getElementById('stats-month-filter').value;
-        const yearVal = parseInt(document.getElementById('stats-year-filter').value);
+        const monthFilterEl = document.getElementById('stats-month-filter');
+        const yearFilterEl = document.getElementById('stats-year-filter');
+        
+        if (!monthFilterEl || !yearFilterEl) {
+            console.warn('Stats filters not found');
+            return;
+        }
+        
+        const filterVal = monthFilterEl.value;
+        const yearVal = parseInt(yearFilterEl.value);
+        
+        if (isNaN(yearVal)) {
+            console.warn('Invalid year value:', yearFilterEl.value);
+            return;
+        }
+        
         const filtered = State.getFilteredClients(filterVal, yearVal);
         
         this.updateSummary(filtered, filterVal, yearVal);
@@ -1835,14 +1868,24 @@ const StatsView = {
         const bridesCount = filtered.filter(c => c.isBride || c.notes?.includes('כלה')).length;
         const totalCount = filtered.length;
         
-        const periodText = filterVal === 'ALL' ? `סה"כ ${yearVal}` : `${filterVal} ${yearVal}`;
+        // Create period text based on filter
+        let periodText;
+        if (filterVal === 'all' || filterVal.toLowerCase() === 'all') {
+            periodText = `סה"כ ${yearVal}`;
+        } else {
+            const months = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
+            const monthIndex = parseInt(filterVal) - 1;
+            const monthName = months[monthIndex] || filterVal;
+            periodText = `${monthName} ${yearVal}`;
+        }
+        
         document.getElementById('sum-total').innerHTML = `<div class="text-3xl font-bold text-white">${totalIncome.toLocaleString()} ₪</div><div class="text-sm text-purple-200 mt-1">${periodText}</div>`;
-        document.getElementById('sum-brides').innerHTML = `<div class="text-3xl font-bold text-white">${bridesCount}</div><div class="text-sm text-pink-100 mt-1">כלות ${filterVal === 'ALL' ? 'בשנה' : 'בחודש'}</div>`;
-        document.getElementById('sum-count').innerHTML = `<div class="text-3xl font-bold text-white">${totalCount}</div><div class="text-sm text-cyan-100 mt-1">עסקאות ${filterVal === 'ALL' ? 'בשנה' : 'בחודש'}</div>`;
+        document.getElementById('sum-brides').innerHTML = `<div class="text-3xl font-bold text-white">${bridesCount}</div><div class="text-sm text-pink-100 mt-1">כלות ${filterVal === 'all' ? 'בשנה' : 'בחודש'}</div>`;
+        document.getElementById('sum-count').innerHTML = `<div class="text-3xl font-bold text-white">${totalCount}</div><div class="text-sm text-cyan-100 mt-1">עסקאות ${filterVal === 'all' ? 'בשנה' : 'בחודש'}</div>`;
     },
     
     updateChart(filterVal, yearVal, filtered) {
-        const isYearView = filterVal === 'ALL';
+        const isYearView = (filterVal === 'all' || filterVal.toLowerCase() === 'all');
         const months = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
         
         let labels, incomeData, bridesData;
