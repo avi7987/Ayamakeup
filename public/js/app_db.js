@@ -4644,12 +4644,6 @@ async function initApp() {
     await switchPage('home');
     console.log('✅ CRM Ready!');
 }
-    await checkAuthStatus();
-    
-    // Initial render - Show home page by default
-    await switchPage('home');
-    console.log('✅ CRM Ready!');
-}
 
 // Side Navigation Functions
 async function switchPageNav(pageName) {
