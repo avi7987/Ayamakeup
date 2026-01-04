@@ -30,8 +30,9 @@ function setupAuth(app, mongoose, User) {
         cookie: {
             maxAge: 30 * 24 * 60 * 60 * 1000, // 30 ימים
             httpOnly: true,
-            secure: false, // Disabled for Railway testing
-            sameSite: 'lax'
+            secure: process.env.NODE_ENV === 'production', // Auto-detect: true in production (Railway), false locally
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // 'none' for Railway HTTPS
+            domain: process.env.NODE_ENV === 'production' ? '.railway.app' : undefined
         }
     }));
 
@@ -71,7 +72,11 @@ function setupAuth(app, mongoose, User) {
     passport.use(new GoogleStrategy({
         clientID: process.env.GOOGLE_CLIENT_ID,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-        callbackURL: process.env.GOOGLE_CALLBACK_URL || '/auth/google/callback',
+        callbackURL: process.env.GOOGLE_CALLBACK_URL || (
+            process.env.NODE_ENV === 'production' 
+                ? 'https://lunabusiness.up.railway.app/auth/google/callback'
+                : 'http://localhost:3001/auth/google/callback'
+        ),
         scope: [
             'profile',
             'email',
@@ -205,8 +210,19 @@ function setupAuthRoutes(app) {
         }),
         (req, res) => {
             console.log('✅ User authenticated successfully:', req.user.email);
-            console.log('🏠 Redirecting to dashboard');
-            res.redirect('/');
+            console.log('📦 Session ID:', req.sessionID);
+            console.log('🍪 Session saved:', req.session);
+            
+            // שומרים את ה-session באופן מפורש לפני redirect
+            req.session.save((err) => {
+                if (err) {
+                    console.error('❌ Failed to save session:', err);
+                    return res.redirect('/login?error=session_failed');
+                }
+                console.log('✅ Session saved successfully');
+                console.log('🏠 Redirecting to dashboard');
+                res.redirect('/');
+            });
         }
     );
 
