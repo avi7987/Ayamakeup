@@ -5772,7 +5772,7 @@ const GoalsManager = {
         if (!container) return;
         
         container.innerHTML = goals.map((goal, index) => `
-            <div class="bg-white dark:bg-slate-700 p-4 rounded-xl border-2 border-gray-200 dark:border-slate-600 goal-row" data-index="${index}">
+            <div class="bg-white dark:bg-slate-800 p-4 rounded-xl border-2 border-gray-200 dark:border-slate-500 goal-row" data-index="${index}">
                 <div class="flex gap-3 items-start">
                     <div class="flex-1">
                         <label class="block text-xs font-bold text-gray-600 dark:text-gray-300 mb-2">סוג היעד</label>
