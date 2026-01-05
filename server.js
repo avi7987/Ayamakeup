@@ -39,6 +39,22 @@ app.get('/api/user', (req, res) => {
     });
 });
 
+// Google OAuth routes - redirect to fallback homepage
+app.get('/auth/google', (req, res) => {
+    console.log('⚠️ Google OAuth not configured - redirecting to homepage');
+    res.redirect('/');
+});
+
+app.get('/auth/google/callback', (req, res) => {
+    console.log('⚠️ Google OAuth callback not configured - redirecting to homepage');
+    res.redirect('/');
+});
+
+// Logout route
+app.get('/auth/logout', (req, res) => {
+    res.redirect('/');
+});
+
 // ==================== API ROUTES ====================
 
 // Health Check

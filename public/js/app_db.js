@@ -22,6 +22,11 @@ async function checkAuthStatus() {
             currentUser = data.user;
             showUserProfile(data.user);
             
+            // Update mobile header avatar if on mobile
+            if (typeof updateMobileHeaderAvatar === 'function') {
+                updateMobileHeaderAvatar();
+            }
+            
             // Load user data
             await loadAllData();
         } else {
@@ -6270,22 +6275,29 @@ function openMobileProfileSheet() {
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                 </svg>`;
             }
-            
-            // Update mobile header avatar
-            const mobileAvatar = document.getElementById('mobile-user-avatar');
-            if (mobileAvatar) {
-                if (userPicture && userPicture.trim() !== '') {
-                    mobileAvatar.innerHTML = `<img src="${userPicture}" class="w-full h-full rounded-full object-cover" alt="Profile">`;
-                } else {
-                    mobileAvatar.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                    </svg>`;
-                }
-            }
         } else {
             // Show not-logged-in state
             loggedInState.classList.add('hidden');
             notLoggedInState.classList.remove('hidden');
+        }
+        
+        // ALWAYS update mobile header avatar when opening profile
+        updateMobileHeaderAvatar();
+    }
+}
+
+// New function to update mobile header avatar
+function updateMobileHeaderAvatar() {
+    const mobileAvatar = document.getElementById('mobile-user-avatar');
+    if (mobileAvatar && window.isAuthenticated && window.currentUser) {
+        const userPicture = window.currentUser.picture || window.currentUser.photoURL;
+        
+        if (userPicture && userPicture.trim() !== '') {
+            mobileAvatar.innerHTML = `<img src="${userPicture}" class="w-full h-full rounded-full object-cover" alt="Profile">`;
+        } else {
+            // Show first letter of name or default icon
+            const firstName = (window.currentUser.name || 'M').charAt(0).toUpperCase();
+            mobileAvatar.innerHTML = `<div class="w-full h-full flex items-center justify-center text-white font-bold text-sm">${firstName}</div>`;
         }
     }
 }
@@ -6299,6 +6311,7 @@ function closeMobileProfileSheet() {
 
 window.openMobileProfileSheet = openMobileProfileSheet;
 window.closeMobileProfileSheet = closeMobileProfileSheet;
+window.updateMobileHeaderAvatar = updateMobileHeaderAvatar;
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', initApp);
