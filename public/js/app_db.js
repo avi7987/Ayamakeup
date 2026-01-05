@@ -1662,8 +1662,10 @@ const HomeView = {
     },
     
     updateGoalsSection(goals, currentIncome, currentLeads, currentDeals) {
+        console.log('🎯 updateGoalsSection called');
         // Use new dynamic goals system
         const savedGoals = JSON.parse(localStorage.getItem('userGoals') || '[]');
+        console.log('📊 Saved goals from localStorage:', savedGoals);
         
         if (savedGoals.length === 0) {
             // Fallback to old system if no goals saved yet
@@ -1711,21 +1713,38 @@ const HomeView = {
         
         // Use dynamic goals from settings
         const goalsSection = document.querySelector('.bg-white.dark\\:bg-slate-800.rounded-2xl.shadow-lg.p-6.fade-in .space-y-5');
-        if (!goalsSection) return;
+        if (!goalsSection) {
+            console.warn('⚠️ Goals section not found in DOM');
+            return;
+        }
         
-        // Take only first 3 goals for display
-        const displayGoals = savedGoals.slice(0, 3);
+        // Display all user goals (no limit)
+        const displayGoals = savedGoals;
+        console.log('📈 Displaying', displayGoals.length, 'goals');
         
         const goalsHTML = displayGoals.map((goal, index) => {
-            const selectedGoalDef = GoalsManager.predefinedGoals.find(g => g.id === goal.goalType);
-            if (!selectedGoalDef || !selectedGoalDef.calculate) return '';
+            // Check predefined goals first
+            let selectedGoalDef = GoalsManager.predefinedGoals.find(g => g.id === goal.goalType);
+            
+            // If not found in predefined, check custom goal options
+            if (!selectedGoalDef) {
+                selectedGoalDef = GoalsManager.customGoalOptions.find(g => g.id === goal.goalType);
+            }
+            
+            // If still not found or no calculate function, skip
+            if (!selectedGoalDef || !selectedGoalDef.calculate) {
+                console.warn('⚠️ Goal not found or no calculate function:', goal.goalType);
+                return '';
+            }
             
             const currentValue = selectedGoalDef.calculate();
             const targetValue = goal.target || 0;
             const percentage = targetValue > 0 ? Math.min(100, Math.round((currentValue / targetValue) * 100)) : 0;
             const status = percentage >= 90 ? 'עומד ביעד ✔️' : percentage >= 70 ? 'קרוב ליעד ⚠️' : 'רחוק מהיעד';
             
-            const colors = ['emerald', 'blue', 'purple'];
+            console.log(`   Goal ${index + 1}: ${goal.label} - ${currentValue}/${targetValue} (${percentage}%)`);
+            
+            const colors = ['emerald', 'blue', 'purple', 'rose', 'amber', 'teal'];
             const color = colors[index % colors.length];
             
             const displayLabel = goal.goalType === 'custom' ? (goal.customLabel || goal.label) : goal.label;
@@ -1751,6 +1770,7 @@ const HomeView = {
             `;
         }).join('');
         
+        console.log('✅ Goals HTML updated successfully');
         goalsSection.innerHTML = goalsHTML;
     },
     
@@ -5770,8 +5790,9 @@ const GoalsManager = {
             description: 'כמות האירועים שנקבעו בחודש הנוכחי',
             calculate: () => {
                 const now = new Date();
-                const monthlyEvents = State.events.filter(e => {
-                    const eDate = new Date(e.date || e.start);
+                const monthlyEvents = State.leads.filter(l => {
+                    if (!l.eventDate) return false;
+                    const eDate = new Date(l.eventDate);
                     return eDate.getMonth() === now.getMonth() && eDate.getFullYear() === now.getFullYear();
                 });
                 return monthlyEvents.length;
@@ -5784,8 +5805,9 @@ const GoalsManager = {
             description: 'כמות כל האירועים שנקבעו השנה',
             calculate: () => {
                 const now = new Date();
-                const yearlyEvents = State.events.filter(e => {
-                    const eDate = new Date(e.date || e.start);
+                const yearlyEvents = State.leads.filter(l => {
+                    if (!l.eventDate) return false;
+                    const eDate = new Date(l.eventDate);
                     return eDate.getFullYear() === now.getFullYear();
                 });
                 return yearlyEvents.length;
@@ -5825,9 +5847,10 @@ const GoalsManager = {
             description: 'כמות החוזים שנחתמו השנה',
             calculate: () => {
                 const now = new Date();
-                return State.contracts.filter(c => {
-                    const cDate = new Date(c.createdAt || c.signedAt);
-                    return c.signed && cDate.getFullYear() === now.getFullYear();
+                return State.leads.filter(l => {
+                    if (!l.contractStatus || l.contractStatus !== 'signed') return false;
+                    const cDate = new Date(l.updatedAt || l.createdAt);
+                    return cDate.getFullYear() === now.getFullYear();
                 }).length;
             }
         },
