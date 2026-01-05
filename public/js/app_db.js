@@ -808,6 +808,11 @@ const LeadsManager = {
         
         if (!data.name || !data.lastName || !data.phone) {
             alert('אנא מלאי את כל השדות המסומנים בכוכבית (*): שם פרטי, שם משפחה וטלפון');
+            // Set today's date as default if modal reopens
+            const eventDateInput = document.getElementById('lead-event-date');
+            if (eventDateInput && !eventDateInput.value) {
+                eventDateInput.value = new Date().toISOString().split('T')[0];
+            }
             return;
         }
         
@@ -3201,6 +3206,15 @@ window.openModal = (id) => {
     }
     if (id === 'modal-settings') {
         GoalsManager.init();
+    }
+    if (id === 'modal-new-lead') {
+        // Set today's date as default
+        setTimeout(() => {
+            const eventDateInput = document.getElementById('lead-event-date');
+            if (eventDateInput && !eventDateInput.value) {
+                eventDateInput.value = new Date().toISOString().split('T')[0];
+            }
+        }, 50);
     }
     ModalManager.open(id);
 };
@@ -5937,10 +5951,19 @@ const GoalsManager = {
         
         console.log('📋 Rendering', goals.length, 'goals in settings');
         
+        // Get list of already selected goal types (excluding current goal being rendered)
+        const getSelectedGoalTypes = (currentIndex) => {
+            return goals
+                .map((g, idx) => idx !== currentIndex ? g.goalType : null)
+                .filter(Boolean);
+        };
+        
         container.innerHTML = goals.map((goal, index) => {
             // Find if it's a custom goal option
             const isCustomOption = this.customGoalOptions.find(cg => cg.id === goal.goalType);
             const goalDescription = isCustomOption ? `<div class="text-xs text-gray-500 dark:text-gray-400 mt-1">ℹ️ ${isCustomOption.description}</div>` : '';
+            
+            const selectedTypes = getSelectedGoalTypes(index);
             
             return `
             <div class="bg-white dark:bg-slate-800 p-4 rounded-xl border-2 border-gray-200 dark:border-slate-500 goal-row" data-index="${index}">
@@ -5949,14 +5972,20 @@ const GoalsManager = {
                         <label class="block text-xs font-bold text-gray-600 dark:text-gray-300 mb-2">סוג היעד</label>
                         <select class="goal-type-select w-full p-2 border border-gray-300 dark:border-slate-500 dark:bg-slate-600 dark:text-white rounded-lg text-sm" data-index="${index}" onchange="GoalsManager.handleGoalTypeChange(${index}, this.value)">
                             <optgroup label="יעדים סטנדרטיים">
-                                ${this.predefinedGoals.map(pg => `
-                                    <option value="${pg.id}" ${goal.goalType === pg.id ? 'selected' : ''}>${pg.label}</option>
-                                `).join('')}
+                                ${this.predefinedGoals.map(pg => {
+                                    const isSelected = goal.goalType === pg.id;
+                                    const isUsedElsewhere = selectedTypes.includes(pg.id);
+                                    if (isUsedElsewhere && !isSelected) return ''; // Hide if used elsewhere
+                                    return `<option value="${pg.id}" ${isSelected ? 'selected' : ''}>${pg.label}</option>`;
+                                }).join('')}
                             </optgroup>
                             <optgroup label="יעדים מותאמים אישית">
-                                ${this.customGoalOptions.map(cg => `
-                                    <option value="${cg.id}" ${goal.goalType === cg.id ? 'selected' : ''}>${cg.label}</option>
-                                `).join('')}
+                                ${this.customGoalOptions.map(cg => {
+                                    const isSelected = goal.goalType === cg.id;
+                                    const isUsedElsewhere = selectedTypes.includes(cg.id);
+                                    if (isUsedElsewhere && !isSelected) return ''; // Hide if used elsewhere
+                                    return `<option value="${cg.id}" ${isSelected ? 'selected' : ''}>${cg.label}</option>`;
+                                }).join('')}
                             </optgroup>
                         </select>
                         ${goalDescription}
