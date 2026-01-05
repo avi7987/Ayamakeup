@@ -14,7 +14,7 @@ const adapter = new FileSync('db.json');
 const db = low(adapter);
 
 // Set default database structure
-db.defaults({ clients: [], leads: [] }).write();
+db.defaults({ clients: [], leads: [], goals: {} }).write();
 
 console.log('✅ Connected to JSON database (db.json)');
 
