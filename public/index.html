@@ -290,6 +290,16 @@
             width: 240px;
         }
         
+        /* Logo section - center when not hovered */
+        .side-nav > div:first-child button {
+            justify-content: flex-start;
+            transition: justify-content 0.3s ease;
+        }
+        
+        .side-nav:not(:hover) > div:first-child button {
+            justify-content: center;
+        }
+        
         .side-nav-item {
             display: flex;
             align-items: center;
@@ -324,11 +334,14 @@
             font-weight: 500;
             white-space: nowrap;
             opacity: 0;
-            transition: opacity 0.3s;
+            width: 0;
+            overflow: hidden;
+            transition: opacity 0.3s, width 0.3s;
         }
         
         .side-nav:hover .side-nav-text {
             opacity: 1;
+            width: auto;
         }
         
         /* Main Content with margin for side nav */
