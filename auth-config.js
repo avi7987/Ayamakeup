@@ -7,6 +7,7 @@ const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const session = require('express-session');
 const MongoStore = require('connect-mongo').default;
 const path = require('path');
+const { debugMobileAuth, debugOAuthCallback, debugSessionSave } = require('./debug-mobile-auth');
 
 /**
  * הגדרת מערכת האימות - להוסיף ל-server לפני כל ה-routes
@@ -30,15 +31,24 @@ function setupAuth(app, mongoose, User) {
         cookie: {
             maxAge: 30 * 24 * 60 * 60 * 1000, // 30 ימים
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production', // Auto-detect: true in production (Railway), false locally
-            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // 'none' for Railway HTTPS
-            domain: process.env.NODE_ENV === 'production' ? '.railway.app' : undefined
+            // 🔒 MOBILE FIX: secure must be true for HTTPS (Railway auto-provides HTTPS)
+            secure: process.env.NODE_ENV === 'production',
+            // 🔒 MOBILE FIX: 'lax' works for OAuth callbacks AND mobile browsers
+            // 'none' requires exact domain match and can be blocked by mobile Safari
+            sameSite: 'lax',
+            // 🔒 MOBILE FIX: Remove domain setting - let browser handle it
+            // Setting domain can cause cookie to be rejected on mobile
+            domain: undefined
         }
     }));
 
     // אתחול Passport
     app.use(passport.initialize());
     app.use(passport.session());
+    
+    // 🔍 Debug middleware for mobile authentication (after passport setup)
+    app.use(debugSessionSave);
+    app.use(debugMobileAuth);
 
     // Serialize user - שמירת ה-ID ב-session
     passport.serializeUser((user, done) => {
@@ -204,24 +214,54 @@ function setupAuthRoutes(app) {
 
     // Callback מ-Google
     app.get('/auth/google/callback',
+        debugOAuthCallback, // 🔍 Debug before passport processes
         passport.authenticate('google', {
             failureRedirect: '/login?error=auth_failed',
             failureMessage: true
         }),
         (req, res) => {
-            console.log('✅ User authenticated successfully:', req.user.email);
-            console.log('📦 Session ID:', req.sessionID);
-            console.log('🍪 Session saved:', req.session);
+            const userAgent = req.get('user-agent');
+            const isMobile = /Mobile|Android|iPhone|iPad/i.test(userAgent);
             
-            // שומרים את ה-session באופן מפורש לפני redirect
+            console.log('✅ User authenticated successfully:', req.user.email);
+            console.log('📱 Device Type:', isMobile ? 'MOBILE' : 'DESKTOP');
+            console.log('📦 Session ID:', req.sessionID);
+            console.log('🍪 Session Cookie Config:', req.session.cookie);
+            console.log('🔐 req.isAuthenticated():', req.isAuthenticated());
+            
+            // 🔒 MOBILE FIX: Explicitly save session before redirect
+            // Mobile browsers need confirmation that session is persisted
             req.session.save((err) => {
                 if (err) {
                     console.error('❌ Failed to save session:', err);
+                    console.error('   → User will appear logged out on redirect');
                     return res.redirect('/login?error=session_failed');
                 }
+                
                 console.log('✅ Session saved successfully');
-                console.log('🏠 Redirecting to dashboard');
-                res.redirect('/');
+                console.log('   → Session ID:', req.sessionID);
+                console.log('   → User ID:', req.user._id);
+                
+                // 🔒 MOBILE FIX: Add explicit Set-Cookie header verification
+                const cookieHeader = res.getHeader('Set-Cookie');
+                console.log('🍪 Set-Cookie header:', cookieHeader);
+                
+                if (!cookieHeader || !cookieHeader.toString().includes('connect.sid')) {
+                    console.error('⚠️ WARNING: Set-Cookie header missing or invalid!');
+                    console.error('   → Mobile browser may not receive session cookie');
+                }
+                
+                console.log('🏠 Redirecting to dashboard...');
+                
+                // Add a small delay for mobile browsers to process the cookie
+                if (isMobile) {
+                    console.log('📱 Mobile detected - adding 100ms delay before redirect');
+                    setTimeout(() => {
+                        res.redirect('/');
+                    }, 100);
+                } else {
+                    res.redirect('/');
+                }
             });
         }
     );
@@ -258,7 +298,18 @@ function setupAuthRoutes(app) {
 
     // בדיקת סטטוס אימות (ל-frontend)
     app.get('/api/auth/status', (req, res) => {
+        const userAgent = req.get('user-agent');
+        const isMobile = /Mobile|Android|iPhone|iPad/i.test(userAgent);
+        
+        console.log('🔍 Auth status check:');
+        console.log('   - Device:', isMobile ? 'MOBILE' : 'DESKTOP');
+        console.log('   - Session ID:', req.sessionID);
+        console.log('   - Has Session Cookie:', req.headers.cookie?.includes('connect.sid') ? '✅' : '❌');
+        console.log('   - isAuthenticated():', req.isAuthenticated ? req.isAuthenticated() : 'N/A');
+        console.log('   - Has User:', !!req.user);
+        
         if (req.isAuthenticated()) {
+            console.log('   - User Email:', req.user.email);
             res.json({
                 authenticated: true,
                 user: {
@@ -269,8 +320,15 @@ function setupAuthRoutes(app) {
                 }
             });
         } else {
+            console.log('   ❌ User NOT authenticated');
+            console.log('   → Check if session cookie is being sent');
             res.json({ 
-                authenticated: false 
+                authenticated: false,
+                debug: {
+                    hasSession: !!req.session,
+                    sessionID: req.sessionID,
+                    hasCookie: !!req.headers.cookie
+                }
             });
         }
     });
@@ -295,5 +353,8 @@ module.exports = {
     setupAuth,
     requireAuth,
     optionalAuth,
-    setupAuthRoutes
+    setupAuthRoutes,
+    debugMobileAuth,
+    debugOAuthCallback,
+    debugSessionSave
 };
