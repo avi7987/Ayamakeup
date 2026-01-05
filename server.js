@@ -25,12 +25,17 @@ app.use(express.static(path.join(__dirname)));
 
 // ==================== AUTHENTICATION (FALLBACK MODE) ====================
 
-// User endpoint - always return fallback mode for local development
+// User endpoint - fallback mode for local development (returns authenticated)
 app.get('/api/user', (req, res) => {
     res.json({
         isFallbackMode: true,
-        isAuthenticated: false,
-        user: null
+        isAuthenticated: true, // Changed to true so data loads
+        user: {
+            id: 'fallback-user',
+            email: 'local@user.com',
+            name: 'Local User',
+            picture: ''
+        }
     });
 });
 
