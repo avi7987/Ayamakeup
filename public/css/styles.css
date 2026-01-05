@@ -546,8 +546,8 @@ tr {
 /* Mobile Responsive */
 @media (max-width: 768px) {
     body {
-        padding-bottom: 80px; /* Space for bottom nav */
         padding-top: 60px; /* Space for top header */
+        padding-bottom: 1rem; /* No bottom nav anymore */
     }
 
     /* Hide ALL desktop navigation on mobile */
@@ -557,13 +557,13 @@ tr {
         display: none !important;
     }
 
-    /* Show mobile navigation */
-    .mobile-nav-bar {
+    /* Show mobile header */
+    .mobile-header {
         display: flex !important;
     }
 
-    /* Show mobile header */
-    .mobile-header {
+    /* Show Super Menu FAB */
+    #mobile-super-menu-fab {
         display: flex !important;
     }
 
@@ -651,47 +651,6 @@ tr {
     }
 }
 
-/* Mobile Navigation Bar Styles */
-.mobile-nav-bar {
-    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-}
-
-body.dark-mode .mobile-nav-bar {
-    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
-}
-
-.mobile-nav-item {
-    transition: all 0.2s ease;
-}
-
-.mobile-nav-item.active {
-    color: #9333ea !important;
-}
-
-body.dark-mode .mobile-nav-item.active {
-    color: #a855f7 !important;
-}
-
-.mobile-nav-item.active svg {
-    stroke-width: 2.5;
-    transform: scale(1.1);
-}
-
-.mobile-nav-item-special {
-    color: #10b981;
-    position: relative;
-}
-
-.mobile-nav-item-special:active {
-    transform: scale(0.95);
-}
-
-.mobile-nav-item:active {
-    transform: scale(0.95);
-}
-
 /* Mobile Header */
 .mobile-header {
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
@@ -701,9 +660,55 @@ body.dark-mode .mobile-header {
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
 
+/* Super Menu FAB */
+#mobile-super-menu-fab {
+    box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+    animation: pulse-soft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+#mobile-super-menu-fab:active {
+    transform: scale(0.95);
+}
+
+@keyframes pulse-soft {
+    0%, 100% {
+        box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+    }
+    50% {
+        box-shadow: 0 8px 25px rgba(16, 185, 129, 0.5);
+    }
+}
+
+/* Super Menu Overlay */
+#super-menu-overlay {
+    transition: opacity 0.3s ease;
+}
+
+#super-menu-overlay > div {
+    animation: slide-up 0.3s ease-out;
+}
+
+@keyframes slide-up {
+    from {
+        transform: translateY(100%);
+    }
+    to {
+        transform: translateY(0);
+    }
+}
+
 /* Mobile Drawer Animation */
 #mobile-drawer.show #mobile-drawer-content {
     transform: translateX(0);
+}
+
+/* Mobile View Body Adjustments */
+body.mobile-view {
+    padding-bottom: 0 !important;
+}
+
+body.mobile-view #main-content {
+    padding-bottom: 1rem !important;
 }
 
 /* Mobile Social Modal Animation */

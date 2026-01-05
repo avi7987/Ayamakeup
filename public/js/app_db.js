@@ -5663,16 +5663,7 @@ function toggleSidebarCollapse() {
 
 // Mobile Navigation Functions
 function switchPageMobile(pageName) {
-    // Update active state in bottom nav
-    document.querySelectorAll('.mobile-nav-item').forEach(item => {
-        item.classList.remove('active');
-    });
-    const activeItem = document.querySelector(`.mobile-nav-item[data-page="${pageName}"]`);
-    if (activeItem) {
-        activeItem.classList.add('active');
-    }
-    
-    // Also update side nav active state (for consistency)
+    // Update side nav active state (for consistency)
     document.querySelectorAll('.side-nav-item').forEach(item => {
         item.classList.remove('active');
         if (item.getAttribute('data-page') === pageName) {
@@ -5740,6 +5731,21 @@ function closeMobileSocialMenu() {
             modal.classList.add('hidden');
             modal.classList.remove('show');
         }, 300);
+    }
+}
+
+// Super Menu Functions
+function openSuperMenu() {
+    const overlay = document.getElementById('super-menu-overlay');
+    if (overlay) {
+        overlay.classList.remove('hidden');
+    }
+}
+
+function closeSuperMenu() {
+    const overlay = document.getElementById('super-menu-overlay');
+    if (overlay) {
+        overlay.classList.add('hidden');
     }
 }
 
@@ -6139,6 +6145,8 @@ window.showLoginPopup = showLoginPopup;
 window.hideLoginPopup = hideLoginPopup;
 window.GoalsManager = GoalsManager;
 window.updateGoalsSectionDynamic = updateGoalsSectionDynamic;
+window.openSuperMenu = openSuperMenu;
+window.closeSuperMenu = closeSuperMenu;
 
 // Mobile Bottom Sheet Functions
 function openMobileProfileSheet() {
@@ -6166,24 +6174,8 @@ function closeMobileProfileSheet() {
     }
 }
 
-function openMobileFabSheet() {
-    const sheet = document.getElementById('mobile-fab-sheet');
-    if (sheet) {
-        sheet.classList.remove('hidden');
-    }
-}
-
-function closeMobileFabSheet() {
-    const sheet = document.getElementById('mobile-fab-sheet');
-    if (sheet) {
-        sheet.classList.add('hidden');
-    }
-}
-
 window.openMobileProfileSheet = openMobileProfileSheet;
 window.closeMobileProfileSheet = closeMobileProfileSheet;
-window.openMobileFabSheet = openMobileFabSheet;
-window.closeMobileFabSheet = closeMobileFabSheet;
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', initApp);
