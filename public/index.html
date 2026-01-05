@@ -283,33 +283,56 @@
             border-left: 1px solid rgba(255,255,255,0.1);
             z-index: 50;
             transition: width 0.3s ease;
-            overflow: hidden;
+            overflow: visible; /* Changed from hidden to allow tooltips */
         }
         
         .side-nav:hover {
             width: 240px;
         }
         
-        /* Logo section - center when not hovered */
-        .side-nav > div:first-child button {
-            justify-content: flex-start;
-            transition: justify-content 0.3s ease;
-        }
-        
-        .side-nav:not(:hover) > div:first-child button {
+        /* Logo section - perfect center when collapsed */
+        .side-nav > div:first-child {
+            display: flex;
             justify-content: center;
+            align-items: center;
+            padding: 16px 0;
+            transition: all 0.3s ease;
         }
         
-        .side-nav-item {
+        .side-nav:hover > div:first-child {
+            justify-content: flex-start;
+            padding: 16px 24px;
+        }
+        
+        .side-nav > div:first-child button {
             display: flex;
             align-items: center;
             gap: 12px;
-            padding: 14px 20px;
+            transition: all 0.3s ease;
+        }
+        
+        /* Hide logo text when collapsed */
+        .side-nav:not(:hover) > div:first-child .side-nav-text {
+            display: none;
+        }
+        
+        .side-nav-item {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 14px;
             color: #94A3B8;
             text-decoration: none;
             transition: all 0.2s;
             cursor: pointer;
             border-right: 3px solid transparent;
+        }
+        
+        .side-nav:hover .side-nav-item {
+            justify-content: flex-start;
+            padding: 14px 20px;
         }
         
         .side-nav-item:hover {
@@ -329,19 +352,47 @@
             flex-shrink: 0;
         }
         
+        /* Text completely hidden when collapsed */
         .side-nav-text {
             font-size: 15px;
             font-weight: 500;
             white-space: nowrap;
-            opacity: 0;
-            width: 0;
-            overflow: hidden;
-            transition: opacity 0.3s, width 0.3s;
+            display: none;
         }
         
         .side-nav:hover .side-nav-text {
+            display: block;
+        }
+        
+        /* Tooltip for collapsed state */
+        .side-nav:not(:hover) .side-nav-item::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            left: -10px;
+            transform: translateX(-100%);
+            background: #1F2937;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 100;
+        }
+        
+        .side-nav:not(:hover) .side-nav-item:hover::after,
+        .side-nav:not(:hover) .side-nav-item:focus::after {
             opacity: 1;
-            width: auto;
+        }
+        
+        /* Hide dividers and labels when collapsed */
+        .side-nav:not(:hover) .my-3,
+        .side-nav:not(:hover) > div > div.px-4 {
+            display: none;
         }
         
         /* Main Content with margin for side nav */
@@ -408,42 +459,42 @@
         <!-- Navigation Items -->
         <div class="py-4">
             <!-- Business Core -->
-            <a onclick="window.switchPageNav('home')" class="side-nav-item active" data-page="home">
+            <a onclick="window.switchPageNav('home')" class="side-nav-item active" data-page="home" data-tooltip="בית">
                 <svg class="side-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
                 </svg>
                 <span class="side-nav-text">בית</span>
             </a>
             
-            <a onclick="window.switchPageNav('leads')" class="side-nav-item" data-page="leads">
+            <a onclick="window.switchPageNav('leads')" class="side-nav-item" data-page="leads" data-tooltip="ניהול לידים">
                 <svg class="side-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
                 </svg>
                 <span class="side-nav-text">ניהול לידים</span>
             </a>
             
-            <a onclick="window.switchPageNav('entry')" class="side-nav-item" data-page="entry">
+            <a onclick="window.switchPageNav('entry')" class="side-nav-item" data-page="entry" data-tooltip="הכנסות">
                 <svg class="side-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                 </svg>
                 <span class="side-nav-text">הכנסות</span>
             </a>
             
-            <a onclick="window.switchPageNav('stats')" class="side-nav-item" data-page="stats">
+            <a onclick="window.switchPageNav('stats')" class="side-nav-item" data-page="stats" data-tooltip="סטטיסטיקות">
                 <svg class="side-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
                 </svg>
                 <span class="side-nav-text">סטטיסטיקות</span>
             </a>
             
-            <a onclick="window.switchPageNav('insights')" class="side-nav-item" data-page="insights">
+            <a onclick="window.switchPageNav('insights')" class="side-nav-item" data-page="insights" data-tooltip="תובנות">
                 <svg class="side-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
                 </svg>
                 <span class="side-nav-text">תובנות</span>
             </a>
             
-            <a onclick="window.switchPageNav('contracts')" class="side-nav-item" data-page="contracts">
+            <a onclick="window.switchPageNav('contracts')" class="side-nav-item" data-page="contracts" data-tooltip="חוזים">
                 <svg class="side-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                 </svg>
@@ -457,21 +508,21 @@
             </div>
             
             <!-- Social Module -->
-            <a onclick="window.switchPageNav('social-strategy')" class="side-nav-item" data-page="social-strategy">
+            <a onclick="window.switchPageNav('social-strategy')" class="side-nav-item" data-page="social-strategy" data-tooltip="אסטרטגיית סושיאל">
                 <svg class="side-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
                 </svg>
                 <span class="side-nav-text">אסטרטגיית סושיאל</span>
             </a>
             
-            <a onclick="window.switchPageNav('social-planning')" class="side-nav-item" data-page="social-planning">
+            <a onclick="window.switchPageNav('social-planning')" class="side-nav-item" data-page="social-planning" data-tooltip="תכנון תוכן שבועי">
                 <svg class="side-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                 </svg>
                 <span class="side-nav-text">תכנון תוכן שבועי</span>
             </a>
             
-            <a onclick="window.switchPageNav('social-execution')" class="side-nav-item" data-page="social-execution">
+            <a onclick="window.switchPageNav('social-execution')" class="side-nav-item" data-page="social-execution" data-tooltip="ביצוע והעלאה">
                 <svg class="side-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5-5m0 0l5 5m-5-5v12"></path>
                 </svg>
@@ -481,7 +532,7 @@
             <!-- Bottom Settings -->
             <div class="my-3 border-t border-white/10"></div>
             
-            <a onclick="openModal('modal-settings')" class="side-nav-item">
+            <a onclick="openModal('modal-settings')" class="side-nav-item" data-tooltip="הגדרות">
                 <svg class="side-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
