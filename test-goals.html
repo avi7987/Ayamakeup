@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>בדיקת יעדים - Goals Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 { color: #6366f1; }
+        h2 { color: #333; margin-top: 30px; }
+        button {
+            background: #6366f1;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #4f46e5; }
+        .goal-item {
+            background: #f9fafb;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid #6366f1;
+        }
+        .goal-item strong { color: #6366f1; }
+        pre {
+            background: #1f2937;
+            color: #10b981;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        .warning {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .success {
+            background: #d1fae5;
+            border-left: 4px solid #10b981;
+            padding: 15px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 בדיקת מערכת היעדים</h1>
+        
+        <h2>📊 יעדים שמורים ב-localStorage:</h2>
+        <div id="saved-goals"></div>
+        
+        <h2>🔧 פעולות:</h2>
+        <button onclick="showGoals()">📋 הצג יעדים</button>
+        <button onclick="addTestGoal()">➕ הוסף יעד בדיקה</button>
+        <button onclick="clearGoals()">🗑️ מחק את כל היעדים</button>
+        <button onclick="addDefaultGoals()">🔄 איפוס ליעדים ברירת מחדל</button>
+        
+        <h2>🖥️ Console Log:</h2>
+        <div id="console-output"></div>
+    </div>
+
+    <script>
+        // Redirect console.log to page
+        const consoleOutput = document.getElementById('console-output');
+        const originalLog = console.log;
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            const message = args.map(arg => 
+                typeof arg === 'object' ? JSON.stringify(arg, null, 2) : arg
+            ).join(' ');
+            consoleOutput.innerHTML += `<pre>${message}</pre>`;
+        };
+
+        function showGoals() {
+            const goals = JSON.parse(localStorage.getItem('userGoals') || '[]');
+            const container = document.getElementById('saved-goals');
+            
+            if (goals.length === 0) {
+                container.innerHTML = '<div class="warning">⚠️ אין יעדים שמורים ב-localStorage</div>';
+            } else {
+                container.innerHTML = `
+                    <div class="success">✅ נמצאו ${goals.length} יעדים:</div>
+                    ${goals.map((goal, index) => `
+                        <div class="goal-item">
+                            <strong>יעד ${index + 1}:</strong> ${goal.label}<br>
+                            <strong>סוג:</strong> ${goal.goalType}<br>
+                            <strong>יעד:</strong> ${goal.target.toLocaleString()}
+                        </div>
+                    `).join('')}
+                `;
+            }
+            
+            console.log('📊 יעדים שמורים:', goals);
+        }
+
+        function addTestGoal() {
+            const goals = JSON.parse(localStorage.getItem('userGoals') || '[]');
+            const newGoal = {
+                goalType: 'monthly-income',
+                target: 50000,
+                label: '💰 הכנסה חודשית'
+            };
+            goals.push(newGoal);
+            localStorage.setItem('userGoals', JSON.stringify(goals));
+            console.log('➕ נוסף יעד חדש. סך הכל:', goals.length);
+            showGoals();
+        }
+
+        function clearGoals() {
+            if (confirm('האם אתה בטוח שברצונך למחוק את כל היעדים?')) {
+                localStorage.removeItem('userGoals');
+                console.log('🗑️ כל היעדים נמחקו');
+                showGoals();
+            }
+        }
+
+        function addDefaultGoals() {
+            const defaultGoals = [
+                { goalType: 'monthly-income', target: 200000, label: '💰 הכנסה חודשית' },
+                { goalType: 'monthly-leads', target: 50, label: '📊 לידים חדשים (חודשי)' },
+                { goalType: 'monthly-deals', target: 20, label: '✅ עסקאות שנסגרו (חודשי)' },
+                { goalType: 'annual-brides', target: 100, label: '👰 כמות כלות בשנה' }
+            ];
+            localStorage.setItem('userGoals', JSON.stringify(defaultGoals));
+            console.log('🔄 יעדים אופסו לברירת מחדל (4 יעדים)');
+            showGoals();
+        }
+
+        // Show goals on load
+        window.onload = function() {
+            console.log('🚀 דף בדיקת יעדים נטען');
+            showGoals();
+        };
+    </script>
+</body>
+</html>

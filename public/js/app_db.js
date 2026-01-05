@@ -4659,6 +4659,17 @@ async function initApp() {
     await TimerSettings.init();
     FollowUpTimers.init();
     
+    // Show mobile UI elements on mobile
+    if (window.innerWidth <= 768) {
+        const mobileHeader = document.getElementById('mobile-header');
+        const mobileNav = document.getElementById('mobile-bottom-nav');
+        const mobileFab = document.getElementById('mobile-fab');
+        
+        if (mobileHeader) mobileHeader.classList.remove('hidden');
+        if (mobileNav) mobileNav.classList.remove('hidden');
+        if (mobileFab) mobileFab.classList.remove('hidden');
+    }
+    
     // Populate year filter
     const yearFilter = document.getElementById('stats-year-filter');
     if (yearFilter) {
@@ -6128,6 +6139,51 @@ window.showLoginPopup = showLoginPopup;
 window.hideLoginPopup = hideLoginPopup;
 window.GoalsManager = GoalsManager;
 window.updateGoalsSectionDynamic = updateGoalsSectionDynamic;
+
+// Mobile Bottom Sheet Functions
+function openMobileProfileSheet() {
+    const sheet = document.getElementById('mobile-profile-sheet');
+    if (sheet) {
+        sheet.classList.remove('hidden');
+        // Update profile info if logged in
+        if (window.currentUser) {
+            document.getElementById('mobile-profile-name').textContent = window.currentUser.displayName || 'משתמש';
+            document.getElementById('mobile-profile-email').textContent = window.currentUser.email || '';
+            
+            // Update avatar
+            const avatar = document.getElementById('mobile-profile-avatar');
+            if (window.currentUser.photoURL) {
+                avatar.innerHTML = `<img src="${window.currentUser.photoURL}" class="w-full h-full rounded-full object-cover" alt="Profile">`;
+            }
+        }
+    }
+}
+
+function closeMobileProfileSheet() {
+    const sheet = document.getElementById('mobile-profile-sheet');
+    if (sheet) {
+        sheet.classList.add('hidden');
+    }
+}
+
+function openMobileFabSheet() {
+    const sheet = document.getElementById('mobile-fab-sheet');
+    if (sheet) {
+        sheet.classList.remove('hidden');
+    }
+}
+
+function closeMobileFabSheet() {
+    const sheet = document.getElementById('mobile-fab-sheet');
+    if (sheet) {
+        sheet.classList.add('hidden');
+    }
+}
+
+window.openMobileProfileSheet = openMobileProfileSheet;
+window.closeMobileProfileSheet = closeMobileProfileSheet;
+window.openMobileFabSheet = openMobileFabSheet;
+window.closeMobileFabSheet = closeMobileFabSheet;
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', initApp);

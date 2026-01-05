@@ -752,11 +752,107 @@
                 <span class="text-2xl">🌙</span>
                 <span class="text-lg font-black text-purple-900 dark:text-purple-100">LUNA</span>
             </div>
-            <button onclick="toggleMobileDrawer()" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all">
-                <svg class="w-6 h-6 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-                </svg>
+            <!-- Profile Avatar Button (replaces hamburger) -->
+            <button onclick="openMobileProfileSheet()" class="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-all">
+                <div id="mobile-user-avatar" class="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                    </svg>
+                </div>
             </button>
+        </div>
+    </div>
+    
+    <!-- Mobile Profile Bottom Sheet -->
+    <div id="mobile-profile-sheet" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] hidden" onclick="closeMobileProfileSheet()">
+        <div class="absolute bottom-0 left-0 right-0 bg-white dark:bg-gray-900 rounded-t-3xl shadow-2xl transform transition-transform duration-300" onclick="event.stopPropagation()">
+            <div class="p-6">
+                <div class="w-12 h-1 bg-gray-300 dark:bg-gray-600 rounded-full mx-auto mb-6"></div>
+                
+                <!-- Profile Info -->
+                <div class="flex items-center gap-4 mb-6 pb-6 border-b border-gray-200 dark:border-gray-700">
+                    <div id="mobile-profile-avatar" class="w-16 h-16 rounded-full bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center text-white font-bold text-xl">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                        </svg>
+                    </div>
+                    <div class="flex-1">
+                        <div class="font-bold text-lg text-gray-900 dark:text-white" id="mobile-profile-name">משתמש</div>
+                        <div class="text-sm text-gray-500 dark:text-gray-400" id="mobile-profile-email">user@example.com</div>
+                    </div>
+                </div>
+                
+                <!-- Menu Options -->
+                <div class="space-y-2 mb-4">
+                    <button onclick="openModal('modal-settings'); closeMobileProfileSheet();" class="w-full flex items-center gap-3 p-4 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-all text-right">
+                        <div class="w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
+                            <svg class="w-5 h-5 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
+                        </div>
+                        <div class="flex-1 text-right">
+                            <div class="font-semibold text-gray-900 dark:text-white">הגדרות</div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400">ניהול יעדים והעדפות</div>
+                        </div>
+                    </button>
+                    
+                    <button onclick="logout(); closeMobileProfileSheet();" class="w-full flex items-center gap-3 p-4 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-all text-right">
+                        <div class="w-10 h-10 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center">
+                            <svg class="w-5 h-5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                            </svg>
+                        </div>
+                        <div class="flex-1 text-right">
+                            <div class="font-semibold text-red-600 dark:text-red-400">התנתק</div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400">יציאה מהחשבון</div>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Mobile FAB (Floating Action Button) -->
+    <button id="mobile-fab" class="fixed bottom-20 left-4 w-14 h-14 bg-gradient-to-r from-emerald-500 to-green-600 rounded-full shadow-lg flex items-center justify-center z-40 hidden hover:scale-110 transition-transform" onclick="openMobileFabSheet()">
+        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4"></path>
+        </svg>
+    </button>
+    
+    <!-- Mobile FAB Bottom Sheet -->
+    <div id="mobile-fab-sheet" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] hidden" onclick="closeMobileFabSheet()">
+        <div class="absolute bottom-0 left-0 right-0 bg-white dark:bg-gray-900 rounded-t-3xl shadow-2xl transform transition-transform duration-300" onclick="event.stopPropagation()">
+            <div class="p-6">
+                <div class="w-12 h-1 bg-gray-300 dark:bg-gray-600 rounded-full mx-auto mb-6"></div>
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4 text-center">פעולה מהירה</h3>
+                
+                <div class="space-y-3">
+                    <button onclick="switchPageMobile('entry'); closeMobileFabSheet();" class="w-full flex items-center gap-4 p-4 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-all text-right">
+                        <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <div class="flex-1">
+                            <div class="font-bold text-gray-900 dark:text-white">הוסף הכנסה</div>
+                            <div class="text-sm text-gray-600 dark:text-gray-400">רישום הכנסה חדשה</div>
+                        </div>
+                    </button>
+                    
+                    <button onclick="switchPageMobile('leads'); closeMobileFabSheet(); setTimeout(() => { document.getElementById('add-lead-btn')?.click(); }, 300);" class="w-full flex items-center gap-4 p-4 rounded-xl bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-all text-right">
+                        <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+                            </svg>
+                        </div>
+                        <div class="flex-1">
+                            <div class="font-bold text-gray-900 dark:text-white">הוסף ליד</div>
+                            <div class="text-sm text-gray-600 dark:text-gray-400">לקוח פוטנציאלי חדש</div>
+                        </div>
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
