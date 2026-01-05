@@ -1711,10 +1711,20 @@ const HomeView = {
             return;
         }
         
-        // Use dynamic goals from settings
-        const goalsSection = document.querySelector('.bg-white.dark\\:bg-slate-800.rounded-2xl.shadow-lg.p-6.fade-in .space-y-5');
+        // Use dynamic goals from settings - Find by heading text
+        let goalsSection = null;
+        const allSections = document.querySelectorAll('.bg-white.rounded-2xl.shadow-lg.p-6, .bg-white.dark\\:bg-\\[\\#111827\\].rounded-2xl.shadow-lg.p-6');
+        
+        for (const section of allSections) {
+            const heading = section.querySelector('h2, h3');
+            if (heading && (heading.textContent.includes('עמידה ביעדים') || heading.textContent.includes('יעדים') || heading.textContent.includes('התקדמות'))) {
+                goalsSection = section.querySelector('.space-y-5');
+                break;
+            }
+        }
+        
         if (!goalsSection) {
-            console.warn('⚠️ Goals section not found in DOM');
+            console.warn('⚠️ Goals section not found in DOM in updateGoalsSection');
             return;
         }
         
@@ -6022,23 +6032,22 @@ window.saveGoals = function() {
 function updateGoalsSectionDynamic() {
     console.log('🎯 updateGoalsSectionDynamic called');
     
-    // Try multiple selectors to find the goals section
-    let goalsSection = document.querySelector('.bg-white.dark\\:bg-slate-800.rounded-2xl.shadow-lg.p-6.fade-in .space-y-5');
+    // Find goals section by looking for the heading text
+    let goalsSection = null;
+    const allSections = document.querySelectorAll('.bg-white.rounded-2xl.shadow-lg.p-6, .bg-white.dark\\:bg-\\[\\#111827\\].rounded-2xl.shadow-lg.p-6');
     
-    if (!goalsSection) {
-        // Alternative: look for goals section by searching for specific text
-        const allSections = document.querySelectorAll('.bg-white.dark\\:bg-slate-800.rounded-2xl.shadow-lg.p-6');
-        for (const section of allSections) {
-            const heading = section.querySelector('h3');
-            if (heading && (heading.textContent.includes('יעדים') || heading.textContent.includes('התקדמות'))) {
-                goalsSection = section.querySelector('.space-y-5');
-                break;
-            }
+    for (const section of allSections) {
+        const heading = section.querySelector('h2, h3');
+        if (heading && (heading.textContent.includes('עמידה ביעדים') || heading.textContent.includes('יעדים') || heading.textContent.includes('התקדמות'))) {
+            goalsSection = section.querySelector('.space-y-5');
+            console.log('✅ Found goals section');
+            break;
         }
     }
     
     if (!goalsSection) {
         console.warn('⚠️ Goals section not found in DOM');
+        console.log('Available sections:', allSections.length);
         return;
     }
     
