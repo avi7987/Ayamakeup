@@ -1628,12 +1628,12 @@ const HomeView = {
         
         // ===== NEW DASHBOARD SECTIONS =====
         
-        // Section 1: Goals & Progress (goals loaded from localStorage by GoalsManager.init)
-        this.updateGoalsSection({}, monthlyRevenue, newLeadsThisMonth, closedDeals);
-        
-        // Update goals section with real-time data
+        // Section 1: Goals & Progress - Use dynamic goals system
         if (typeof updateGoalsSectionDynamic === 'function') {
             updateGoalsSectionDynamic();
+        } else {
+            // Fallback to old system
+            this.updateGoalsSection({}, monthlyRevenue, newLeadsThisMonth, closedDeals);
         }
         
         // Section 2: Business Health Snapshot
@@ -5898,7 +5898,12 @@ const GoalsManager = {
     
     renderGoals(goals) {
         const container = document.getElementById('goals-container');
-        if (!container) return;
+        if (!container) {
+            console.warn('⚠️ goals-container not found');
+            return;
+        }
+        
+        console.log('📋 Rendering', goals.length, 'goals in settings');
         
         container.innerHTML = goals.map((goal, index) => {
             // Find if it's a custom goal option
@@ -5971,6 +5976,7 @@ window.addGoalRow = function() {
     const goals = JSON.parse(localStorage.getItem('userGoals') || '[]');
     goals.push({ goalType: 'monthly-income', target: 0, label: '💰 הכנסה חודשית' });
     localStorage.setItem('userGoals', JSON.stringify(goals));
+    console.log('➕ Added new goal. Total goals:', goals.length);
     GoalsManager.renderGoals(goals);
 };
 
@@ -5999,6 +6005,7 @@ window.saveGoals = function() {
     });
     
     localStorage.setItem('userGoals', JSON.stringify(goals));
+    console.log('💾 Saved', goals.length, 'goals to localStorage');
     alert('✅ היעדים נשמרו בהצלחה!');
     closeModal('modal-settings');
     
@@ -6006,8 +6013,8 @@ window.saveGoals = function() {
     if (typeof updateGoalsSectionDynamic === 'function') {
         updateGoalsSectionDynamic();
     }
-    if (typeof DashboardView !== 'undefined' && DashboardView.update) {
-        DashboardView.update();
+    if (typeof HomeView !== 'undefined' && HomeView.update) {
+        HomeView.update();
     }
 };
 
