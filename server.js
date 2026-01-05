@@ -320,6 +320,49 @@ app.post('/api/migrate', (req, res) => {
     }
 });
 
+// ==================== GOALS ROUTES ====================
+
+// Get user goals
+app.get('/api/goals/:userId', (req, res) => {
+    try {
+        const { userId } = req.params;
+        
+        // Initialize goals structure if not exists
+        if (!db.has('goals').value()) {
+            db.set('goals', {}).write();
+        }
+        
+        const userGoals = db.get('goals').get(userId).value() || [];
+        res.json(userGoals);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Save user goals
+app.post('/api/goals/:userId', (req, res) => {
+    try {
+        const { userId } = req.params;
+        const goals = req.body;
+        
+        // Initialize goals structure if not exists
+        if (!db.has('goals').value()) {
+            db.set('goals', {}).write();
+        }
+        
+        // Save goals for this user
+        db.get('goals').set(userId, goals).write();
+        
+        res.json({
+            success: true,
+            message: 'Goals saved successfully',
+            goalsCount: goals.length
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Start Server
 app.listen(PORT, () => {
     console.log('');

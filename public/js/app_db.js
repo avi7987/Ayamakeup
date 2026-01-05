@@ -5903,24 +5903,29 @@ const GoalsManager = {
     ],
     
     init() {
-        const savedGoals = JSON.parse(localStorage.getItem('userGoals') || '[]');
-        
-        // Default goals if nothing saved
-        if (savedGoals.length === 0) {
-            savedGoals.push(
-                { goalType: 'monthly-income', target: 200000, label: '💰 הכנסה חודשית' },
-                { goalType: 'monthly-leads', target: 50, label: '📊 לידים חדשים (חודשי)' },
-                { goalType: 'monthly-deals', target: 20, label: '✅ עסקאות שנסגרו (חודשי)' }
-            );
-            localStorage.setItem('userGoals', JSON.stringify(savedGoals));
-        }
-        
-        this.renderGoals(savedGoals);
-        
-        // Update dashboard display with real data
-        if (typeof updateGoalsSectionDynamic === 'function') {
-            updateGoalsSectionDynamic();
-        }
+        // Try to load goals from server if authenticated
+        this.loadGoalsFromServer().then(savedGoals => {
+            // Default goals if nothing saved
+            if (savedGoals.length === 0) {
+                savedGoals.push(
+                    { goalType: 'monthly-income', target: 200000, label: '💰 הכנסה חודשית' },
+                    { goalType: 'monthly-leads', target: 50, label: '📊 לידים חדשים (חודשי)' },
+                    { goalType: 'monthly-deals', target: 20, label: '✅ עסקאות שנסגרו (חודשי)' }
+                );
+                localStorage.setItem('userGoals', JSON.stringify(savedGoals));
+                // Sync default goals to server if authenticated
+                if (window.isAuthenticated) {
+                    this.syncGoalsToServer(savedGoals);
+                }
+            }
+            
+            this.renderGoals(savedGoals);
+            
+            // Update dashboard display with real data
+            if (typeof updateGoalsSectionDynamic === 'function') {
+                updateGoalsSectionDynamic();
+            }
+        });
     },
     
     renderGoals(goals) {
@@ -5989,6 +5994,9 @@ const GoalsManager = {
         
         localStorage.setItem('userGoals', JSON.stringify(goals));
         this.renderGoals(goals);
+        
+        // Sync to server
+        this.syncGoalsToServer(goals);
     },
     
     removeGoal(index) {
@@ -5996,6 +6004,53 @@ const GoalsManager = {
         goals.splice(index, 1);
         localStorage.setItem('userGoals', JSON.stringify(goals));
         this.renderGoals(goals);
+        
+        // Sync to server
+        this.syncGoalsToServer(goals);
+    },
+    
+    // Sync goals to server
+    async syncGoalsToServer(goals) {
+        if (!window.isAuthenticated || !window.currentUser) {
+            return;
+        }
+        
+        try {
+            const userId = window.currentUser.id || window.currentUser.email;
+            await fetch(`/api/goals/${userId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(goals)
+            });
+            console.log('✅ Goals synced to server');
+        } catch (error) {
+            console.warn('⚠️ Error syncing goals:', error);
+        }
+    },
+    
+    // Load goals from server
+    async loadGoalsFromServer() {
+        if (!window.isAuthenticated || !window.currentUser) {
+            return JSON.parse(localStorage.getItem('userGoals') || '[]');
+        }
+        
+        try {
+            const userId = window.currentUser.id || window.currentUser.email;
+            const response = await fetch(`/api/goals/${userId}`);
+            
+            if (response.ok) {
+                const serverGoals = await response.json();
+                if (serverGoals && serverGoals.length > 0) {
+                    localStorage.setItem('userGoals', JSON.stringify(serverGoals));
+                    console.log('✅ Loaded', serverGoals.length, 'goals from server');
+                    return serverGoals;
+                }
+            }
+        } catch (error) {
+            console.warn('⚠️ Error loading goals:', error);
+        }
+        
+        return JSON.parse(localStorage.getItem('userGoals') || '[]');
     }
 };
 
@@ -6005,6 +6060,7 @@ window.addGoalRow = function() {
     localStorage.setItem('userGoals', JSON.stringify(goals));
     console.log('➕ Added new goal. Total goals:', goals.length);
     GoalsManager.renderGoals(goals);
+    GoalsManager.syncGoalsToServer(goals);
 };
 
 window.saveGoals = function() {
@@ -6033,6 +6089,10 @@ window.saveGoals = function() {
     
     localStorage.setItem('userGoals', JSON.stringify(goals));
     console.log('💾 Saved', goals.length, 'goals to localStorage');
+    
+    // Sync to server
+    GoalsManager.syncGoalsToServer(goals);
+    
     alert('✅ היעדים נשמרו בהצלחה!');
     closeModal('modal-settings');
     
@@ -6153,16 +6213,50 @@ function openMobileProfileSheet() {
     const sheet = document.getElementById('mobile-profile-sheet');
     if (sheet) {
         sheet.classList.remove('hidden');
-        // Update profile info if logged in
-        if (window.currentUser) {
-            document.getElementById('mobile-profile-name').textContent = window.currentUser.displayName || 'משתמש';
-            document.getElementById('mobile-profile-email').textContent = window.currentUser.email || '';
+        
+        const loggedInState = document.getElementById('mobile-profile-logged-in');
+        const notLoggedInState = document.getElementById('mobile-profile-not-logged-in');
+        
+        // Check if user is authenticated
+        if (window.isAuthenticated && window.currentUser) {
+            // Show logged-in state
+            loggedInState.classList.remove('hidden');
+            notLoggedInState.classList.add('hidden');
+            
+            // Update profile info
+            const userName = window.currentUser.name || window.currentUser.displayName || 'משתמש';
+            const userEmail = window.currentUser.email || '';
+            
+            document.getElementById('mobile-profile-name').textContent = userName;
+            document.getElementById('mobile-profile-email').textContent = userEmail;
             
             // Update avatar
             const avatar = document.getElementById('mobile-profile-avatar');
-            if (window.currentUser.photoURL) {
-                avatar.innerHTML = `<img src="${window.currentUser.photoURL}" class="w-full h-full rounded-full object-cover" alt="Profile">`;
+            const userPicture = window.currentUser.picture || window.currentUser.photoURL;
+            
+            if (userPicture && userPicture.trim() !== '') {
+                avatar.innerHTML = `<img src="${userPicture}" class="w-full h-full rounded-full object-cover" alt="Profile">`;
+            } else {
+                avatar.innerHTML = `<svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                </svg>`;
             }
+            
+            // Update mobile header avatar
+            const mobileAvatar = document.getElementById('mobile-user-avatar');
+            if (mobileAvatar) {
+                if (userPicture && userPicture.trim() !== '') {
+                    mobileAvatar.innerHTML = `<img src="${userPicture}" class="w-full h-full rounded-full object-cover" alt="Profile">`;
+                } else {
+                    mobileAvatar.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                    </svg>`;
+                }
+            }
+        } else {
+            // Show not-logged-in state
+            loggedInState.classList.add('hidden');
+            notLoggedInState.classList.remove('hidden');
         }
     }
 }
