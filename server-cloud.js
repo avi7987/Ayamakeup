@@ -17,8 +17,15 @@ const { setupAuth, requireAuth, setupAuthRoutes } = require('./auth-config');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// 🔒 CRITICAL: Trust proxy for Railway/HTTPS
+// Railway uses a proxy, we need to trust it for secure cookies to work
+app.set('trust proxy', 1);
+
 // Middleware
-app.use(cors());
+app.use(cors({
+    origin: true, // Allow all origins for now
+    credentials: true // CRITICAL: Allow cookies to be sent
+}));
 app.use(bodyParser.json());
 
 // MongoDB Connection

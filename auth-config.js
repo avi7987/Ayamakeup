@@ -32,12 +32,23 @@ try {
  */
 function setupAuth(app, mongoose, User) {
     console.log('🔐 Setting up authentication system...');
+    
+    // 🔒 Determine if we should use secure cookies
+    // Always true in production, or if Railway deployment is detected
+    const isProduction = process.env.NODE_ENV === 'production' || process.env.RAILWAY_ENVIRONMENT;
+    const useSecureCookies = isProduction;
+    
+    console.log('🍪 Cookie Configuration:');
+    console.log('   NODE_ENV:', process.env.NODE_ENV);
+    console.log('   RAILWAY_ENVIRONMENT:', process.env.RAILWAY_ENVIRONMENT);
+    console.log('   Using Secure Cookies:', useSecureCookies);
 
     // Session middleware - חייב להיות לפני passport
     app.use(session({
         secret: process.env.SESSION_SECRET || 'luna-secret-key-change-in-production',
         resave: false,
         saveUninitialized: false,
+        proxy: true, // 🔒 CRITICAL: Trust proxy for Railway
         store: MongoStore.create({
             mongoUrl: process.env.MONGODB_URI,
             collectionName: 'sessions',
@@ -46,14 +57,13 @@ function setupAuth(app, mongoose, User) {
         cookie: {
             maxAge: 30 * 24 * 60 * 60 * 1000, // 30 ימים
             httpOnly: true,
-            // 🔒 MOBILE FIX: secure must be true for HTTPS (Railway auto-provides HTTPS)
-            secure: process.env.NODE_ENV === 'production',
+            // 🔒 MOBILE FIX: Always true on Railway/Production
+            secure: useSecureCookies,
             // 🔒 MOBILE FIX: 'lax' works for OAuth callbacks AND mobile browsers
-            // 'none' requires exact domain match and can be blocked by mobile Safari
             sameSite: 'lax',
             // 🔒 MOBILE FIX: Remove domain setting - let browser handle it
-            // Setting domain can cause cookie to be rejected on mobile
-            domain: undefined
+            domain: undefined,
+            path: '/' // Explicit path
         }
     }));
 
@@ -238,35 +248,48 @@ function setupAuthRoutes(app) {
             const userAgent = req.get('user-agent');
             const isMobile = /Mobile|Android|iPhone|iPad/i.test(userAgent);
             
-            console.log('✅ User authenticated successfully:', req.user.email);
-            console.log('📱 Device Type:', isMobile ? 'MOBILE' : 'DESKTOP');
-            console.log('📦 Session ID:', req.sessionID);
-            console.log('🍪 Session Cookie Config:', req.session.cookie);
-            console.log('🔐 req.isAuthenticated():', req.isAuthenticated());
+            console.log('\n' + '='.repeat(80));
+            console.log('✅ GOOGLE OAUTH CALLBACK SUCCESS');
+            console.log('='.repeat(80));
+            console.log('User:', req.user.email);
+            console.log('Device:', isMobile ? 'MOBILE' : 'DESKTOP');
+            console.log('Session ID:', req.sessionID);
+            console.log('Protocol:', req.protocol);
+            console.log('Secure:', req.secure);
+            console.log('Cookie Config:');
+            console.log('  - httpOnly:', req.session.cookie.httpOnly);
+            console.log('  - secure:', req.session.cookie.secure);
+            console.log('  - sameSite:', req.session.cookie.sameSite);
+            console.log('  - domain:', req.session.cookie.domain || 'undefined');
+            console.log('  - path:', req.session.cookie.path);
+            console.log('isAuthenticated():', req.isAuthenticated());
+            console.log('='.repeat(80) + '\n');
             
             // 🔒 MOBILE FIX: Explicitly save session before redirect
-            // Mobile browsers need confirmation that session is persisted
             req.session.save((err) => {
                 if (err) {
                     console.error('❌ Failed to save session:', err);
-                    console.error('   → User will appear logged out on redirect');
                     return res.redirect('/login?error=session_failed');
                 }
                 
-                console.log('✅ Session saved successfully');
-                console.log('   → Session ID:', req.sessionID);
-                console.log('   → User ID:', req.user._id);
+                console.log('✅ Session saved to MongoDB');
                 
-                // 🔒 MOBILE FIX: Add explicit Set-Cookie header verification
-                const cookieHeader = res.getHeader('Set-Cookie');
-                console.log('🍪 Set-Cookie header:', cookieHeader);
+                // 🔒 Verify Set-Cookie header
+                const setCookieHeaders = res.getHeader('Set-Cookie');
+                console.log('🍪 Set-Cookie headers being sent:', setCookieHeaders);
                 
-                if (!cookieHeader || !cookieHeader.toString().includes('connect.sid')) {
-                    console.error('⚠️ WARNING: Set-Cookie header missing or invalid!');
-                    console.error('   → Mobile browser may not receive session cookie');
+                if (!setCookieHeaders) {
+                    console.error('❌ CRITICAL: No Set-Cookie header!');
+                    console.error('   This means the browser will NOT receive the cookie');
+                } else if (Array.isArray(setCookieHeaders)) {
+                    const hasSessionCookie = setCookieHeaders.some(h => h.includes('connect.sid'));
+                    console.log('   Has connect.sid cookie:', hasSessionCookie ? '✅' : '❌');
+                } else {
+                    console.log('   Cookie type:', typeof setCookieHeaders);
+                    console.log('   Includes connect.sid:', setCookieHeaders.includes('connect.sid') ? '✅' : '❌');
                 }
                 
-                console.log('🏠 Redirecting to dashboard...');
+                console.log('\n🏠 Redirecting to dashboard...\n');
                 
                 // Add a small delay for mobile browsers to process the cookie
                 if (isMobile) {
