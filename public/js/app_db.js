@@ -410,23 +410,23 @@ const CONFIG = {
     ],
     DEFAULT_MESSAGE_SETTINGS: {
         'new': {
-            immediate: {enabled: false, template: 'היי {{firstName}}! 👋\nתודה שפנית אלינו.\nאשוב אליך בהקדם!'},
+            immediate: {enabled: false, template: 'היי {{firstName}}!\nתודה שפנית אלינו.\nאשוב אליך בהקדם!'},
             followUp: {enabled: false, delay: 1, unit: 'days', template: 'היי {{firstName}},\nעדיין מעוניינת? אשמח לעזור!'}
         },
         'in-process': {
-            immediate: {enabled: true, template: 'שלום {{firstName}}! 😊\nאני כאן לענות על כל שאלה.\nמה חשוב לך לדעת?'},
+            immediate: {enabled: true, template: 'שלום {{firstName}}!\nאני כאן לענות על כל שאלה.\nמה חשוב לך לדעת?'},
             followUp: {enabled: true, delay: 2, unit: 'days', template: 'היי {{firstName}},\nהספקת לחשוב על ההצעה?\nאשמח לעזור בכל דבר!'}
         },
         'contract-sent': {
-            immediate: {enabled: true, template: 'היי {{firstName}}! 🎉\nשלחתי את החוזה לאישור.\nנא לאשר בהקדם כדי לשמור את התאריך!'},
+            immediate: {enabled: true, template: 'היי {{firstName}}!\nשלחתי את החוזה לאישור.\nנא לאשר בהקדם כדי לשמור את התאריך!'},
             followUp: {enabled: true, delay: 3, unit: 'days', template: 'היי {{firstName}},\nהספקת לעבור על החוזה?\nהתאריך עדיין שמור לך!'}
         },
         'closed': {
-            immediate: {enabled: true, template: 'מזל טוב {{firstName}}! 🎊👰\nהזמנת אושרה!\nכל הפרטים שמורים במערכת.\nנתראה בתאריך {{date}}!'},
+            immediate: {enabled: true, template: 'מזל טוב {{firstName}}!\nהזמנת אושרה!\nכל הפרטים שמורים במערכת.\nנתראה בתאריך {{date}}!'},
             followUp: {enabled: false, delay: 7, unit: 'days', template: 'היי {{firstName}},\nמתרגשת לקראת האירוע?\nאני פה לכל שאלה!'}
         },
         'completed': {
-            immediate: {enabled: true, template: 'תודה {{firstName}}! 💕\nהיה כיף לעבוד איתך!\nשתמיד תזכרי את היום המיוחד הזה! 🌟'},
+            immediate: {enabled: true, template: 'תודה {{firstName}}!\nהיה כיף לעבוד איתך!\nשתמיד תזכרי את היום המיוחד הזה!'},
             followUp: {enabled: false, delay: 1, unit: 'days', template: ''}
         },
         'lost': {
