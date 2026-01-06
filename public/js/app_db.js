@@ -3567,9 +3567,52 @@ const StageManager = {
         }
         
         try {
-            await API.updateLead(leadId, this.pendingLead);
+            // First, check if the lead exists in the server
+            let leadExistsInServer = false;
+            try {
+                const checkResponse = await fetch(`${CONFIG.API_BASE_URL}/leads/${leadId}`);
+                leadExistsInServer = checkResponse.ok;
+            } catch (e) {
+                console.warn('Could not check if lead exists:', e);
+            }
+            
+            if (!leadExistsInServer) {
+                console.warn('⚠️ Lead does not exist in server, creating it now...');
+                // Create the lead in the server
+                const createdLead = await API.addLead({
+                    name: this.pendingLead.name,
+                    lastName: this.pendingLead.lastName,
+                    phone: this.pendingLead.phone,
+                    source: this.pendingLead.source || '',
+                    service: this.pendingLead.service || '',
+                    eventDate: this.pendingLead.eventDate || '',
+                    location: this.pendingLead.location || '',
+                    status: this.pendingLead.status || 'new',
+                    stage: this.pendingLead.stage || 'new',
+                    proposedPrice: price,
+                    price: this.pendingLead.price || 0,
+                    isBride: this.pendingLead.isBride || false
+                });
+                
+                // Update the lead with the server ID
+                this.pendingLead._id = createdLead._id;
+                this.pendingLead.id = createdLead._id;
+                
+                // Update State.leads
+                const leadIndex = State.leads.findIndex(l => 
+                    l.phone === this.pendingLead.phone && l.name === this.pendingLead.name
+                );
+                if (leadIndex !== -1) {
+                    State.leads[leadIndex] = createdLead;
+                }
+                
+                console.log('✅ Lead created in server with ID:', createdLead._id);
+            } else {
+                // Lead exists, update it
+                await API.updateLead(leadId, this.pendingLead);
+            }
         } catch (error) {
-            console.error('❌ Failed to update lead:', error);
+            console.error('❌ Failed to save lead:', error);
             alert('שגיאה בשמירת המחיר. אנא נסה שוב.');
             return;
         }
@@ -3621,7 +3664,50 @@ const StageManager = {
         
         // Save to database before closing
         try {
-            await API.updateLead(leadId, this.pendingLead);
+            // First, check if the lead exists in the server
+            let leadExistsInServer = false;
+            try {
+                const checkResponse = await fetch(`${CONFIG.API_BASE_URL}/leads/${leadId}`);
+                leadExistsInServer = checkResponse.ok;
+            } catch (e) {
+                console.warn('Could not check if lead exists:', e);
+            }
+            
+            if (!leadExistsInServer) {
+                console.warn('⚠️ Lead does not exist in server, creating it now...');
+                // Create the lead in the server
+                const createdLead = await API.addLead({
+                    name: this.pendingLead.name,
+                    lastName: this.pendingLead.lastName,
+                    phone: this.pendingLead.phone,
+                    source: this.pendingLead.source || '',
+                    service: this.pendingLead.service || '',
+                    eventDate: this.pendingLead.eventDate || '',
+                    location: this.pendingLead.location || '',
+                    status: this.pendingLead.status || 'new',
+                    stage: this.pendingLead.stage || 'new',
+                    proposedPrice: price > 0 ? price : 0,
+                    price: this.pendingLead.price || 0,
+                    isBride: this.pendingLead.isBride || false
+                });
+                
+                // Update the lead with the server ID
+                this.pendingLead._id = createdLead._id;
+                this.pendingLead.id = createdLead._id;
+                
+                // Update State.leads
+                const leadIndex = State.leads.findIndex(l => 
+                    l.phone === this.pendingLead.phone && l.name === this.pendingLead.name
+                );
+                if (leadIndex !== -1) {
+                    State.leads[leadIndex] = createdLead;
+                }
+                
+                console.log('✅ Lead created in server with ID:', createdLead._id);
+            } else {
+                // Lead exists, update it
+                await API.updateLead(leadId, this.pendingLead);
+            }
         } catch (error) {
             console.error('❌ Failed to update lead:', error);
             // Continue anyway for skip action
