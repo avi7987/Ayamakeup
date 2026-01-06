@@ -1015,14 +1015,20 @@ const LeadsManager = {
     },
     
     async delete(id) {
+        console.log('🗑️ Attempting to delete lead:', id);
         if (!confirm('למחוק את הליד?')) return;
         
         try {
             await API.deleteLead(id);
+            console.log('✅ Lead deleted from server');
             State.leads = State.leads.filter(l => (l._id || l.id) !== id);
+            State.clients = State.clients.filter(c => (c._id || c.id) !== id);
             localStorage.setItem('leads', JSON.stringify(State.leads));
+            localStorage.setItem('clients', JSON.stringify(State.clients));
             LeadsView.render();
+            console.log('✅ Lead removed from state and localStorage');
         } catch (error) {
+            console.error('❌ Delete failed:', error);
             alert("שגיאה במחיקה: " + error.message);
         }
     },
@@ -1609,8 +1615,10 @@ const LeadsView = {
                 <div class="flex gap-2 border-t pt-2 mt-1">
                     <button onclick="viewLead('${leadId}')" class="text-[10px] bg-purple-50 text-purple-600 px-2 py-1 rounded font-bold">הצג פרטים</button>
                     ${contractButton}
-                    <button onclick="markAsNotClosed('${leadId}')" class="text-[10px] bg-gray-100 text-gray-600 px-2 py-1 rounded">לא נסגר</button>
-                    <button onclick="deleteLead('${leadId}')" class="text-[10px] text-red-300 mr-auto">מחק</button>
+                    <div class="mr-auto flex gap-1">
+                        <button onclick="deleteLead('${leadId}')" class="text-[10px] bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded font-medium shadow-sm">מחק</button>
+                        <button onclick="markAsNotClosed('${leadId}')" class="text-[10px] bg-orange-400 hover:bg-orange-500 text-white px-2 py-1 rounded font-medium shadow-sm">לא נסגר</button>
+                    </div>
                 </div>
             </div>
         `;
