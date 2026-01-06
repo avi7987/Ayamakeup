@@ -632,6 +632,8 @@ const API = {
     
     async updateLead(id, data) {
         console.log('📤 Updating lead:', id, 'proposedPrice in data:', data.proposedPrice);
+        console.log('📍 Full lead data being sent:', data);
+        console.log('📍 Request URL will be:', `${CONFIG.API_BASE_URL}/leads/${id}`);
         console.trace('📍 Called from:');
         const result = await this.request(`/leads/${id}`, {
             method: 'PUT',
@@ -3531,7 +3533,17 @@ const StageManager = {
     },
     
     async confirmPrice() {
-        if (!this.pendingLead) return;
+        if (!this.pendingLead) {
+            console.error('❌ No pending lead!');
+            return;
+        }
+        
+        const leadId = this.pendingLead._id || this.pendingLead.id;
+        if (!leadId) {
+            console.error('❌ Lead has no ID!', this.pendingLead);
+            alert('שגיאה: הליד לא מזוהה. אנא נסה שוב.');
+            return;
+        }
         
         const price = parseInt(document.getElementById('price-input').value) || 0;
         
@@ -3539,7 +3551,7 @@ const StageManager = {
         this.pendingLead.proposedPrice = price;
         
         console.log('💰 Confirm Price - Saving:', {
-            leadId: this.pendingLead._id || this.pendingLead.id,
+            leadId: leadId,
             proposedPrice: this.pendingLead.proposedPrice,
             fullLead: this.pendingLead
         });
@@ -3549,7 +3561,13 @@ const StageManager = {
             this.pendingLead.lastName = this.pendingLead.name.split(' ').slice(1).join(' ') || 'לא צוין';
         }
         
-        await API.updateLead(this.pendingLead._id || this.pendingLead.id, this.pendingLead);
+        try {
+            await API.updateLead(leadId, this.pendingLead);
+        } catch (error) {
+            console.error('❌ Failed to update lead:', error);
+            alert('שגיאה בשמירת המחיר. אנא נסה שוב.');
+            return;
+        }
         
         console.log('✅ Price saved to database');
         
@@ -3573,7 +3591,17 @@ const StageManager = {
     },
     
     async skipPrice() {
-        if (!this.pendingLead) return;
+        if (!this.pendingLead) {
+            console.error('❌ No pending lead!');
+            return;
+        }
+        
+        const leadId = this.pendingLead._id || this.pendingLead.id;
+        if (!leadId) {
+            console.error('❌ Lead has no ID!', this.pendingLead);
+            alert('שגיאה: הליד לא מזוהה. אנא נסה שוב.');
+            return;
+        }
         
         // Save the price even when skipping (if user entered something)
         const price = parseInt(document.getElementById('price-input').value) || 0;
@@ -3587,7 +3615,12 @@ const StageManager = {
         }
         
         // Save to database before closing
-        await API.updateLead(this.pendingLead._id || this.pendingLead.id, this.pendingLead);
+        try {
+            await API.updateLead(leadId, this.pendingLead);
+        } catch (error) {
+            console.error('❌ Failed to update lead:', error);
+            // Continue anyway for skip action
+        }
         
         // CRITICAL: Update State.leads with the new price
         const leadInState = State.leads.find(l => (l._id || l.id) === (this.pendingLead._id || this.pendingLead.id));
