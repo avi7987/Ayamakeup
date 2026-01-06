@@ -574,7 +574,6 @@ const API = {
             
             return await response.json();
         } catch (error) {
-            console.error('API Request failed:', error);
             throw error;
         }
     },
@@ -1032,13 +1031,11 @@ const LeadsManager = {
             }
         }
         
-        // Remove from local state
+        // Remove from state
         State.leads = State.leads.filter(l => (l._id || l.id) !== id);
         State.clients = State.clients.filter(c => (c._id || c.id) !== id);
-        localStorage.setItem('leads', JSON.stringify(State.leads));
-        localStorage.setItem('clients', JSON.stringify(State.clients));
         LeadsView.render();
-        console.log('✅ Lead removed from state and localStorage');
+        console.log('✅ Lead removed from state');
     },
     
     async markAsNotClosed(id) {
@@ -1051,7 +1048,6 @@ const LeadsManager = {
             lead.updatedAt = new Date().toISOString();
             
             await API.updateLead(id, lead);
-            localStorage.setItem('leads', JSON.stringify(State.leads));
             LeadsView.render();
         } catch (error) {
             alert("שגיאה בעדכון סטטוס: " + error.message);
