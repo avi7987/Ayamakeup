@@ -4583,10 +4583,6 @@ window.updateBridesmaidsFields = () => {
 window.saveIncome = () => IncomeManager.save();
 window.editClient = (id) => IncomeManager.edit(id);
 window.deleteClient = (id) => IncomeManager.delete(id);
-window.saveLead = () => LeadManager.save();
-window.editLead = (id) => LeadManager.edit(id);
-window.deleteLead = (id) => LeadManager.delete(id);
-window.convertLeadToClient = (leadId) => LeadManager.convertToClient(leadId);
 
 // Page navigation
 window.showPage = (pageId) => {
