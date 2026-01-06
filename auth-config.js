@@ -7,7 +7,22 @@ const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const session = require('express-session');
 const MongoStore = require('connect-mongo').default;
 const path = require('path');
-const { debugMobileAuth, debugOAuthCallback, debugSessionSave } = require('./debug-mobile-auth');
+
+// Optional debug middleware - won't break if module has issues
+let debugMobileAuth, debugOAuthCallback, debugSessionSave;
+try {
+    const debugModule = require('./debug-mobile-auth');
+    debugMobileAuth = debugModule.debugMobileAuth;
+    debugOAuthCallback = debugModule.debugOAuthCallback;
+    debugSessionSave = debugModule.debugSessionSave;
+    console.log('✅ Debug middleware loaded');
+} catch (error) {
+    console.log('⚠️ Debug middleware not available:', error.message);
+    // Fallback: no-op middlewares
+    debugMobileAuth = (req, res, next) => next();
+    debugOAuthCallback = (req, res, next) => next();
+    debugSessionSave = (req, res, next) => next();
+}
 
 /**
  * הגדרת מערכת האימות - להוסיף ל-server לפני כל ה-routes

@@ -2,8 +2,6 @@
 // 🔍 Mobile Authentication Debug Middleware
 // Logs detailed information about mobile authentication flow
 
-const chalk = require('chalk'); // Optional: for colored console output
-
 /**
  * Mobile User-Agent Detection
  */
