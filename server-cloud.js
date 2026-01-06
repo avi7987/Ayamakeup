@@ -640,16 +640,48 @@ app.post('/api/leads', requireAuth, async (req, res) => {
 app.put('/api/leads/:id', requireAuth, async (req, res) => {
     try {
         const userId = req.user._id;
+        console.log('🔍 PUT /api/leads/:id - Received:', {
+            leadId: req.params.id,
+            userId: userId.toString(),
+            bodyKeys: Object.keys(req.body),
+            hasProposedPrice: 'proposedPrice' in req.body,
+            proposedPrice: req.body.proposedPrice
+        });
+        
         const lead = await Lead.findOneAndUpdate(
             { _id: req.params.id, userId },
             req.body,
             { new: true, runValidators: true }
         );
+        
         if (!lead) {
+            console.error('❌ Lead not found:', {
+                searchId: req.params.id,
+                userId: userId.toString()
+            });
+            
+            // Check if lead exists at all
+            const leadExists = await Lead.findById(req.params.id);
+            if (leadExists) {
+                console.error('⚠️ Lead exists but belongs to different user:', {
+                    leadUserId: leadExists.userId.toString(),
+                    requestUserId: userId.toString()
+                });
+            } else {
+                console.error('⚠️ Lead does not exist in database');
+            }
+            
             return res.status(404).json({ error: 'Lead not found' });
         }
+        
+        console.log('✅ Lead updated successfully:', {
+            leadId: lead._id.toString(),
+            proposedPrice: lead.proposedPrice
+        });
+        
         res.json(lead);
     } catch (error) {
+        console.error('❌ Error updating lead:', error);
         res.status(400).json({ error: error.message });
     }
 });
