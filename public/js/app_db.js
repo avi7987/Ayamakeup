@@ -82,28 +82,29 @@ function showUserProfile(user) {
     const loginButtons = document.querySelectorAll('[id*="login"]');
     loginButtons.forEach(btn => btn.classList.add('hidden'));
     
-    // Hide side-nav login button
-    const sideNavLogin = document.getElementById('side-nav-login-btn');
-    if (sideNavLogin) sideNavLogin.classList.add('hidden');
-    
-    // Show side-nav user profile
-    const sideNavProfile = document.getElementById('side-nav-user-profile');
-    if (sideNavProfile) {
-        sideNavProfile.classList.remove('hidden');
-        const sideNavAvatar = document.getElementById('side-nav-avatar');
-        if (sideNavAvatar) {
+    // Header: Show user profile, hide login button
+    const headerLogin = document.getElementById('header-login-btn');
+    const headerProfile = document.getElementById('header-user-profile');
+    if (headerLogin) headerLogin.classList.add('hidden');
+    if (headerProfile) {
+        headerProfile.classList.remove('hidden');
+        const headerUserName = document.getElementById('header-user-name');
+        const headerAvatar = document.getElementById('header-avatar');
+        
+        if (headerUserName) headerUserName.textContent = user.name.split(' ')[0];
+        if (headerAvatar) {
             if (user.picture && user.picture.trim() !== '') {
-                sideNavAvatar.innerHTML = `<img src="${user.picture}" class="w-full h-full rounded-full object-cover" alt="Profile">`;
-                sideNavAvatar.className = "w-6 h-6 rounded-full overflow-hidden";
+                headerAvatar.innerHTML = `<img src="${user.picture}" class="w-full h-full rounded-full object-cover" alt="Profile">`;
+                headerAvatar.className = "w-8 h-8 rounded-full overflow-hidden";
             } else {
                 const firstName = (user.name || 'M').charAt(0).toUpperCase();
-                sideNavAvatar.textContent = firstName;
-                sideNavAvatar.className = "w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center text-white font-bold text-xs";
+                headerAvatar.textContent = firstName;
+                headerAvatar.className = "w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm";
             }
         }
     }
     
-    // Show user menu in top bar (if exists)
+    // Show user menu in top bar (if exists - legacy)
     const userMenu = document.getElementById('user-menu');
     if (userMenu) {
         userMenu.classList.remove('hidden');
@@ -158,7 +159,13 @@ function showUserProfile(user) {
 
 // Show login button
 function showLoginButton() {
-    // Show login button in top bar (if exists)
+    // Header: Show login button, hide user profile
+    const headerLogin = document.getElementById('header-login-btn');
+    const headerProfile = document.getElementById('header-user-profile');
+    if (headerLogin) headerLogin.classList.remove('hidden');
+    if (headerProfile) headerProfile.classList.add('hidden');
+    
+    // Show login button in top bar (if exists - legacy)
     const loginButton = document.getElementById('login-button');
     if (loginButton) {
         loginButton.classList.remove('hidden');
@@ -168,14 +175,6 @@ function showLoginButton() {
     if (userMenu) {
         userMenu.classList.add('hidden');
     }
-    
-    // Show side-nav login button
-    const sideNavLogin = document.getElementById('side-nav-login-btn');
-    if (sideNavLogin) sideNavLogin.classList.remove('hidden');
-    
-    // Hide side-nav user profile
-    const sideNavProfile = document.getElementById('side-nav-user-profile');
-    if (sideNavProfile) sideNavProfile.classList.add('hidden');
     
     // Hide sidebar user profile
     const sidebarProfile = document.getElementById('sidebar-user-profile');
