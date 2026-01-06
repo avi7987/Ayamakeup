@@ -341,6 +341,116 @@ app.get('/api/debug/config', (req, res) => {
     });
 });
 
+// 🔍 NEW: Comprehensive session & cookie debugging endpoint
+app.get('/api/debug/session', (req, res) => {
+    const userAgent = req.get('user-agent');
+    const isMobile = /Mobile|Android|iPhone|iPad/i.test(userAgent);
+    
+    const debugData = {
+        timestamp: new Date().toISOString(),
+        device: isMobile ? 'MOBILE' : 'DESKTOP',
+        userAgent: userAgent,
+        
+        // Request Info
+        request: {
+            protocol: req.protocol,
+            secure: req.secure,
+            host: req.get('host'),
+            origin: req.get('origin') || 'None',
+            referer: req.get('referer') || 'None',
+            ip: req.ip || req.connection.remoteAddress
+        },
+        
+        // Session Info
+        session: {
+            exists: !!req.session,
+            sessionID: req.sessionID || 'None',
+            cookie: req.session ? {
+                maxAge: req.session.cookie.maxAge,
+                expires: req.session.cookie.expires,
+                httpOnly: req.session.cookie.httpOnly,
+                secure: req.session.cookie.secure,
+                sameSite: req.session.cookie.sameSite,
+                domain: req.session.cookie.domain || 'undefined',
+                path: req.session.cookie.path
+            } : 'No session'
+        },
+        
+        // Cookie Headers
+        cookies: {
+            hasCookieHeader: !!req.headers.cookie,
+            rawCookieHeader: req.headers.cookie || 'None',
+            hasSessionCookie: req.headers.cookie?.includes('connect.sid') || false,
+            parsedCookies: req.headers.cookie ? 
+                req.headers.cookie.split(';').map(c => c.trim().split('=')[0]) : []
+        },
+        
+        // Authentication Status
+        auth: {
+            hasAuthMethod: !!req.isAuthenticated,
+            isAuthenticated: req.isAuthenticated ? req.isAuthenticated() : false,
+            hasUser: !!req.user,
+            userId: req.user?._id?.toString() || 'None',
+            userEmail: req.user?.email || 'None'
+        },
+        
+        // Environment Check
+        environment: {
+            nodeEnv: process.env.NODE_ENV || 'development',
+            hasGoogleAuth: !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET),
+            isFallbackMode: !(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET)
+        },
+        
+        // Cookie Configuration Analysis
+        analysis: {
+            cookieSecureOK: req.session ? 
+                (req.protocol === 'https' ? req.session.cookie.secure : true) : 'No session',
+            cookieSameSiteOK: req.session ? 
+                (req.session.cookie.sameSite === 'lax' || req.session.cookie.sameSite === 'none') : 'No session',
+            httpsEnabled: req.protocol === 'https',
+            issues: []
+        }
+    };
+    
+    // Analyze potential issues
+    if (req.session) {
+        if (req.protocol === 'https' && !req.session.cookie.secure) {
+            debugData.analysis.issues.push('❌ HTTPS enabled but cookie.secure=false');
+        }
+        if (req.session.cookie.sameSite === 'none' && !req.session.cookie.secure) {
+            debugData.analysis.issues.push('❌ sameSite=none requires secure=true');
+        }
+        if (!req.headers.cookie && req.sessionID) {
+            debugData.analysis.issues.push('⚠️ Session exists but no cookie header in request');
+        }
+        if (req.headers.cookie && !req.headers.cookie.includes('connect.sid')) {
+            debugData.analysis.issues.push('⚠️ Cookie header exists but no session cookie');
+        }
+        if (req.session && !req.isAuthenticated()) {
+            debugData.analysis.issues.push('⚠️ Session exists but user not authenticated');
+        }
+    }
+    
+    if (debugData.analysis.issues.length === 0) {
+        debugData.analysis.issues.push('✅ No issues detected');
+    }
+    
+    // Log to console for Railway logs
+    console.log('\n' + '='.repeat(80));
+    console.log('🔍 SESSION DEBUG REQUEST');
+    console.log('='.repeat(80));
+    console.log('Device:', debugData.device);
+    console.log('Protocol:', debugData.request.protocol);
+    console.log('Secure:', debugData.request.secure);
+    console.log('Session ID:', debugData.session.sessionID);
+    console.log('Has Cookie:', debugData.cookies.hasCookieHeader);
+    console.log('Authenticated:', debugData.auth.isAuthenticated);
+    console.log('Issues:', debugData.analysis.issues);
+    console.log('='.repeat(80) + '\n');
+    
+    res.json(debugData);
+});
+
 // Health Check
 app.get('/api/health', (req, res) => {
     res.json({ 

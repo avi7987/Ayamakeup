@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔍 Session Debug Tool</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .debug-section {
+            background: #1f2937;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        .debug-label {
+            color: #9ca3af;
+            font-size: 0.875rem;
+            margin-bottom: 0.25rem;
+        }
+        .debug-value {
+            color: #10b981;
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+        }
+        .issue-ok {
+            color: #10b981;
+        }
+        .issue-warning {
+            color: #f59e0b;
+        }
+        .issue-error {
+            color: #ef4444;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white p-4">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold mb-2">🔍 Session & Cookie Debug Tool</h1>
+        <p class="text-gray-400 mb-6">מידע מפורט על ה-session וה-cookies לדיבוג אימות נייד</p>
+        
+        <button id="refreshBtn" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded mb-4">
+            🔄 רענן מידע
+        </button>
+        
+        <button id="testAuthBtn" class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded mb-4 mr-2">
+            🔐 נסה התחברות
+        </button>
+        
+        <div id="loading" class="text-center py-8 hidden">
+            <div class="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+            <p class="mt-4 text-gray-400">טוען מידע...</p>
+        </div>
+        
+        <div id="errorMsg" class="bg-red-900 border border-red-700 rounded p-4 mb-4 hidden">
+            <p class="font-bold">❌ שגיאה</p>
+            <p id="errorText" class="text-sm"></p>
+        </div>
+        
+        <div id="content" class="space-y-4"></div>
+    </div>
+
+    <script>
+        async function loadDebugInfo() {
+            const loading = document.getElementById('loading');
+            const content = document.getElementById('content');
+            const errorMsg = document.getElementById('errorMsg');
+            
+            loading.classList.remove('hidden');
+            content.innerHTML = '';
+            errorMsg.classList.add('hidden');
+            
+            try {
+                const response = await fetch('/api/debug/session');
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                displayDebugInfo(data);
+            } catch (error) {
+                console.error('Error loading debug info:', error);
+                errorMsg.classList.remove('hidden');
+                document.getElementById('errorText').textContent = error.message;
+            } finally {
+                loading.classList.add('hidden');
+            }
+        }
+        
+        function displayDebugInfo(data) {
+            const content = document.getElementById('content');
+            
+            // Analysis / Issues
+            const issuesHtml = `
+                <div class="debug-section border-2 ${data.analysis.issues.some(i => i.includes('❌')) ? 'border-red-500' : 'border-green-500'}">
+                    <h2 class="text-xl font-bold mb-4">⚠️ ניתוח בעיות</h2>
+                    ${data.analysis.issues.map(issue => {
+                        let className = 'issue-ok';
+                        if (issue.includes('❌')) className = 'issue-error';
+                        if (issue.includes('⚠️')) className = 'issue-warning';
+                        return `<p class="${className} text-lg mb-2">${issue}</p>`;
+                    }).join('')}
+                </div>
+            `;
+            
+            // Device Info
+            const deviceHtml = `
+                <div class="debug-section">
+                    <h2 class="text-xl font-bold mb-4">📱 מידע על המכשיר</h2>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <p class="debug-label">סוג מכשיר</p>
+                            <p class="debug-value text-lg">${data.device}</p>
+                        </div>
+                        <div>
+                            <p class="debug-label">זמן</p>
+                            <p class="debug-value">${new Date(data.timestamp).toLocaleString('he-IL')}</p>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <p class="debug-label">User-Agent</p>
+                        <p class="debug-value text-xs break-all">${data.userAgent}</p>
+                    </div>
+                </div>
+            `;
+            
+            // Request Info
+            const requestHtml = `
+                <div class="debug-section">
+                    <h2 class="text-xl font-bold mb-4">🌐 מידע על הבקשה</h2>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <p class="debug-label">Protocol</p>
+                            <p class="debug-value">${data.request.protocol}</p>
+                        </div>
+                        <div>
+                            <p class="debug-label">Secure (HTTPS)</p>
+                            <p class="debug-value">${data.request.secure ? '✅ כן' : '❌ לא'}</p>
+                        </div>
+                        <div>
+                            <p class="debug-label">Host</p>
+                            <p class="debug-value">${data.request.host}</p>
+                        </div>
+                        <div>
+                            <p class="debug-label">IP Address</p>
+                            <p class="debug-value">${data.request.ip}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Cookie Configuration
+            const cookieConfigHtml = data.session.cookie !== 'No session' ? `
+                <div class="debug-section">
+                    <h2 class="text-xl font-bold mb-4">🍪 הגדרות Cookie</h2>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <p class="debug-label">httpOnly</p>
+                            <p class="debug-value ${data.session.cookie.httpOnly ? 'text-green-400' : 'text-red-400'}">
+                                ${data.session.cookie.httpOnly ? '✅ true' : '❌ false'}
+                            </p>
+                        </div>
+                        <div>
+                            <p class="debug-label">secure</p>
+                            <p class="debug-value ${data.session.cookie.secure ? 'text-green-400' : 'text-red-400'}">
+                                ${data.session.cookie.secure ? '✅ true' : '❌ false'}
+                            </p>
+                        </div>
+                        <div>
+                            <p class="debug-label">sameSite</p>
+                            <p class="debug-value ${data.session.cookie.sameSite === 'lax' || data.session.cookie.sameSite === 'none' ? 'text-green-400' : 'text-yellow-400'}">
+                                ${data.session.cookie.sameSite}
+                            </p>
+                        </div>
+                        <div>
+                            <p class="debug-label">domain</p>
+                            <p class="debug-value">${data.session.cookie.domain}</p>
+                        </div>
+                        <div>
+                            <p class="debug-label">path</p>
+                            <p class="debug-value">${data.session.cookie.path}</p>
+                        </div>
+                        <div>
+                            <p class="debug-label">maxAge</p>
+                            <p class="debug-value">${Math.round(data.session.cookie.maxAge / 1000 / 60 / 60 / 24)} ימים</p>
+                        </div>
+                    </div>
+                </div>
+            ` : `
+                <div class="debug-section border-2 border-red-500">
+                    <h2 class="text-xl font-bold mb-4">🍪 הגדרות Cookie</h2>
+                    <p class="text-red-400 text-lg">❌ אין session פעיל</p>
+                </div>
+            `;
+            
+            // Session Info
+            const sessionHtml = `
+                <div class="debug-section">
+                    <h2 class="text-xl font-bold mb-4">📦 מידע על Session</h2>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <p class="debug-label">Session קיים</p>
+                            <p class="debug-value">${data.session.exists ? '✅ כן' : '❌ לא'}</p>
+                        </div>
+                        <div>
+                            <p class="debug-label">Session ID</p>
+                            <p class="debug-value text-xs break-all">${data.session.sessionID}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Cookie Headers
+            const cookieHeadersHtml = `
+                <div class="debug-section">
+                    <h2 class="text-xl font-bold mb-4">🍪 Cookie Headers</h2>
+                    <div class="space-y-2">
+                        <div>
+                            <p class="debug-label">יש Cookie Header</p>
+                            <p class="debug-value">${data.cookies.hasCookieHeader ? '✅ כן' : '❌ לא'}</p>
+                        </div>
+                        <div>
+                            <p class="debug-label">יש Session Cookie (connect.sid)</p>
+                            <p class="debug-value">${data.cookies.hasSessionCookie ? '✅ כן' : '❌ לא'}</p>
+                        </div>
+                        <div>
+                            <p class="debug-label">Raw Cookie Header</p>
+                            <p class="debug-value text-xs break-all">${data.cookies.rawCookieHeader}</p>
+                        </div>
+                        ${data.cookies.parsedCookies.length > 0 ? `
+                        <div>
+                            <p class="debug-label">Cookies שנשלחו</p>
+                            <div class="flex flex-wrap gap-2 mt-2">
+                                ${data.cookies.parsedCookies.map(c => `
+                                    <span class="bg-blue-900 px-2 py-1 rounded text-xs">${c}</span>
+                                `).join('')}
+                            </div>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+            
+            // Auth Status
+            const authHtml = `
+                <div class="debug-section">
+                    <h2 class="text-xl font-bold mb-4">🔐 סטטוס אימות</h2>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <p class="debug-label">מאומת</p>
+                            <p class="debug-value text-lg ${data.auth.isAuthenticated ? 'text-green-400' : 'text-red-400'}">
+                                ${data.auth.isAuthenticated ? '✅ כן' : '❌ לא'}
+                            </p>
+                        </div>
+                        <div>
+                            <p class="debug-label">יש User</p>
+                            <p class="debug-value">${data.auth.hasUser ? '✅ כן' : '❌ לא'}</p>
+                        </div>
+                        ${data.auth.hasUser ? `
+                        <div>
+                            <p class="debug-label">User Email</p>
+                            <p class="debug-value">${data.auth.userEmail}</p>
+                        </div>
+                        <div>
+                            <p class="debug-label">User ID</p>
+                            <p class="debug-value text-xs">${data.auth.userId}</p>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+            
+            // Environment
+            const envHtml = `
+                <div class="debug-section">
+                    <h2 class="text-xl font-bold mb-4">⚙️ סביבה</h2>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <p class="debug-label">NODE_ENV</p>
+                            <p class="debug-value">${data.environment.nodeEnv}</p>
+                        </div>
+                        <div>
+                            <p class="debug-label">Google Auth מוגדר</p>
+                            <p class="debug-value">${data.environment.hasGoogleAuth ? '✅ כן' : '❌ לא'}</p>
+                        </div>
+                        <div>
+                            <p class="debug-label">Fallback Mode</p>
+                            <p class="debug-value">${data.environment.isFallbackMode ? '⚠️ כן' : '✅ לא'}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            content.innerHTML = issuesHtml + deviceHtml + requestHtml + cookieConfigHtml + sessionHtml + cookieHeadersHtml + authHtml + envHtml;
+        }
+        
+        document.getElementById('refreshBtn').addEventListener('click', loadDebugInfo);
+        
+        document.getElementById('testAuthBtn').addEventListener('click', () => {
+            window.location.href = '/auth/google';
+        });
+        
+        // Load on page load
+        loadDebugInfo();
+        
+        // Auto-refresh every 5 seconds
+        setInterval(loadDebugInfo, 5000);
+    </script>
+</body>
+</html>
