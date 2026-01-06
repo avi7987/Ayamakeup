@@ -616,6 +616,33 @@ const API = {
         return await this.request('/leads');
     },
     
+    // Helper: Create clean lead data without _id for server creation
+    createLeadData(lead) {
+        return {
+            name: lead.name,
+            lastName: lead.lastName || '',
+            phone: lead.phone,
+            source: lead.source || '',
+            service: lead.service || '',
+            eventDate: lead.eventDate || '',
+            location: lead.location || '',
+            status: lead.status || 'new',
+            stage: lead.stage || 'new',
+            proposedPrice: lead.proposedPrice || 0,
+            proposedDeposit: lead.proposedDeposit || 0,
+            escortType: lead.escortType || 'none',
+            escortPrice: lead.escortPrice || 0,
+            bridesmaids: lead.bridesmaids || [],
+            price: lead.price || 0,
+            deposit: lead.deposit || 0,
+            actualDeposit: lead.actualDeposit || 0,
+            isBride: lead.isBride || false,
+            notes: lead.notes || '',
+            stageHistory: lead.stageHistory || [],
+            messageHistory: lead.messageHistory || []
+        };
+    },
+    
     async addLead(data) {
         return await this.request('/leads', {
             method: 'POST',
@@ -2917,7 +2944,7 @@ const WhatsAppAutomation = {
                 
                 if (!leadExistsInServer) {
                     console.warn('⚠️ Lead does not exist in server, creating it now...');
-                    const createdLead = await API.addLead(this.pendingLead);
+                    const createdLead = await API.addLead(API.createLeadData(this.pendingLead));
                     this.pendingLead._id = createdLead._id;
                     this.pendingLead.id = createdLead._id;
                     
@@ -3053,7 +3080,7 @@ const WhatsAppAutomation = {
             
             if (!leadExistsInServer) {
                 console.warn('⚠️ Lead does not exist in server, creating it now...');
-                const createdLead = await API.addLead(this.pendingLead);
+                const createdLead = await API.addLead(API.createLeadData(this.pendingLead));
                 this.pendingLead._id = createdLead._id;
                 this.pendingLead.id = createdLead._id;
                 
@@ -3061,7 +3088,7 @@ const WhatsAppAutomation = {
                     l.phone === this.pendingLead.phone && l.name === this.pendingLead.name
                 );
                 if (leadIndex !== -1) {
-                    State.leads[leadIndex] = createdLead;
+                    State.leads[leadIndex] = {...createdLead, ...this.pendingLead};
                 }
             } else {
                 await API.updateLead(leadId, this.pendingLead);
@@ -3126,7 +3153,7 @@ const WhatsAppAutomation = {
             
             if (!leadExistsInServer) {
                 console.warn('⚠️ Lead does not exist in server, creating it now...');
-                const createdLead = await API.addLead(this.pendingLead);
+                const createdLead = await API.addLead(API.createLeadData(this.pendingLead));
                 this.pendingLead._id = createdLead._id;
                 this.pendingLead.id = createdLead._id;
                 
@@ -3134,7 +3161,7 @@ const WhatsAppAutomation = {
                     l.phone === this.pendingLead.phone && l.name === this.pendingLead.name
                 );
                 if (leadIndex !== -1) {
-                    State.leads[leadIndex] = createdLead;
+                    State.leads[leadIndex] = {...createdLead, ...this.pendingLead};
                 }
             } else {
                 await API.updateLead(leadId, this.pendingLead);
@@ -3235,7 +3262,7 @@ const WhatsAppAutomation = {
                 
                 if (!leadExistsInServer) {
                     console.warn('⚠️ Lead does not exist in server, creating it now...');
-                    const createdLead = await API.addLead(this.pendingLead);
+                    const createdLead = await API.addLead(API.createLeadData(this.pendingLead));
                     this.pendingLead._id = createdLead._id;
                     this.pendingLead.id = createdLead._id;
                     
@@ -3243,7 +3270,7 @@ const WhatsAppAutomation = {
                         l.phone === this.pendingLead.phone && l.name === this.pendingLead.name
                     );
                     if (leadIndex !== -1) {
-                        State.leads[leadIndex] = createdLead;
+                        State.leads[leadIndex] = {...createdLead, ...this.pendingLead};
                     }
                 } else {
                     await API.updateLead(leadId, this.pendingLead);
@@ -3316,7 +3343,7 @@ const WhatsAppAutomation = {
             
             if (!leadExistsInServer) {
                 console.warn('⚠️ Lead does not exist in server, creating it now...');
-                const createdLead = await API.addLead(lead);
+                const createdLead = await API.addLead(API.createLeadData(lead));
                 lead._id = createdLead._id;
                 lead.id = createdLead._id;
                 
@@ -3324,7 +3351,7 @@ const WhatsAppAutomation = {
                     l.phone === lead.phone && l.name === lead.name
                 );
                 if (leadIndex !== -1) {
-                    State.leads[leadIndex] = createdLead;
+                    State.leads[leadIndex] = {...createdLead, ...lead};
                 }
             } else {
                 await API.updateLead(leadId, lead);
@@ -3726,20 +3753,7 @@ const StageManager = {
             if (!leadExistsInServer) {
                 console.warn('⚠️ Lead does not exist in server, creating it now...');
                 // Create the lead in the server
-                const createdLead = await API.addLead({
-                    name: this.pendingLead.name,
-                    lastName: this.pendingLead.lastName,
-                    phone: this.pendingLead.phone,
-                    source: this.pendingLead.source || '',
-                    service: this.pendingLead.service || '',
-                    eventDate: this.pendingLead.eventDate || '',
-                    location: this.pendingLead.location || '',
-                    status: this.pendingLead.status || 'new',
-                    stage: this.pendingLead.stage || 'new',
-                    proposedPrice: price,
-                    price: this.pendingLead.price || 0,
-                    isBride: this.pendingLead.isBride || false
-                });
+                const createdLead = await API.addLead(API.createLeadData(this.pendingLead));
                 
                 // Update the lead with the server ID
                 this.pendingLead._id = createdLead._id;
@@ -3750,7 +3764,7 @@ const StageManager = {
                     l.phone === this.pendingLead.phone && l.name === this.pendingLead.name
                 );
                 if (leadIndex !== -1) {
-                    State.leads[leadIndex] = createdLead;
+                    State.leads[leadIndex] = {...createdLead, ...this.pendingLead};
                 }
                 
                 console.log('✅ Lead created in server with ID:', createdLead._id);
@@ -3823,20 +3837,7 @@ const StageManager = {
             if (!leadExistsInServer) {
                 console.warn('⚠️ Lead does not exist in server, creating it now...');
                 // Create the lead in the server
-                const createdLead = await API.addLead({
-                    name: this.pendingLead.name,
-                    lastName: this.pendingLead.lastName,
-                    phone: this.pendingLead.phone,
-                    source: this.pendingLead.source || '',
-                    service: this.pendingLead.service || '',
-                    eventDate: this.pendingLead.eventDate || '',
-                    location: this.pendingLead.location || '',
-                    status: this.pendingLead.status || 'new',
-                    stage: this.pendingLead.stage || 'new',
-                    proposedPrice: price > 0 ? price : 0,
-                    price: this.pendingLead.price || 0,
-                    isBride: this.pendingLead.isBride || false
-                });
+                const createdLead = await API.addLead(API.createLeadData(this.pendingLead));
                 
                 // Update the lead with the server ID
                 this.pendingLead._id = createdLead._id;
@@ -3847,7 +3848,7 @@ const StageManager = {
                     l.phone === this.pendingLead.phone && l.name === this.pendingLead.name
                 );
                 if (leadIndex !== -1) {
-                    State.leads[leadIndex] = createdLead;
+                    State.leads[leadIndex] = {...createdLead, ...this.pendingLead};
                 }
                 
                 console.log('✅ Lead created in server with ID:', createdLead._id);
