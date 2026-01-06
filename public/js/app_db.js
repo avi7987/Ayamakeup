@@ -1253,8 +1253,10 @@ const LeadProfile = {
                     <div class="bg-green-50 p-4 rounded-xl">
                         <h3 class="font-bold text-green-800 mb-3">פרטים כספיים</h3>
                         <div class="space-y-2 text-sm">
+                            ${lead.proposedPrice ? `<p><b>💰 מחיר מוצע:</b> ₪${(lead.proposedPrice || 0).toLocaleString()}</p>` : ''}
                             <p><b>מחיר:</b> ₪${(lead.price || 0).toLocaleString()}</p>
                             <p><b>מקדמה:</b> ₪${(lead.deposit || 0).toLocaleString()}</p>
+                            ${lead.proposedDeposit ? `<p><b>מקדמה מוצעת:</b> ₪${(lead.proposedDeposit || 0).toLocaleString()}</p>` : ''}
                             <p><b>חוזה:</b> ${lead.contractStatus === 'signed' ? '✅ נחתם' : lead.contractStatus === 'sent' ? '📄 נשלח' : '⏳ ממתין'}</p>
                         </div>
                     </div>
