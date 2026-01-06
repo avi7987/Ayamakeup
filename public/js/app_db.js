@@ -3304,8 +3304,35 @@ const WhatsAppAutomation = {
             FollowUpTimers.startTimer(leadId, newStage, stageSettings.followUp);
         }
         
-        // Save to database
-        await API.updateLead(leadId, lead);
+        // Save to database - with check and create if needed
+        try {
+            let leadExistsInServer = false;
+            try {
+                const checkResponse = await fetch(`${CONFIG.API_BASE_URL}/leads/${leadId}`);
+                leadExistsInServer = checkResponse.ok;
+            } catch (e) {
+                console.warn('Could not check if lead exists:', e);
+            }
+            
+            if (!leadExistsInServer) {
+                console.warn('⚠️ Lead does not exist in server, creating it now...');
+                const createdLead = await API.addLead(lead);
+                lead._id = createdLead._id;
+                lead.id = createdLead._id;
+                
+                const leadIndex = State.leads.findIndex(l => 
+                    l.phone === lead.phone && l.name === lead.name
+                );
+                if (leadIndex !== -1) {
+                    State.leads[leadIndex] = createdLead;
+                }
+            } else {
+                await API.updateLead(leadId, lead);
+            }
+        } catch (error) {
+            console.error('❌ Failed to save lead:', error);
+            // Continue anyway - at least local state is updated
+        }
         
         // Handle Google Calendar for "closed" stage
         if (newStage === 'closed' && lead.eventDate && !lead.calendarEventId) {
