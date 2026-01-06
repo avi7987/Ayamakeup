@@ -1019,10 +1019,28 @@ const LeadsManager = {
         
         try {
             await API.deleteLead(id);
-            State.leads = State.leads.filter(l => l.id !== id);
+            State.leads = State.leads.filter(l => (l._id || l.id) !== id);
+            localStorage.setItem('leads', JSON.stringify(State.leads));
             LeadsView.render();
         } catch (error) {
             alert("שגיאה במחיקה: " + error.message);
+        }
+    },
+    
+    async markAsNotClosed(id) {
+        const lead = State.leads.find(l => (l._id || l.id) === id);
+        if (!lead) return;
+        
+        try {
+            lead.status = 'lost';
+            lead.stage = 'lost';
+            lead.updatedAt = new Date().toISOString();
+            
+            await API.updateLead(id, lead);
+            localStorage.setItem('leads', JSON.stringify(State.leads));
+            LeadsView.render();
+        } catch (error) {
+            alert("שגיאה בעדכון סטטוס: " + error.message);
         }
     },
     
@@ -1591,6 +1609,7 @@ const LeadsView = {
                 <div class="flex gap-2 border-t pt-2 mt-1">
                     <button onclick="viewLead('${leadId}')" class="text-[10px] bg-purple-50 text-purple-600 px-2 py-1 rounded font-bold">הצג פרטים</button>
                     ${contractButton}
+                    <button onclick="markAsNotClosed('${leadId}')" class="text-[10px] bg-gray-100 text-gray-600 px-2 py-1 rounded">לא נסגר</button>
                     <button onclick="deleteLead('${leadId}')" class="text-[10px] text-red-300 mr-auto">מחק</button>
                 </div>
             </div>
@@ -3505,6 +3524,7 @@ window.saveIncome = () => { if (!requireLogin()) return; IncomeManager.save(); }
 window.addLead = () => { if (!requireLogin()) return; LeadsManager.add(); };
 window.viewLead = (id) => LeadsManager.view(id);
 window.deleteLead = (id) => { if (!requireLogin()) return; LeadsManager.delete(id); };
+window.markAsNotClosed = (id) => { if (!requireLogin()) return; LeadsManager.markAsNotClosed(id); };
 window.openManageModal = () => ManageView.open();
 window.startEdit = (id) => { if (!requireLogin()) return; IncomeManager.startEdit(id); };
 window.submitEdit = () => { if (!requireLogin()) return; IncomeManager.update(); };
