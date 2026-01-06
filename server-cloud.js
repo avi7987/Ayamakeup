@@ -707,12 +707,19 @@ app.patch('/api/leads/:id/status', async (req, res) => {
 app.delete('/api/leads/:id', requireAuth, async (req, res) => {
     try {
         const userId = req.user._id;
-        const lead = await Lead.findOneAndDelete({ _id: req.params.id, userId });
+        const leadId = req.params.id;
+        console.log('🗑️ DELETE request for lead:', leadId, 'by user:', userId);
+        
+        const lead = await Lead.findOneAndDelete({ _id: leadId, userId });
         if (!lead) {
+            console.warn('⚠️ Lead not found:', leadId);
             return res.status(404).json({ error: 'Lead not found' });
         }
-        res.json({ message: 'Lead deleted successfully' });
+        
+        console.log('✅ Lead deleted successfully:', leadId);
+        res.json({ message: 'Lead deleted successfully', id: leadId });
     } catch (error) {
+        console.error('❌ Delete error:', error.message);
         res.status(500).json({ error: error.message });
     }
 });

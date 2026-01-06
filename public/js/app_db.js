@@ -1017,25 +1017,32 @@ const LeadsManager = {
         console.log('🗑️ Attempting to delete lead:', id);
         if (!confirm('למחוק את הליד?')) return;
         
+        let deletedFromServer = false;
         try {
-            await API.deleteLead(id);
-            console.log('✅ Lead deleted from server');
+            const result = await API.deleteLead(id);
+            console.log('✅ Lead deleted from server, result:', result);
+            deletedFromServer = true;
         } catch (error) {
+            console.error('❌ Server delete error:', error.message);
             // If lead not found on server, that's OK - it only exists locally
             if (error.message.includes('Lead not found')) {
-                console.warn('⚠️ Lead not found on server, removing from local storage only');
+                console.warn('⚠️ Lead not found on server, will remove from state only');
             } else {
-                console.error('❌ Delete failed:', error);
-                alert("שגיאה במחיקה: " + error.message);
+                alert("שגיאה במחיקה מהשרת: " + error.message);
                 return; // Don't proceed if there's a real error
             }
         }
         
         // Remove from state
+        const beforeCount = State.leads.length;
         State.leads = State.leads.filter(l => (l._id || l.id) !== id);
         State.clients = State.clients.filter(c => (c._id || c.id) !== id);
+        const afterCount = State.leads.length;
+        
+        console.log(`✅ Lead removed from state (${beforeCount} -> ${afterCount})`);
+        console.log(`   Deleted from server: ${deletedFromServer}`);
+        
         LeadsView.render();
-        console.log('✅ Lead removed from state');
     },
     
     async markAsNotClosed(id) {
