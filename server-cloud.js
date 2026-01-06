@@ -272,10 +272,23 @@ app.get('/contract-sign/:leadId', (req, res) => {
 
 // Get current user info - NO AUTH REQUIRED for fallback mode
 app.get('/api/user', (req, res) => {
+    const userAgent = req.get('user-agent');
+    const isMobile = /Mobile|Android|iPhone|iPad/i.test(userAgent);
+    
+    console.log('🔍 /api/user called');
+    console.log('   Device:', isMobile ? 'MOBILE' : 'DESKTOP');
+    console.log('   Has Session:', !!req.session);
+    console.log('   Session ID:', req.sessionID);
+    console.log('   Has Cookie:', !!req.headers.cookie);
+    console.log('   Cookie:', req.headers.cookie?.substring(0, 100));
+    console.log('   isAuthenticated():', req.isAuthenticated ? req.isAuthenticated() : 'N/A');
+    console.log('   Has User:', !!req.user);
+    
     // Check if in fallback mode (no Google credentials)
     const isFallbackMode = !process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET;
     
     if (isFallbackMode) {
+        console.log('   ⚠️ Running in FALLBACK mode');
         // Return fallback mode - allow access without login
         return res.json({
             user: null,
@@ -286,6 +299,7 @@ app.get('/api/user', (req, res) => {
     
     // If Google auth is configured, check if user is authenticated
     if (req.isAuthenticated && req.isAuthenticated()) {
+        console.log('   ✅ User authenticated:', req.user.email);
         return res.json({
             user: {
                 _id: req.user._id,
@@ -299,6 +313,7 @@ app.get('/api/user', (req, res) => {
     }
     
     // Not authenticated and not in fallback mode
+    console.log('   ❌ User NOT authenticated');
     res.json({
         user: null,
         isAuthenticated: false,
@@ -311,6 +326,18 @@ app.get('/api/debug/user', requireAuth, (req, res) => {
     res.json({ 
         user: req.user,
         isAuthenticated: req.isAuthenticated ? req.isAuthenticated() : false
+    });
+});
+
+// Debug endpoint - check OAuth config
+app.get('/api/debug/config', (req, res) => {
+    res.json({
+        hasGoogleClientId: !!process.env.GOOGLE_CLIENT_ID,
+        hasGoogleClientSecret: !!process.env.GOOGLE_CLIENT_SECRET,
+        hasMongoDB: !!process.env.MONGODB_URI,
+        hasSessionSecret: !!process.env.SESSION_SECRET,
+        nodeEnv: process.env.NODE_ENV,
+        callbackUrl: process.env.GOOGLE_CALLBACK_URL || 'not set'
     });
 });
 
