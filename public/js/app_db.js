@@ -78,31 +78,87 @@ function hideLoginPopup() {
 
 // Show user profile in header
 function showUserProfile(user) {
-    document.getElementById('login-button').classList.add('hidden');
-    document.getElementById('user-menu').classList.remove('hidden');
-    document.getElementById('user-name').textContent = user.name.split(' ')[0]; // First name only
+    // Hide all login buttons
+    const loginButtons = document.querySelectorAll('[id*="login"]');
+    loginButtons.forEach(btn => btn.classList.add('hidden'));
     
-    // Set avatar - replace entire container content
-    const avatarContainer = document.getElementById('user-avatar-container');
-    
-    if (user.picture && user.picture.trim() !== '') {
-        // Has picture - show image
-        avatarContainer.innerHTML = `<img src="${user.picture}" alt="User" class="w-full h-full object-cover rounded-full">`;
-    } else {
-        // No picture - show default SVG icon
-        avatarContainer.innerHTML = `<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-        </svg>`;
+    // Show user menu in top bar (if exists)
+    const userMenu = document.getElementById('user-menu');
+    if (userMenu) {
+        userMenu.classList.remove('hidden');
+        document.getElementById('user-name').textContent = user.name.split(' ')[0]; // First name only
+        
+        // Set avatar - replace entire container content
+        const avatarContainer = document.getElementById('user-avatar-container');
+        
+        if (user.picture && user.picture.trim() !== '') {
+            // Has picture - show image
+            avatarContainer.innerHTML = `<img src="${user.picture}" alt="User" class="w-full h-full object-cover rounded-full">`;
+        } else {
+            // No picture - show default SVG icon
+            avatarContainer.innerHTML = `<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+            </svg>`;
+        }
+        
+        document.getElementById('dropdown-user-name').textContent = user.name;
+        document.getElementById('dropdown-user-email').textContent = user.email;
     }
     
-    document.getElementById('dropdown-user-name').textContent = user.name;
-    document.getElementById('dropdown-user-email').textContent = user.email;
+    // Show user profile in sidebar
+    const sidebarProfile = document.getElementById('sidebar-user-profile');
+    if (sidebarProfile) {
+        sidebarProfile.classList.remove('hidden');
+        
+        // Update sidebar user info
+        const sidebarUserName = document.getElementById('sidebar-user-name');
+        const sidebarUserEmail = document.getElementById('sidebar-user-email');
+        const sidebarUserAvatar = document.getElementById('sidebar-user-avatar');
+        
+        if (sidebarUserName) sidebarUserName.textContent = user.name.split(' ')[0];
+        if (sidebarUserEmail) sidebarUserEmail.textContent = user.email;
+        
+        if (sidebarUserAvatar) {
+            if (user.picture && user.picture.trim() !== '') {
+                sidebarUserAvatar.innerHTML = `<img src="${user.picture}" class="w-full h-full rounded-full object-cover" alt="Profile">`;
+            } else {
+                const firstName = (user.name || 'M').charAt(0).toUpperCase();
+                sidebarUserAvatar.innerHTML = firstName;
+            }
+        }
+    }
+    
+    // Hide sidebar login section
+    const sidebarLogin = document.getElementById('sidebar-login-section');
+    if (sidebarLogin) {
+        sidebarLogin.classList.add('hidden');
+    }
 }
 
 // Show login button
 function showLoginButton() {
-    document.getElementById('login-button').classList.remove('hidden');
-    document.getElementById('user-menu').classList.add('hidden');
+    // Show login button in top bar (if exists)
+    const loginButton = document.getElementById('login-button');
+    if (loginButton) {
+        loginButton.classList.remove('hidden');
+    }
+    
+    const userMenu = document.getElementById('user-menu');
+    if (userMenu) {
+        userMenu.classList.add('hidden');
+    }
+    
+    // Hide sidebar user profile
+    const sidebarProfile = document.getElementById('sidebar-user-profile');
+    if (sidebarProfile) {
+        sidebarProfile.classList.add('hidden');
+    }
+    
+    // Show sidebar login section
+    const sidebarLogin = document.getElementById('sidebar-login-section');
+    if (sidebarLogin) {
+        sidebarLogin.classList.remove('hidden');
+    }
 }
 
 // Toggle user dropdown
