@@ -1021,16 +1021,24 @@ const LeadsManager = {
         try {
             await API.deleteLead(id);
             console.log('✅ Lead deleted from server');
-            State.leads = State.leads.filter(l => (l._id || l.id) !== id);
-            State.clients = State.clients.filter(c => (c._id || c.id) !== id);
-            localStorage.setItem('leads', JSON.stringify(State.leads));
-            localStorage.setItem('clients', JSON.stringify(State.clients));
-            LeadsView.render();
-            console.log('✅ Lead removed from state and localStorage');
         } catch (error) {
-            console.error('❌ Delete failed:', error);
-            alert("שגיאה במחיקה: " + error.message);
+            // If lead not found on server, that's OK - it only exists locally
+            if (error.message.includes('Lead not found')) {
+                console.warn('⚠️ Lead not found on server, removing from local storage only');
+            } else {
+                console.error('❌ Delete failed:', error);
+                alert("שגיאה במחיקה: " + error.message);
+                return; // Don't proceed if there's a real error
+            }
         }
+        
+        // Remove from local state
+        State.leads = State.leads.filter(l => (l._id || l.id) !== id);
+        State.clients = State.clients.filter(c => (c._id || c.id) !== id);
+        localStorage.setItem('leads', JSON.stringify(State.leads));
+        localStorage.setItem('clients', JSON.stringify(State.clients));
+        LeadsView.render();
+        console.log('✅ Lead removed from state and localStorage');
     },
     
     async markAsNotClosed(id) {
