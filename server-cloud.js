@@ -710,9 +710,22 @@ app.delete('/api/leads/:id', requireAuth, async (req, res) => {
         const leadId = req.params.id;
         console.log('🗑️ DELETE request for lead:', leadId, 'by user:', userId);
         
-        const lead = await Lead.findOneAndDelete({ _id: leadId, userId });
+        // Build query - same logic as GET /api/leads
+        let query = { _id: leadId };
+        
+        // In fallback mode (default-user-id), allow deleting any lead for backward compatibility
+        if (userId !== 'default-user-id') {
+            query.$or = [
+                { userId: userId },
+                { userId: userId.toString() },
+                { userId: { $exists: false } }, // Also delete leads without userId (legacy data)
+                { userId: null } // Also delete leads with null userId
+            ];
+        }
+        
+        const lead = await Lead.findOneAndDelete(query);
         if (!lead) {
-            console.warn('⚠️ Lead not found:', leadId);
+            console.warn('⚠️ Lead not found:', leadId, 'with query:', JSON.stringify(query));
             return res.status(404).json({ error: 'Lead not found' });
         }
         
