@@ -3541,9 +3541,14 @@ const StageManager = {
         const leadId = this.pendingLead._id || this.pendingLead.id;
         if (!leadId) {
             console.error('❌ Lead has no ID!', this.pendingLead);
+            console.error('❌ pendingLead keys:', Object.keys(this.pendingLead));
+            console.error('❌ pendingLead._id:', this.pendingLead._id);
+            console.error('❌ pendingLead.id:', this.pendingLead.id);
             alert('שגיאה: הליד לא מזוהה. אנא נסה שוב.');
             return;
         }
+        
+        console.log('✅ Lead ID found:', leadId, 'Type:', typeof leadId);
         
         const price = parseInt(document.getElementById('price-input').value) || 0;
         
