@@ -88,18 +88,27 @@ function showUserProfile(user) {
     if (headerLogin) headerLogin.classList.add('hidden');
     if (headerProfile) {
         headerProfile.classList.remove('hidden');
-        const headerUserName = document.getElementById('header-user-name');
-        const headerAvatar = document.getElementById('header-avatar');
         
-        if (headerUserName) headerUserName.textContent = user.name.split(' ')[0];
-        if (headerAvatar) {
-            if (user.picture && user.picture.trim() !== '') {
-                headerAvatar.innerHTML = `<img src="${user.picture}" class="w-full h-full rounded-full object-cover" alt="Profile">`;
-                headerAvatar.className = "w-8 h-8 rounded-full overflow-hidden";
-            } else {
+        // Set avatar image
+        const avatarImg = document.getElementById('header-avatar-img');
+        const avatarFallback = document.getElementById('header-avatar-fallback');
+        
+        if (user.picture && user.picture.trim() !== '') {
+            if (avatarImg) {
+                avatarImg.src = user.picture;
+                avatarImg.classList.remove('hidden');
+            }
+            if (avatarFallback) {
+                avatarFallback.classList.add('hidden');
+            }
+        } else {
+            if (avatarImg) {
+                avatarImg.classList.add('hidden');
+            }
+            if (avatarFallback) {
                 const firstName = (user.name || 'M').charAt(0).toUpperCase();
-                headerAvatar.textContent = firstName;
-                headerAvatar.className = "w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm";
+                avatarFallback.textContent = firstName;
+                avatarFallback.classList.remove('hidden');
             }
         }
     }
@@ -197,8 +206,16 @@ function toggleUserDropdown() {
 
 // Close dropdown when clicking outside
 document.addEventListener('click', (e) => {
-    const userMenu = document.getElementById('user-menu');
+    const headerProfile = document.getElementById('header-user-profile');
     const dropdown = document.getElementById('user-dropdown');
+    
+    // Close if clicking outside the header profile container
+    if (headerProfile && dropdown && !headerProfile.contains(e.target)) {
+        dropdown.classList.add('hidden');
+    }
+    
+    // Legacy support for old user-menu
+    const userMenu = document.getElementById('user-menu');
     if (userMenu && !userMenu.contains(e.target)) {
         dropdown.classList.add('hidden');
     }
