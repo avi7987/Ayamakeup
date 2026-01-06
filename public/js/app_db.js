@@ -2904,7 +2904,37 @@ const WhatsAppAutomation = {
             }
             
             // Save updated lead data
-            await API.updateLead(this.pendingLead._id || this.pendingLead.id, this.pendingLead);
+            try {
+                let leadExistsInServer = false;
+                const leadId = this.pendingLead._id || this.pendingLead.id;
+                
+                try {
+                    const checkResponse = await fetch(`${CONFIG.API_BASE_URL}/leads/${leadId}`);
+                    leadExistsInServer = checkResponse.ok;
+                } catch (e) {
+                    console.warn('Could not check if lead exists:', e);
+                }
+                
+                if (!leadExistsInServer) {
+                    console.warn('⚠️ Lead does not exist in server, creating it now...');
+                    const createdLead = await API.addLead(this.pendingLead);
+                    this.pendingLead._id = createdLead._id;
+                    this.pendingLead.id = createdLead._id;
+                    
+                    const leadIndex = State.leads.findIndex(l => 
+                        l.phone === this.pendingLead.phone && l.name === this.pendingLead.name
+                    );
+                    if (leadIndex !== -1) {
+                        State.leads[leadIndex] = createdLead;
+                    }
+                } else {
+                    await API.updateLead(leadId, this.pendingLead);
+                }
+            } catch (error) {
+                console.error('❌ Failed to save lead:', error);
+                alert('שגיאה בשמירת הנתונים. אנא נסה שוב.');
+                return;
+            }
             
             // Generate contract
             try {
@@ -3010,7 +3040,37 @@ const WhatsAppAutomation = {
         
         // Save lead data first
         console.log('💾 Saving lead data...');
-        await API.updateLead(this.pendingLead._id || this.pendingLead.id, this.pendingLead);
+        try {
+            let leadExistsInServer = false;
+            const leadId = this.pendingLead._id || this.pendingLead.id;
+            
+            try {
+                const checkResponse = await fetch(`${CONFIG.API_BASE_URL}/leads/${leadId}`);
+                leadExistsInServer = checkResponse.ok;
+            } catch (e) {
+                console.warn('Could not check if lead exists:', e);
+            }
+            
+            if (!leadExistsInServer) {
+                console.warn('⚠️ Lead does not exist in server, creating it now...');
+                const createdLead = await API.addLead(this.pendingLead);
+                this.pendingLead._id = createdLead._id;
+                this.pendingLead.id = createdLead._id;
+                
+                const leadIndex = State.leads.findIndex(l => 
+                    l.phone === this.pendingLead.phone && l.name === this.pendingLead.name
+                );
+                if (leadIndex !== -1) {
+                    State.leads[leadIndex] = createdLead;
+                }
+            } else {
+                await API.updateLead(leadId, this.pendingLead);
+            }
+        } catch (error) {
+            console.error('❌ Failed to save lead:', error);
+            alert('שגיאה בשמירת הנתונים. אנא נסה שוב.');
+            return;
+        }
         console.log('✅ Lead data saved');
         
         // Open HTML preview in new tab
@@ -3053,7 +3113,37 @@ const WhatsAppAutomation = {
         
         // Save lead data first
         console.log('💾 Saving lead data...');
-        await API.updateLead(this.pendingLead._id || this.pendingLead.id, this.pendingLead);
+        try {
+            let leadExistsInServer = false;
+            const leadId = this.pendingLead._id || this.pendingLead.id;
+            
+            try {
+                const checkResponse = await fetch(`${CONFIG.API_BASE_URL}/leads/${leadId}`);
+                leadExistsInServer = checkResponse.ok;
+            } catch (e) {
+                console.warn('Could not check if lead exists:', e);
+            }
+            
+            if (!leadExistsInServer) {
+                console.warn('⚠️ Lead does not exist in server, creating it now...');
+                const createdLead = await API.addLead(this.pendingLead);
+                this.pendingLead._id = createdLead._id;
+                this.pendingLead.id = createdLead._id;
+                
+                const leadIndex = State.leads.findIndex(l => 
+                    l.phone === this.pendingLead.phone && l.name === this.pendingLead.name
+                );
+                if (leadIndex !== -1) {
+                    State.leads[leadIndex] = createdLead;
+                }
+            } else {
+                await API.updateLead(leadId, this.pendingLead);
+            }
+        } catch (error) {
+            console.error('❌ Failed to save lead:', error);
+            alert('שגיאה בשמירת הנתונים. אנא נסה שוב.');
+            return;
+        }
         console.log('✅ Lead data saved');
         
         try {
@@ -3120,6 +3210,8 @@ const WhatsAppAutomation = {
     async skipMessage() {
         if (!this.pendingLead || !this.pendingStage) return;
         
+        const leadId = this.pendingLead._id || this.pendingLead.id;
+        
         // DON'T update proposedPrice here - it was already saved in confirmPrice()
         // The in-process-fields are now hidden, so we can't read from them anyway
         
@@ -3130,7 +3222,35 @@ const WhatsAppAutomation = {
             if (this.pendingLead.escortType !== 'none') {
                 this.pendingLead.escortPrice = parseInt(document.getElementById('contract-escortPrice').value) || 0;
             }
-            await API.updateLead(this.pendingLead._id || this.pendingLead.id, this.pendingLead);
+            
+            // Check if lead exists, create if not
+            try {
+                let leadExistsInServer = false;
+                try {
+                    const checkResponse = await fetch(`${CONFIG.API_BASE_URL}/leads/${leadId}`);
+                    leadExistsInServer = checkResponse.ok;
+                } catch (e) {
+                    console.warn('Could not check if lead exists:', e);
+                }
+                
+                if (!leadExistsInServer) {
+                    console.warn('⚠️ Lead does not exist in server, creating it now...');
+                    const createdLead = await API.addLead(this.pendingLead);
+                    this.pendingLead._id = createdLead._id;
+                    this.pendingLead.id = createdLead._id;
+                    
+                    const leadIndex = State.leads.findIndex(l => 
+                        l.phone === this.pendingLead.phone && l.name === this.pendingLead.name
+                    );
+                    if (leadIndex !== -1) {
+                        State.leads[leadIndex] = createdLead;
+                    }
+                } else {
+                    await API.updateLead(leadId, this.pendingLead);
+                }
+            } catch (error) {
+                console.error('❌ Failed to save lead:', error);
+            }
         }
         
         // Just update stage without sending
