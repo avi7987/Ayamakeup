@@ -82,6 +82,27 @@ function showUserProfile(user) {
     const loginButtons = document.querySelectorAll('[id*="login"]');
     loginButtons.forEach(btn => btn.classList.add('hidden'));
     
+    // Hide side-nav login button
+    const sideNavLogin = document.getElementById('side-nav-login-btn');
+    if (sideNavLogin) sideNavLogin.classList.add('hidden');
+    
+    // Show side-nav user profile
+    const sideNavProfile = document.getElementById('side-nav-user-profile');
+    if (sideNavProfile) {
+        sideNavProfile.classList.remove('hidden');
+        const sideNavAvatar = document.getElementById('side-nav-avatar');
+        if (sideNavAvatar) {
+            if (user.picture && user.picture.trim() !== '') {
+                sideNavAvatar.innerHTML = `<img src="${user.picture}" class="w-full h-full rounded-full object-cover" alt="Profile">`;
+                sideNavAvatar.className = "w-6 h-6 rounded-full overflow-hidden";
+            } else {
+                const firstName = (user.name || 'M').charAt(0).toUpperCase();
+                sideNavAvatar.textContent = firstName;
+                sideNavAvatar.className = "w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center text-white font-bold text-xs";
+            }
+        }
+    }
+    
     // Show user menu in top bar (if exists)
     const userMenu = document.getElementById('user-menu');
     if (userMenu) {
@@ -147,6 +168,14 @@ function showLoginButton() {
     if (userMenu) {
         userMenu.classList.add('hidden');
     }
+    
+    // Show side-nav login button
+    const sideNavLogin = document.getElementById('side-nav-login-btn');
+    if (sideNavLogin) sideNavLogin.classList.remove('hidden');
+    
+    // Hide side-nav user profile
+    const sideNavProfile = document.getElementById('side-nav-user-profile');
+    if (sideNavProfile) sideNavProfile.classList.add('hidden');
     
     // Hide sidebar user profile
     const sidebarProfile = document.getElementById('sidebar-user-profile');
