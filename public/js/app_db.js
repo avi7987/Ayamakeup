@@ -4040,8 +4040,14 @@ const StageManager = {
                 note: `עסקה נסגרה - מקדמה: ${actualDeposit.toLocaleString('he-IL')} ₪ (תשלום: ${paymentMethod})`
             });
             
-            // Save lead WITHOUT the flag first - use serverLeadId
-            await API.updateLead(serverLeadId, this.pendingLead);
+            // Save lead WITHOUT the flag first - use serverLeadId and clean data
+            const cleanedData = API.createLeadData(this.pendingLead);
+            const updatedLead = await API.updateLead(serverLeadId, cleanedData);
+            
+            // Update pendingLead with server response to avoid stale data
+            if (updatedLead) {
+                this.pendingLead = updatedLead;
+            }
             
             // Create income record for deposit if amount > 0
             if (actualDeposit > 0) {
@@ -4064,7 +4070,10 @@ const StageManager = {
                 // Mark as recorded ONLY AFTER income was successfully created
                 this.pendingLead.depositIncomeRecorded = true;
                 this.pendingLead.depositIncomeRecordedAt = new Date().toISOString();
-                await API.updateLead(serverLeadId, this.pendingLead);
+                
+                // Clean data again before second update
+                const cleanedData2 = API.createLeadData(this.pendingLead);
+                await API.updateLead(serverLeadId, cleanedData2);
             }
             
             closeModal('modal-deal-closed');
