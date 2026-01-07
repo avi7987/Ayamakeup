@@ -3982,13 +3982,36 @@ const StageManager = {
         if (!this.pendingLead) return;
         
         try {
-            // Reload lead from server to get latest data
+            // Reload lead from server to get latest data, or create if doesn't exist
             const leadId = this.pendingLead._id || this.pendingLead.id;
-            const response = await fetch(`${CONFIG.API_BASE_URL}/leads/${leadId}`);
-            if (response.ok) {
-                const freshLead = await response.json();
-                this.pendingLead = freshLead; // Update with fresh data
+            let freshLead = null;
+            
+            try {
+                const response = await fetch(`${CONFIG.API_BASE_URL}/leads/${leadId}`);
+                if (response.ok) {
+                    freshLead = await response.json();
+                } else if (response.status === 404) {
+                    // Lead doesn't exist - create it first
+                    console.log('⚠️ Lead not found in server, creating...');
+                    const leadData = API.createLeadData(this.pendingLead);
+                    freshLead = await API.addLead(leadData);
+                    console.log('✅ Lead created with ID:', freshLead._id);
+                    
+                    // Update State.leads with new server ID
+                    const leadIndex = State.leads.findIndex(
+                        l => (l._id || l.id) === leadId
+                    );
+                    if (leadIndex !== -1) {
+                        State.leads[leadIndex] = {...freshLead, ...this.pendingLead};
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching/creating lead:', error);
+                // Continue with current lead data
+                freshLead = this.pendingLead;
             }
+            
+            this.pendingLead = freshLead || this.pendingLead; // Update with fresh data or keep current
             
             const actualDeposit = parseInt(document.getElementById('closed-actualDeposit').value) || 0;
             const paymentMethod = document.getElementById('closed-paymentMethod').value;
