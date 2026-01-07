@@ -4002,7 +4002,7 @@ const StageManager = {
                         l => (l._id || l.id) === leadId
                     );
                     if (leadIndex !== -1) {
-                        State.leads[leadIndex] = {...freshLead, ...this.pendingLead};
+                        State.leads[leadIndex] = {...freshLead, ...this.pendingLead, _id: freshLead._id};
                     }
                 }
             } catch (error) {
@@ -4012,6 +4012,10 @@ const StageManager = {
             }
             
             this.pendingLead = freshLead || this.pendingLead; // Update with fresh data or keep current
+            
+            // CRITICAL: Ensure we have the server ID after create
+            const serverLeadId = this.pendingLead._id || this.pendingLead.id;
+            console.log('📍 Using lead ID for update:', serverLeadId);
             
             const actualDeposit = parseInt(document.getElementById('closed-actualDeposit').value) || 0;
             const paymentMethod = document.getElementById('closed-paymentMethod').value;
@@ -4036,8 +4040,8 @@ const StageManager = {
                 note: `עסקה נסגרה - מקדמה: ${actualDeposit.toLocaleString('he-IL')} ₪ (תשלום: ${paymentMethod})`
             });
             
-            // Save lead WITHOUT the flag first
-            await API.updateLead(this.pendingLead._id || this.pendingLead.id, this.pendingLead);
+            // Save lead WITHOUT the flag first - use serverLeadId
+            await API.updateLead(serverLeadId, this.pendingLead);
             
             // Create income record for deposit if amount > 0
             if (actualDeposit > 0) {
@@ -4052,7 +4056,7 @@ const StageManager = {
                     isBride: false,
                     notes: `מקדמה - אירוע: ${this.pendingLead.eventDate || ''} | אמצעי תשלום: ${paymentMethod}`,
                     income: actualDeposit,
-                    leadId: this.pendingLead._id || this.pendingLead.id
+                    leadId: serverLeadId
                 };
                 
                 await API.addClient(incomeRecord);
@@ -4060,7 +4064,7 @@ const StageManager = {
                 // Mark as recorded ONLY AFTER income was successfully created
                 this.pendingLead.depositIncomeRecorded = true;
                 this.pendingLead.depositIncomeRecordedAt = new Date().toISOString();
-                await API.updateLead(this.pendingLead._id || this.pendingLead.id, this.pendingLead);
+                await API.updateLead(serverLeadId, this.pendingLead);
             }
             
             closeModal('modal-deal-closed');
