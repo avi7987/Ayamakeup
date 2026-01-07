@@ -78,15 +78,25 @@ function hideLoginPopup() {
 
 // Show user profile in header
 function showUserProfile(user) {
+    console.log('👤 showUserProfile called with user:', user);
+    
     // Hide all login buttons
     const loginButtons = document.querySelectorAll('[id*="login"]');
+    console.log('🔍 Found login buttons:', loginButtons.length);
     loginButtons.forEach(btn => btn.classList.add('hidden'));
     
     // Header: Show user profile, hide login button
     const headerLogin = document.getElementById('header-login-btn');
     const headerProfile = document.getElementById('header-user-profile');
-    if (headerLogin) headerLogin.classList.add('hidden');
+    console.log('🔍 headerLogin:', headerLogin);
+    console.log('🔍 headerProfile:', headerProfile);
+    
+    if (headerLogin) {
+        console.log('✅ Hiding login button');
+        headerLogin.classList.add('hidden');
+    }
     if (headerProfile) {
+        console.log('✅ Showing user profile');
         headerProfile.classList.remove('hidden');
         
         // Set avatar image
@@ -163,6 +173,21 @@ function showUserProfile(user) {
     const sidebarLogin = document.getElementById('sidebar-login-section');
     if (sidebarLogin) {
         sidebarLogin.classList.add('hidden');
+    }
+    
+    // Update mobile header avatar
+    console.log('📱 Updating mobile header avatar');
+    const mobileAvatar = document.getElementById('mobile-user-avatar');
+    if (mobileAvatar) {
+        console.log('✅ Mobile avatar element found');
+        if (user.picture && user.picture.trim() !== '') {
+            mobileAvatar.innerHTML = `<img src="${user.picture}" class="w-full h-full rounded-full object-cover" alt="Profile">`;
+        } else {
+            const firstName = (user.name || 'M').charAt(0).toUpperCase();
+            mobileAvatar.innerHTML = `<div class="w-full h-full flex items-center justify-center text-white font-bold text-sm bg-gradient-to-br from-purple-500 to-purple-600 rounded-full">${firstName}</div>`;
+        }
+    } else {
+        console.warn('⚠️ Mobile avatar element not found');
     }
 }
 
