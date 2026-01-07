@@ -490,6 +490,12 @@ const State = {
         try {
             console.log('🔄 טוען נתונים מ-MongoDB...');
             console.log('   isAuthenticated:', isAuthenticated);
+            
+            // CRITICAL: Clear existing data first to prevent accumulation
+            this.clients = [];
+            this.leads = [];
+            console.log('🧹 Cleared existing State data');
+            
             // Always load from database
             const [clientsRes, leadsRes] = await Promise.all([
                 fetch(`${CONFIG.API_BASE_URL}/clients`),
@@ -502,12 +508,28 @@ const State = {
                 
                 console.log('✅ Loaded', this.leads.length, 'leads from database');
                 
-                // Check for duplicates
+                // Check for duplicates IN THE DATABASE RESPONSE
                 const leadIds = this.leads.map(l => l._id);
                 const uniqueLeadIds = new Set(leadIds);
                 if (leadIds.length !== uniqueLeadIds.size) {
-                    console.error('🔴 DUPLICATE LEADS IN DATABASE!');
+                    console.error('🔴 DUPLICATE LEADS IN DATABASE RESPONSE!');
                     console.error('   Total:', leadIds.length, 'Unique:', uniqueLeadIds.size);
+                    
+                    // Find and log duplicates
+                    const duplicateIds = leadIds.filter((id, index) => leadIds.indexOf(id) !== index);
+                    console.error('   Duplicate IDs:', duplicateIds);
+                    
+                    // CRITICAL: Remove duplicates - keep only first occurrence
+                    const seenIds = new Set();
+                    this.leads = this.leads.filter(lead => {
+                        if (seenIds.has(lead._id)) {
+                            console.warn('🗑️ Removing duplicate lead:', lead._id, lead.name);
+                            return false;
+                        }
+                        seenIds.add(lead._id);
+                        return true;
+                    });
+                    console.log('✅ After deduplication:', this.leads.length, 'leads');
                 }
                 
                 // Debug: Log proposedPrice values
@@ -1072,13 +1094,24 @@ const LeadsManager = {
     async updateStatus(leadId, newStatus) {
         try {
             const lead = State.leads.find(l => (l._id || l.id) === leadId);
-            if (!lead) return;
+            if (!lead) {
+                console.error('❌ Lead not found in State:', leadId);
+                return;
+            }
             
             // Check if stage manager needs to handle this
             const canProceed = await StageManager.handleStageChange(leadId, newStatus);
             if (!canProceed) return; // Wait for modal
             
             const oldStatus = lead.status;
+            
+            // Prevent status change if already at this status
+            if (oldStatus === newStatus) {
+                console.log('ℹ️ Lead already at status:', newStatus);
+                return;
+            }
+            
+            console.log(`📋 Updating lead ${leadId} from ${oldStatus} to ${newStatus}`);
             
             // Add to stage history
             if (!lead.stageHistory) lead.stageHistory = [];
@@ -1091,8 +1124,18 @@ const LeadsManager = {
             lead.status = newStatus;
             lead.updatedAt = new Date().toISOString();
             
-            // Save full lead data to database (not just status)
-            await API.updateLead(leadId, lead);
+            // Save full lead data to database using clean data
+            const cleanedData = API.createLeadData(lead);
+            const updatedLead = await API.updateLead(leadId, cleanedData);
+            
+            // Update State.leads with server response to prevent stale data
+            if (updatedLead) {
+                const leadIndex = State.leads.findIndex(l => (l._id || l.id) === leadId);
+                if (leadIndex !== -1) {
+                    State.leads[leadIndex] = updatedLead;
+                    console.log('✅ Lead updated in State with server data');
+                }
+            }
             
             // Handle Google Calendar for "closed" (סגורה) stage
             if (newStatus === 'closed' && lead.eventDate && !lead.calendarEventId) {
@@ -1839,6 +1882,15 @@ const LeadsView = {
                 onEnd: async function(evt) {
                     const leadId = evt.item.getAttribute('data-id');
                     const newStatus = evt.to.getAttribute('data-status');
+                    const oldStatus = evt.from.getAttribute('data-status');
+                    
+                    console.log(`🎯 Drag-and-drop: ${leadId} from ${oldStatus} to ${newStatus}`);
+                    
+                    // Prevent if same status
+                    if (oldStatus === newStatus) {
+                        console.log('ℹ️ Same status, no change needed');
+                        return;
+                    }
                     
                     // First check if stage manager needs to handle this
                     const canProceed = await StageManager.handleStageChange(leadId, newStatus);
@@ -1848,6 +1900,12 @@ const LeadsView = {
                         evt.from.appendChild(evt.item);
                         return;
                     }
+                    
+                    // Update status through LeadsManager to ensure proper handling
+                    await LeadsManager.updateStatus(leadId, newStatus);
+                    
+                    // Re-render to show updated data
+                    LeadsView.render();
                     
                     // Now use WhatsApp automation system
                     await WhatsAppAutomation.checkAndPrompt(leadId, newStatus);
