@@ -1594,15 +1594,21 @@ setInterval(() => ReminderSystem.check(), 60000);
 // Views
 const LeadsView = {
     showLostLeads: false,
+    MAX_CLOSED_LEADS_DISPLAY: 10, // Maximum leads to show in 'closed' column
     
     render() {
         const board = document.getElementById('kanban-board');
         
         // Main stages only (5 columns)
-        const mainStages = CONFIG.LEAD_STAGES.map(stage => `
+        const mainStages = CONFIG.LEAD_STAGES.map(stage => {
+            const closedCount = stage.id === 'closed' ? State.leads.filter(l => l.status === 'closed').length : 0;
+            const showViewAllButton = stage.id === 'closed' && closedCount > this.MAX_CLOSED_LEADS_DISPLAY;
+            
+            return `
             <div class="kanban-col">
                 <div class="flex items-center justify-center gap-1 mb-4 border-b pb-2">
                     <h3 class="font-bold text-purple-900 text-center text-xs">${stage.title}</h3>
+                    ${showViewAllButton ? `<button onclick="LeadsView.showAllClosedLeads()" class="text-[10px] bg-purple-100 hover:bg-purple-200 text-purple-700 px-2 py-1 rounded-full font-bold transition-all ml-1">הצג הכל (${closedCount})</button>` : ''}
                     <div class="tooltip-container relative inline-block">
                         <span class="info-icon text-purple-400 cursor-help text-xs">ℹ️</span>
                         <div class="tooltip-text">${stage.tooltip}</div>
@@ -1612,7 +1618,8 @@ const LeadsView = {
                     ${this.renderLeadsForStage(stage.id)}
                 </div>
             </div>
-        `).join('');
+        `;
+        }).join('');
         
         // Lost leads toggle button + conditional column
         const lostCount = State.leads.filter(l => l.status === 'lost').length;
@@ -1655,8 +1662,85 @@ const LeadsView = {
         this.render();
     },
     
+    showAllClosedLeads() {
+        const closedLeads = State.leads
+            .filter(l => l.status === 'closed')
+            .sort((a, b) => {
+                const dateA = a.eventDate ? new Date(a.eventDate) : new Date('9999-12-31');
+                const dateB = b.eventDate ? new Date(b.eventDate) : new Date('9999-12-31');
+                return dateA - dateB; // Closest date first
+            });
+        
+        const leadsHTML = closedLeads.map(lead => {
+            const leadId = lead._id || lead.id;
+            const eventDateDisplay = lead.eventDate || 'לא נקבע';
+            const hasReminders = lead.reminders && lead.reminders.filter(r => !r.completed).length > 0;
+            const reminderBadge = hasReminders ? '<span class="text-amber-500 text-xs">🔔</span>' : '';
+            
+            return `
+                <div class="p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all">
+                    <div class="flex justify-between items-start mb-2">
+                        <div class="flex-1">
+                            <div class="font-bold text-gray-900 dark:text-white text-base mb-1">
+                                ${lead.name} ${lead.lastName || ''} ${reminderBadge}
+                            </div>
+                            <div class="text-sm text-gray-600 dark:text-gray-400">${lead.phone}</div>
+                            <div class="text-sm text-gray-600 dark:text-gray-400 mt-1">${lead.service || ''}</div>
+                            ${lead.isBride ? '<div class="text-sm text-pink-500 mt-1">👰 כלה</div>' : ''}
+                        </div>
+                        <div class="text-left">
+                            <div class="text-xs text-gray-500 dark:text-gray-400">תאריך אירוע:</div>
+                            <div class="font-bold text-purple-600 dark:text-purple-400">${eventDateDisplay}</div>
+                        </div>
+                    </div>
+                    <div class="flex gap-2 mt-3 border-t pt-3">
+                        <button onclick="viewLead('${leadId}'); closeModal('modal-all-closed-leads');" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-bold transition-all">
+                            הצג פרטים
+                        </button>
+                        <button onclick="if(confirm('למחוק את הליד?')) { deleteLead('${leadId}'); closeModal('modal-all-closed-leads'); LeadsView.render(); }" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-bold transition-all">
+                            מחק
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+        
+        const modalContent = `
+            <div class="bg-white dark:bg-gray-900 rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
+                <div class="p-6 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                    <h3 class="text-2xl font-bold text-gray-900 dark:text-white">כל הלידים הסגורים (${closedLeads.length})</h3>
+                    <button onclick="closeModal('modal-all-closed-leads')" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-2xl font-bold">✕</button>
+                </div>
+                <div class="p-6 overflow-y-auto flex-1 space-y-3">
+                    ${leadsHTML || '<div class="text-center text-gray-500 dark:text-gray-400 py-8">אין לידים סגורים</div>'}
+                </div>
+            </div>
+        `;
+        
+        // Create or update modal
+        let modal = document.getElementById('modal-all-closed-leads');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'modal-all-closed-leads';
+            modal.className = 'modal';
+            document.body.appendChild(modal);
+        }
+        
+        modal.innerHTML = modalContent;
+        openModal('modal-all-closed-leads');
+    },
+    
     renderLeadsForStage(stageId) {
-        const leads = State.leads.filter(l => (l.status || 'new') === stageId);
+        let leads = State.leads.filter(l => (l.status || 'new') === stageId);
+        
+        // For 'closed' status - sort by event date (closest first) and limit to MAX_CLOSED_LEADS_DISPLAY
+        if (stageId === 'closed') {
+            leads = leads.sort((a, b) => {
+                const dateA = a.eventDate ? new Date(a.eventDate) : new Date('9999-12-31');
+                const dateB = b.eventDate ? new Date(b.eventDate) : new Date('9999-12-31');
+                return dateA - dateB;
+            }).slice(0, this.MAX_CLOSED_LEADS_DISPLAY);
+        }
         
         // Check for duplicates by ID
         const leadIds = leads.map(l => l._id || l.id);
