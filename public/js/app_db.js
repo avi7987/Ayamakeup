@@ -20,6 +20,9 @@ async function checkAuthStatus() {
         if (data.isAuthenticated && data.user) {
             isAuthenticated = true;
             currentUser = data.user;
+            // Make available globally for mobile profile sheet
+            window.isAuthenticated = true;
+            window.currentUser = data.user;
             showUserProfile(data.user);
             
             // Update mobile header avatar if on mobile
@@ -33,6 +36,8 @@ async function checkAuthStatus() {
             // Not authenticated - show login UI
             isAuthenticated = false;
             currentUser = null;
+            window.isAuthenticated = false;
+            window.currentUser = null;
             showLoginButton();
             showEmptyDashboard();
             console.log('ℹ️ User not authenticated - showing empty dashboard');
@@ -42,6 +47,8 @@ async function checkAuthStatus() {
         // On error, DO NOT load data
         isAuthenticated = false;
         currentUser = null;
+        window.isAuthenticated = false;
+        window.currentUser = null;
         showLoginButton();
         showEmptyDashboard();
     }
