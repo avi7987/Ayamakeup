@@ -410,6 +410,18 @@
             body > div.min-h-screen {
                 margin-right: 0 !important;
             }
+            
+            /* Hide desktop floating buttons on mobile */
+            body > div.fixed.top-4.left-4 {
+                display: none !important;
+            }
+        }
+        
+        /* Hide mobile header on desktop */
+        @media (min-width: 769px) {
+            #mobile-header {
+                display: none !important;
+            }
         }
     </style>
 </head>
@@ -840,10 +852,6 @@
                 <span class="text-2xl">🌙</span>
                 <span class="text-lg font-black text-purple-900 dark:text-purple-100">LUNA</span>
             </div>
-            <!-- Right: Empty spacer for balance -->
-            <div class="w-20">
-                </div>
-            </button>
         </div>
     </div>
     
