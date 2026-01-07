@@ -418,10 +418,10 @@
     <div class="fixed top-4 left-4 z-[100] flex items-center gap-3">
         <!-- Theme Toggle Button -->
         <button onclick="toggleDarkMode()" class="floating-glass-btn w-12 h-12 rounded-full flex items-center justify-center transition-all hover:scale-105" title="מצב כהה">
-            <svg id="moon-icon-header" class="w-5 h-5 text-white block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg id="moon-icon-header" class="w-5 h-5 text-purple-700 dark:text-white block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
             </svg>
-            <svg id="sun-icon-header" class="w-5 h-5 text-white hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg id="sun-icon-header" class="w-5 h-5 text-amber-400 dark:text-white hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
             </svg>
         </button>
@@ -1354,15 +1354,8 @@
 
         <!-- Page: Income Entry -->
         <section id="page-entry" class="hidden main-card p-8 pt-6 max-w-lg mx-auto text-right">
-            <!-- Header with Dark Mode Toggle -->
+            <!-- Header -->
             <div class="relative mb-6">
-                <!-- Dark Mode Toggle - Top Left -->
-                <button onclick="toggleDarkMode()" class="absolute top-0 left-0 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 p-2 rounded-full shadow-md transition-all duration-300 hover:scale-110 z-10">
-                    <svg id="dark-mode-icon-entry" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
-                    </svg>
-                </button>
-                
                 <!-- Centered Logo - Clickable -->
                 <div class="text-center mb-4">
                     <button onclick="window.switchPageNav('home')" class="inline-block cursor-pointer hover:scale-105 transition-transform">
@@ -1399,15 +1392,8 @@
 
         <!-- Page: Leads Management -->
         <section id="page-leads" class="hidden pt-6">
-            <!-- Header with Dark Mode Toggle -->
+            <!-- Header -->
             <div class="relative mb-6">
-                <!-- Dark Mode Toggle - Top Left -->
-                <button onclick="toggleDarkMode()" class="absolute top-0 left-0 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 p-2 rounded-full shadow-md transition-all duration-300 hover:scale-110 z-10">
-                    <svg id="dark-mode-icon-leads" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
-                    </svg>
-                </button>
-                
                 <!-- Centered Logo - Clickable -->
                 <div class="text-center mb-4">
                     <button onclick="window.switchPageNav('home')" class="inline-block cursor-pointer hover:scale-105 transition-transform">
@@ -1466,15 +1452,8 @@
 
         <!-- Page: Statistics -->
         <section id="page-stats" class="hidden text-right pt-6">
-            <!-- Header with Dark Mode Toggle -->
+            <!-- Header -->
             <div class="relative mb-6">
-                <!-- Dark Mode Toggle - Top Left -->
-                <button onclick="toggleDarkMode()" class="absolute top-0 left-0 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 p-2 rounded-full shadow-md transition-all duration-300 hover:scale-110 z-10">
-                    <svg id="dark-mode-icon-stats" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
-                    </svg>
-                </button>
-                
                 <!-- Centered Logo - Clickable -->
                 <div class="text-center mb-4">
                     <button onclick="window.switchPageNav('home')" class="inline-block cursor-pointer hover:scale-105 transition-transform">
@@ -1540,15 +1519,8 @@
 
         <!-- Page: Business Insights -->
         <section id="page-insights" class="hidden pt-6">
-            <!-- Header with Dark Mode Toggle -->
+            <!-- Header -->
             <div class="relative mb-6">
-                <!-- Dark Mode Toggle - Top Left -->
-                <button onclick="toggleDarkMode()" class="absolute top-0 left-0 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 p-2 rounded-full shadow-md transition-all duration-300 hover:scale-110 z-10">
-                    <svg id="dark-mode-icon-insights" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
-                    </svg>
-                </button>
-                
                 <!-- Centered Logo - Clickable -->
                 <div class="text-center mb-4">
                     <button onclick="window.switchPageNav('home')" class="inline-block cursor-pointer hover:scale-105 transition-transform">
@@ -1782,13 +1754,6 @@
         <!-- Page: Contracts Management -->
         <section id="page-contracts" class="hidden pt-6">
             <div class="max-w-6xl mx-auto px-4">
-                <!-- Dark Mode Toggle - Top Left -->
-                <button onclick="toggleDarkMode()" class="fixed top-4 left-4 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 p-2 rounded-full shadow-md transition-all duration-300 hover:scale-110 z-50">
-                    <svg id="dark-mode-icon-contracts" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
-                    </svg>
-                </button>
-                
                 <!-- Header -->
                 <div class="mb-8 flex items-center justify-between">
                     <div>
@@ -1887,12 +1852,6 @@
         <section id="page-social" class="hidden pt-6">
             <div class="max-w-4xl mx-auto">
                 <!-- Dark Mode Toggle - Top Left -->
-                <button onclick="toggleDarkMode()" class="fixed top-4 left-4 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 p-2 rounded-full shadow-md transition-all duration-300 hover:scale-110 z-50">
-                    <svg id="dark-mode-icon-social" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
-                    </svg>
-                </button>
-                
                 <div class="bg-white dark:bg-slate-800 rounded-xl shadow-md p-12 text-center">
                     <div class="mb-6">
                         <svg class="w-32 h-32 mx-auto text-blue-300 dark:text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1938,13 +1897,6 @@
         <!-- Page: Social Strategy -->
         <section id="page-social-strategy" class="hidden pt-6">
             <div class="max-w-4xl mx-auto px-4">
-                <!-- Dark Mode Toggle - Top Left -->
-                <button onclick="toggleDarkMode()" class="fixed top-4 left-4 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 p-2 rounded-full shadow-md transition-all duration-300 hover:scale-110 z-50">
-                    <svg id="dark-mode-icon-social-strategy" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
-                    </svg>
-                </button>
-                
                 <!-- Header with Logo -->
                 <div class="mb-8 flex items-center justify-between">
                     <button onclick="window.switchPageNav('home')" class="inline-block cursor-pointer hover:scale-105 transition-transform">
@@ -2162,13 +2114,6 @@
         <!-- Page: Social Execution -->
         <section id="page-social-execution" class="hidden pt-6">
             <div class="max-w-6xl mx-auto px-4">
-                <!-- Dark Mode Toggle - Top Left -->
-                <button onclick="toggleDarkMode()" class="fixed top-4 left-4 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 p-2 rounded-full shadow-md transition-all duration-300 hover:scale-110 z-50">
-                    <svg id="dark-mode-icon-social-execution" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
-                    </svg>
-                </button>
-                
                 <!-- Header -->
                 <div class="mb-8">
                     <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">🚀 ביצוע והעלאה</h1>
@@ -2241,13 +2186,6 @@
         <!-- Page: Social Planning (AI Weekly Planner) -->
         <section id="page-social-planning" class="hidden pt-6">
             <div class="max-w-7xl mx-auto px-4">
-                <!-- Dark Mode Toggle - Top Left -->
-                <button onclick="toggleDarkMode()" class="fixed top-4 left-4 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 p-2 rounded-full shadow-md transition-all duration-300 hover:scale-110 z-50">
-                    <svg id="dark-mode-icon-social-planning" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
-                    </svg>
-                </button>
-                
                 <!-- Header with Logo -->
                 <div class="mb-6 flex items-center justify-between">
                     <button onclick="window.switchPageNav('home')" class="inline-block cursor-pointer hover:scale-105 transition-transform">
