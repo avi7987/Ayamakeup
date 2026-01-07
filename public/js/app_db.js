@@ -910,8 +910,48 @@ const IncomeManager = {
         if (!confirm('למחוק את הרשומה?')) return;
         
         try {
+            // Get the client record before deleting to check if it's linked to a lead
+            const clientToDelete = State.clients.find(c => (c._id || c.id) === id);
+            const linkedLeadId = clientToDelete?.leadId;
+            
             await API.deleteClient(id);
             State.clients = State.clients.filter(c => (c._id || c.id) !== id);
+            
+            // If this income was linked to a lead, clear the recorded flags
+            if (linkedLeadId) {
+                const linkedLead = State.leads.find(l => (l._id || l.id) === linkedLeadId);
+                if (linkedLead) {
+                    let needsUpdate = false;
+                    
+                    // Check if this was a deposit income
+                    if (clientToDelete.notes && clientToDelete.notes.includes('מקדמה')) {
+                        linkedLead.depositIncomeRecorded = false;
+                        linkedLead.depositIncomeRecordedAt = null;
+                        needsUpdate = true;
+                        console.log('🔓 Cleared deposit income flag for lead:', linkedLeadId);
+                    }
+                    
+                    // Check if this was an event payment income
+                    if (clientToDelete.notes && clientToDelete.notes.includes('תשלום באירוע')) {
+                        linkedLead.eventPaymentIncomeRecorded = false;
+                        linkedLead.eventPaymentIncomeRecordedAt = null;
+                        needsUpdate = true;
+                        console.log('🔓 Cleared event payment income flag for lead:', linkedLeadId);
+                    }
+                    
+                    // Update lead if needed
+                    if (needsUpdate) {
+                        try {
+                            const cleanedData = API.createLeadData(linkedLead);
+                            await API.updateLead(linkedLeadId, cleanedData);
+                            console.log('✅ Lead flags updated after income deletion');
+                        } catch (error) {
+                            console.error('❌ Failed to update lead flags:', error);
+                        }
+                    }
+                }
+            }
+            
             // Update home view
             await HomeView.update();
             ManageView.open();
@@ -1308,6 +1348,12 @@ const LeadProfile = {
                             <p><b>מחיר:</b> ₪${(lead.price || 0).toLocaleString()}</p>
                             <p><b>מקדמה:</b> ₪${(lead.deposit || 0).toLocaleString()}</p>
                             ${lead.proposedDeposit ? `<p><b>מקדמה מוצעת:</b> ₪${(lead.proposedDeposit || 0).toLocaleString()}</p>` : ''}
+                            ${lead.actualDeposit ? `<p><b>מקדמה ששולמה:</b> ₪${(lead.actualDeposit || 0).toLocaleString()}</p>` : ''}
+                            ${lead.depositIncomeRecorded ? `<p class="text-green-600"><b>✅ מקדמה נרשמה בהכנסות</b></p>` : ''}
+                            ${lead.depositIncomeRecordedAt ? `<p class="text-xs text-gray-500">תאריך תיעוד מקדמה: ${new Date(lead.depositIncomeRecordedAt).toLocaleString('he-IL')}</p>` : ''}
+                            ${lead.eventPayment ? `<p><b>תשלום באירוע:</b> ₪${(lead.eventPayment || 0).toLocaleString()}</p>` : ''}
+                            ${lead.eventPaymentIncomeRecorded ? `<p class="text-green-600"><b>✅ תשלום אירוע נרשם בהכנסות</b></p>` : ''}
+                            ${lead.eventPaymentIncomeRecordedAt ? `<p class="text-xs text-gray-500">תאריך תיעוד תשלום: ${new Date(lead.eventPaymentIncomeRecordedAt).toLocaleString('he-IL')}</p>` : ''}
                             <p><b>חוזה:</b> ${lead.contractStatus === 'signed' ? '✅ נחתם' : lead.contractStatus === 'sent' ? '📄 נשלח' : '⏳ ממתין'}</p>
                         </div>
                     </div>
@@ -4655,8 +4701,14 @@ const StageManager = {
             note: `האירוע הושלם - הכנסה כוללת: ${totalIncome.toLocaleString('he-IL')} ₪`
         });
         
-        // Save lead WITHOUT the flag first
-        await API.updateLead(this.pendingLead._id || this.pendingLead.id, this.pendingLead);
+        // Save lead WITHOUT the flag first - use clean data
+        const cleanedData = API.createLeadData(this.pendingLead);
+        const updatedLead = await API.updateLead(this.pendingLead._id || this.pendingLead.id, cleanedData);
+        
+        // Update pendingLead with server response
+        if (updatedLead) {
+            this.pendingLead = updatedLead;
+        }
         
         // Create income record for event payment if amount > 0
         if (eventPayment > 0) {
@@ -4679,7 +4731,10 @@ const StageManager = {
             // Mark as recorded ONLY AFTER income was successfully created
             this.pendingLead.eventPaymentIncomeRecorded = true;
             this.pendingLead.eventPaymentIncomeRecordedAt = new Date().toISOString();
-            await API.updateLead(this.pendingLead._id || this.pendingLead.id, this.pendingLead);
+            
+            // Clean data again before second update
+            const cleanedData2 = API.createLeadData(this.pendingLead);
+            await API.updateLead(this.pendingLead._id || this.pendingLead.id, cleanedData2);
         }
         
         closeModal('modal-event-completed');
