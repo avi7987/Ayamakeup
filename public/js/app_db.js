@@ -501,6 +501,15 @@ const State = {
                 this.leads = await leadsRes.json();
                 
                 console.log('✅ Loaded', this.leads.length, 'leads from database');
+                
+                // Check for duplicates
+                const leadIds = this.leads.map(l => l._id);
+                const uniqueLeadIds = new Set(leadIds);
+                if (leadIds.length !== uniqueLeadIds.size) {
+                    console.error('🔴 DUPLICATE LEADS IN DATABASE!');
+                    console.error('   Total:', leadIds.length, 'Unique:', uniqueLeadIds.size);
+                }
+                
                 // Debug: Log proposedPrice values
                 this.leads.forEach(lead => {
                     if (lead.proposedPrice) {
@@ -987,7 +996,17 @@ const LeadsManager = {
         
         try {
             const savedLead = await API.addLead(data);
-            State.leads.push(savedLead); // Use the lead returned from server with _id
+            console.log('✅ Lead saved to server:', savedLead._id);
+            console.log('📊 State.leads before push:', State.leads.length);
+            
+            // Check if lead already exists
+            const existingLead = State.leads.find(l => l._id === savedLead._id || l.id === savedLead._id);
+            if (existingLead) {
+                console.warn('⚠️ Lead already exists in state, skipping duplicate');
+            } else {
+                State.leads.push(savedLead); // Use the lead returned from server with _id
+                console.log('📊 State.leads after push:', State.leads.length);
+            }
             
             ModalManager.close('modal-new-lead');
             LeadsView.render();
@@ -1638,6 +1657,15 @@ const LeadsView = {
     
     renderLeadsForStage(stageId) {
         const leads = State.leads.filter(l => (l.status || 'new') === stageId);
+        
+        // Check for duplicates by ID
+        const leadIds = leads.map(l => l._id || l.id);
+        const uniqueLeadIds = new Set(leadIds);
+        if (leadIds.length !== uniqueLeadIds.size) {
+            console.error('🔴 DUPLICATE LEADS DETECTED in stage:', stageId);
+            console.error('   Total leads:', leadIds.length, 'Unique IDs:', uniqueLeadIds.size);
+            console.error('   IDs:', leadIds);
+        }
         
         return leads.map(lead => {
             // Check for active reminders
