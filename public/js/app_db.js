@@ -6932,14 +6932,24 @@ window.addGoalRow = function() {
         ];
     }
     
-    // Add new goal
+    // Find first available goal type that isn't already selected
+    const selectedTypes = State.userSettings.customGoals.map(g => g.goalType);
+    const allGoals = [...GoalsManager.predefinedGoals, ...GoalsManager.customGoalOptions];
+    const availableGoal = allGoals.find(g => !selectedTypes.includes(g.id));
+    
+    if (!availableGoal) {
+        alert('⚠️ כל היעדים האפשריים כבר נבחרו');
+        return;
+    }
+    
+    // Add new goal with first available type
     State.userSettings.customGoals.push({ 
-        goalType: 'monthly-income', 
+        goalType: availableGoal.id, 
         target: 0, 
-        label: '💰 הכנסה חודשית' 
+        label: availableGoal.label
     });
     
-    console.log('➕ Added new goal. Total goals:', State.userSettings.customGoals.length);
+    console.log('➕ Added new goal:', availableGoal.label, '| Total goals:', State.userSettings.customGoals.length);
     
     // Re-render
     GoalsManager.renderGoals(State.userSettings.customGoals);
