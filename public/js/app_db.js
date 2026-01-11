@@ -6870,8 +6870,8 @@ const GoalsManager = {
     
     handleGoalTypeChange(index, value) {
         if (!isAuthenticated) return;
+        if (!State.userSettings?.customGoals) return;
         
-        const goals = State.userSettings?.customGoals || [];
         let selectedGoal = this.predefinedGoals.find(g => g.id === value);
         
         // If not found in predefined, check custom options
@@ -6879,20 +6879,20 @@ const GoalsManager = {
             selectedGoal = this.customGoalOptions.find(g => g.id === value);
         }
         
-        if (selectedGoal) {
-            goals[index].goalType = value;
-            goals[index].label = selectedGoal.label;
+        if (selectedGoal && State.userSettings.customGoals[index]) {
+            State.userSettings.customGoals[index].goalType = value;
+            State.userSettings.customGoals[index].label = selectedGoal.label;
         }
         
-        this.renderGoals(goals);
+        this.renderGoals(State.userSettings.customGoals);
     },
     
     removeGoal(index) {
         if (!isAuthenticated) return;
+        if (!State.userSettings?.customGoals) return;
         
-        const goals = State.userSettings?.customGoals || [];
-        goals.splice(index, 1);
-        this.renderGoals(goals);
+        State.userSettings.customGoals.splice(index, 1);
+        this.renderGoals(State.userSettings.customGoals);
     }
 };
 
@@ -6902,10 +6902,32 @@ window.addGoalRow = function() {
         return;
     }
     
-    const goals = State.userSettings?.customGoals || [];
-    goals.push({ goalType: 'monthly-income', target: 0, label: '💰 הכנסה חודשית' });
-    console.log('➕ Added new goal. Total goals:', goals.length);
-    GoalsManager.renderGoals(goals);
+    // Make sure we have State.userSettings initialized
+    if (!State.userSettings) {
+        console.error('❌ State.userSettings not initialized');
+        return;
+    }
+    
+    // Get or initialize customGoals array
+    if (!State.userSettings.customGoals) {
+        State.userSettings.customGoals = [
+            { goalType: 'monthly-income', target: 20000, label: '💰 הכנסה חודשית' },
+            { goalType: 'monthly-leads', target: 30, label: '📊 לידים חדשים' },
+            { goalType: 'monthly-deals', target: 15, label: '✅ עסקאות שנסגרו' }
+        ];
+    }
+    
+    // Add new goal
+    State.userSettings.customGoals.push({ 
+        goalType: 'monthly-income', 
+        target: 0, 
+        label: '💰 הכנסה חודשית' 
+    });
+    
+    console.log('➕ Added new goal. Total goals:', State.userSettings.customGoals.length);
+    
+    // Re-render
+    GoalsManager.renderGoals(State.userSettings.customGoals);
 };
 
 window.saveGoals = async function() {
