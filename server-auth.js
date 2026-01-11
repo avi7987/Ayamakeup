@@ -252,7 +252,23 @@ app.get('/auth/google/callback',
     }
 );
 
-// Logout
+// Logout (support both /auth/logout and /api/logout)
+app.get('/auth/logout', (req, res) => {
+    req.logout((err) => {
+        if (err) {
+            console.error('❌ Logout error:', err);
+            return res.redirect('/');
+        }
+        req.session.destroy((err) => {
+            if (err) {
+                console.error('❌ Session destroy error:', err);
+            }
+            console.log('👋 User logged out successfully');
+            res.redirect('/');
+        });
+    });
+});
+
 app.get('/api/logout', (req, res) => {
     req.logout((err) => {
         if (err) {
