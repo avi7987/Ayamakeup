@@ -18,7 +18,16 @@ const MONGODB_URI = process.env.MONGODB_URI;
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
 const SESSION_SECRET = process.env.SESSION_SECRET || 'ayamakeup-crm-secret-key-change-in-production';
-const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
+
+// Determine BASE_URL - try multiple sources
+let BASE_URL = process.env.BASE_URL;
+if (!BASE_URL && process.env.GOOGLE_CALLBACK_URL) {
+    // Extract from GOOGLE_CALLBACK_URL if BASE_URL not available
+    BASE_URL = process.env.GOOGLE_CALLBACK_URL.replace('/auth/google/callback', '');
+}
+if (!BASE_URL) {
+    BASE_URL = `http://localhost:${PORT}`;
+}
 
 // Debug environment variables
 console.log('🔍 Environment Check:');
