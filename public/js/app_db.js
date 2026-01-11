@@ -39,6 +39,7 @@ async function checkAuthStatus() {
             window.isAuthenticated = false;
             window.currentUser = null;
             showLoginButton();
+            disableActionButtons();
             showEmptyDashboard();
             console.log('ℹ️ User not authenticated - showing empty dashboard');
         }
@@ -48,6 +49,8 @@ async function checkAuthStatus() {
         isAuthenticated = false;
         currentUser = null;
         window.isAuthenticated = false;
+        window.currentUser = null;
+        disableActionButtons();
         window.currentUser = null;
         showLoginButton();
         showEmptyDashboard();
@@ -195,6 +198,32 @@ function showUserProfile(user) {
         }
     } else {
         console.warn('⚠️ Mobile avatar element not found');
+    }
+    
+    // Enable action buttons
+    enableActionButtons();
+}
+
+// Enable action buttons when user is authenticated
+function enableActionButtons() {
+    console.log('✅ Enabling action buttons');
+    const btnAddLead = document.getElementById('btn-add-lead');
+    if (btnAddLead) {
+        btnAddLead.disabled = false;
+        btnAddLead.classList.remove('bg-gray-400', 'cursor-not-allowed');
+        btnAddLead.classList.add('bg-purple-600', 'hover:bg-purple-700');
+    }
+}
+
+// Disable action buttons when user is not authenticated
+function disableActionButtons() {
+    console.log('🔒 Disabling action buttons - user not authenticated');
+    const btnAddLead = document.getElementById('btn-add-lead');
+    if (btnAddLead) {
+        btnAddLead.disabled = true;
+        btnAddLead.classList.remove('bg-purple-600', 'hover:bg-purple-700');
+        btnAddLead.classList.add('bg-gray-400', 'cursor-not-allowed');
+        btnAddLead.title = 'יש להתחבר כדי להוסיף ליד';
     }
 }
 
