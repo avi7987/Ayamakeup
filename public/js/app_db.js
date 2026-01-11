@@ -2048,20 +2048,30 @@ const HomeView = {
             return eventDate >= now && eventDate <= nextWeek;
         }).length;
         
-        // Closed deals this month - COUNT ONLY LEADS IN 'closed' STATUS
+        // Closed deals this month - COUNT ALL LEADS THAT MOVED TO 'closed' THIS MONTH
+        // Even if they later moved to 'completed', they should still count as closed deals
         const closedDeals = State.leads.filter(l => {
-            if (l.status !== 'closed') return false;
-            // Check if the lead was closed this month
-            const closedDate = l.stageHistory?.find(h => h.stage === 'closed')?.timestamp;
-            if (!closedDate) return false;
-            const date = new Date(closedDate);
-            return date.getFullYear() === thisYear && date.getMonth() === thisMonth;
+            // Check stageHistory for when the lead moved to 'closed'
+            const closedEntry = l.stageHistory?.find(h => h.stage === 'closed');
+            if (!closedEntry || !closedEntry.timestamp) return false;
+            
+            const closedDate = new Date(closedEntry.timestamp);
+            const wasClosedThisMonth = closedDate.getFullYear() === thisYear && closedDate.getMonth() === thisMonth;
+            
+            return wasClosedThisMonth;
         }).length;
         
         console.log('📊 Dashboard Stats:', {
             closedDeals,
             totalLeads: State.leads.length,
-            closedLeadsTotal: State.leads.filter(l => l.status === 'closed').length
+            closedLeadsTotal: State.leads.filter(l => l.status === 'closed').length,
+            completedLeadsTotal: State.leads.filter(l => l.status === 'completed').length,
+            closedThisMonth: State.leads.filter(l => {
+                const closedEntry = l.stageHistory?.find(h => h.stage === 'closed');
+                if (!closedEntry) return false;
+                const closedDate = new Date(closedEntry.timestamp);
+                return closedDate.getFullYear() === thisYear && closedDate.getMonth() === thisMonth;
+            }).map(l => `${l.name} (${l.status})`)
         });
         
         // New leads this month
