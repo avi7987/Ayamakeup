@@ -20,6 +20,14 @@ const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
 const SESSION_SECRET = process.env.SESSION_SECRET || 'ayamakeup-crm-secret-key-change-in-production';
 const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
 
+// Debug environment variables
+console.log('🔍 Environment Check:');
+console.log('   PORT:', PORT);
+console.log('   BASE_URL from env:', process.env.BASE_URL);
+console.log('   BASE_URL final:', BASE_URL);
+console.log('   NODE_ENV:', process.env.NODE_ENV);
+console.log('   GOOGLE_CALLBACK_URL:', process.env.GOOGLE_CALLBACK_URL);
+
 if (!MONGODB_URI) {
     console.error('❌ ERROR: MONGODB_URI is not defined in .env file');
     process.exit(1);
