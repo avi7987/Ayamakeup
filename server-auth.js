@@ -327,10 +327,17 @@ app.get('/api/clients/month/:month', isAuthenticated, async (req, res) => {
 // Add new client/income
 app.post('/api/clients', isAuthenticated, async (req, res) => {
     try {
+        // Get the highest id for this user
+        const lastClient = await Client.findOne({ userId: req.user.id })
+            .sort({ id: -1 })
+            .select('id');
+        
+        const nextId = lastClient ? lastClient.id + 1 : 1;
+        
         const clientData = {
             userId: req.user.id,
             userEmail: req.user.email,
-            id: req.body.id,
+            id: nextId, // Auto-generate id
             name: req.body.name,
             amount: req.body.amount,
             date: req.body.date,
@@ -455,9 +462,17 @@ app.get('/api/leads/status/:status', isAuthenticated, async (req, res) => {
 // Add new lead
 app.post('/api/leads', isAuthenticated, async (req, res) => {
     try {
+        // Get the highest id for this user
+        const lastLead = await Lead.findOne({ userId: req.user.id })
+            .sort({ id: -1 })
+            .select('id');
+        
+        const nextId = lastLead ? lastLead.id + 1 : 1;
+        
         const leadData = {
             userId: req.user.id,
             userEmail: req.user.email,
+            id: nextId, // Auto-generate id
             ...req.body
         };
         
