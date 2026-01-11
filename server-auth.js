@@ -369,6 +369,9 @@ app.get('/api/user/settings', isAuthenticated, async (req, res) => {
 // Update user settings
 app.put('/api/user/settings', isAuthenticated, async (req, res) => {
     try {
+        console.log('📝 Updating settings for user:', req.user.email);
+        console.log('📊 Settings data:', JSON.stringify(req.body, null, 2));
+        
         const settings = await UserSettings.findOneAndUpdate(
             { userId: req.user.id },
             { 
@@ -380,8 +383,11 @@ app.put('/api/user/settings', isAuthenticated, async (req, res) => {
             { new: true, upsert: true } // Create if doesn't exist
         );
         
+        console.log('✅ Settings updated. customGoals count:', settings.customGoals?.length || 0);
+        
         res.json(settings);
     } catch (error) {
+        console.error('❌ Error updating settings:', error);
         res.status(500).json({ error: error.message });
     }
 });

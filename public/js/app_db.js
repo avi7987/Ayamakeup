@@ -6927,8 +6927,9 @@ window.saveGoals = async function() {
         return;
     }
     
-    const goals = [];
+    // Read values from DOM and update State
     const rows = document.querySelectorAll('.goal-row');
+    const goals = [];
     
     rows.forEach((row, index) => {
         const goalType = row.querySelector('.goal-type-select').value;
@@ -6941,23 +6942,34 @@ window.saveGoals = async function() {
         }
         
         if (selectedGoal) {
-            const goal = {
+            goals.push({
                 goalType,
                 target,
                 label: selectedGoal.label
-            };
-            goals.push(goal);
+            });
         }
     });
     
     try {
         console.log('💾 Saving', goals.length, 'goals to DB');
+        console.log('📊 Goals data:', JSON.stringify(goals));
         
-        // Save to DB (NOT localStorage)
-        await State.updateSettings({
+        // Update State first
+        if (!State.userSettings) {
+            console.error('❌ State.userSettings is null');
+            alert('שגיאה: הגדרות משתמש לא נטענו');
+            return;
+        }
+        
+        State.userSettings.customGoals = goals;
+        
+        // Save to DB
+        const result = await State.updateSettings({
             ...State.userSettings,
             customGoals: goals
         });
+        
+        console.log('✅ Goals saved successfully:', result);
         
         alert('✅ היעדים נשמרו בהצלחה!');
         closeModal('modal-settings');
