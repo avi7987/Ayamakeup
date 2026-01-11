@@ -228,14 +228,20 @@ app.get('/api/user', (req, res) => {
 });
 
 // Google OAuth login
-app.get('/auth/google',
-    passport.authenticate('google', { scope: ['profile', 'email'] })
-);
+app.get('/auth/google', (req, res, next) => {
+    console.log('🔐 /auth/google called');
+    console.log('   GOOGLE_CLIENT_ID:', GOOGLE_CLIENT_ID ? 'Set' : 'Missing');
+    console.log('   GOOGLE_CLIENT_SECRET:', GOOGLE_CLIENT_SECRET ? 'Set' : 'Missing');
+    console.log('   Callback URL:', process.env.GOOGLE_CALLBACK_URL || `${BASE_URL}/auth/google/callback`);
+    next();
+}, passport.authenticate('google', { scope: ['profile', 'email'] }));
 
 // Google OAuth callback
 app.get('/auth/google/callback',
     passport.authenticate('google', { failureRedirect: '/login.html' }),
     (req, res) => {
+        console.log('✅ Authentication successful!');
+        console.log('   User:', req.user);
         // Successful authentication
         res.redirect('/');
     }
