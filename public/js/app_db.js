@@ -523,6 +523,8 @@ const State = {
             console.log('⚙️ טוען הגדרות משתמש מהשרת...');
             this.userSettings = await API.getUserSettings();
             console.log('✅ הגדרות נטענו:', this.userSettings);
+            console.log('🎯 customGoals טעון:', this.userSettings.customGoals);
+            console.log('🎯 customGoals length:', this.userSettings.customGoals?.length || 0);
             
             // Apply dark mode if set
             if (this.userSettings.darkMode) {
@@ -6751,20 +6753,25 @@ const GoalsManager = {
     
     init() {
         // Load goals from State.userSettings (DB) - NOT localStorage
+        console.log('🔄 GoalsManager.init() called');
+        console.log('🔐 isAuthenticated:', window.isAuthenticated);
+        console.log('👤 State.userSettings:', State.userSettings);
+        console.log('🎯 customGoals:', State.userSettings?.customGoals);
+        
         let savedGoals = [];
         
-        if (isAuthenticated && State.userSettings?.customGoals) {
+        if (window.isAuthenticated && State.userSettings?.customGoals && State.userSettings.customGoals.length > 0) {
             // User is logged in - load their custom goals from DB
             savedGoals = State.userSettings.customGoals;
-            console.log('📊 Loading user goals from DB:', savedGoals);
-        } else if (!isAuthenticated) {
+            console.log('✅ Loading', savedGoals.length, 'user goals from DB:', JSON.stringify(savedGoals));
+        } else if (!window.isAuthenticated) {
             // Not logged in - show 3 default goals (read-only)
             savedGoals = [
                 { goalType: 'monthly-income', target: 20000, label: '💰 הכנסה חודשית' },
                 { goalType: 'monthly-leads', target: 30, label: '📊 לידים חדשים' },
                 { goalType: 'monthly-deals', target: 15, label: '✅ עסקאות שנסגרו' }
             ];
-            console.log('📊 Not logged in - using default goals');
+            console.log('📊 Not logged in - using 3 default goals');
             
             // Disable add goal button
             const addBtn = document.getElementById('add-goal-btn');
@@ -6780,8 +6787,10 @@ const GoalsManager = {
                 { goalType: 'monthly-leads', target: 30, label: '📊 לידים חדשים' },
                 { goalType: 'monthly-deals', target: 15, label: '✅ עסקאות שנסגרו' }
             ];
+            console.log('⚠️ Logged in but no customGoals - using 3 default goals');
         }
         
+        console.log('🎯 Final savedGoals to render:', savedGoals.length, 'goals');
         this.renderGoals(savedGoals);
         
         // Update dashboard display with real data
