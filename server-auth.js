@@ -146,7 +146,7 @@ passport.deserializeUser((user, done) => {
 passport.use(new GoogleStrategy({
     clientID: GOOGLE_CLIENT_ID,
     clientSecret: GOOGLE_CLIENT_SECRET,
-    callbackURL: `${BASE_URL}/auth/google/callback`
+    callbackURL: process.env.GOOGLE_CALLBACK_URL || `${BASE_URL}/auth/google/callback`
 },
 (accessToken, refreshToken, profile, done) => {
     // User object to store in session
@@ -170,11 +170,15 @@ app.use(cors({
 app.use(bodyParser.json());
 
 // Serve static files from public directory
-app.use(express.static(path.join(__dirname, 'public')));
+const publicPath = path.join(__dirname, 'public');
+console.log('📁 Serving static files from:', publicPath);
+app.use(express.static(publicPath));
 
 // Root redirect to index.html
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    const indexPath = path.join(publicPath, 'index.html');
+    console.log('📄 Serving index.html from:', indexPath);
+    res.sendFile(indexPath);
 });
 
 // Authentication middleware
