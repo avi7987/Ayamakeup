@@ -3355,6 +3355,7 @@ const WhatsAppAutomation = {
     },
     
     async previewContractHTML() {
+        if (!requireLogin()) return;
         if (!this.pendingLead) return;
         
         console.log('🔍 Opening HTML preview for lead:', this.pendingLead._id || this.pendingLead.id);
@@ -3420,6 +3421,7 @@ const WhatsAppAutomation = {
     },
     
     async previewContract() {
+        if (!requireLogin()) return;
         if (!this.pendingLead) return;
         
         console.log('📋 Preparing contract preview for lead:', this.pendingLead._id || this.pendingLead.id);
@@ -3488,8 +3490,9 @@ const WhatsAppAutomation = {
         console.log('✅ Lead data saved');
         
         try {
-            console.log('📄 Generating contract...');
-            const result = await ContractManager.generateContract(this.pendingLead._id || this.pendingLead.id);
+            const serverLeadId = this.pendingLead._id || this.pendingLead.id;
+            console.log('📄 Generating contract for lead ID:', serverLeadId);
+            const result = await ContractManager.generateContract(serverLeadId);
             console.log('✅ Contract generated:', result);
             
             // CRITICAL: Save the PDF URL to the lead object
