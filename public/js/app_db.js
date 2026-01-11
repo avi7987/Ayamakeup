@@ -1176,7 +1176,10 @@ const LeadsManager = {
         console.log(`✅ Lead removed from state (${beforeCount} -> ${afterCount})`);
         console.log(`   Deleted from server: ${deletedFromServer}`);
         
+        // Update views
         LeadsView.render();
+        await HomeView.update(); // Update Dashboard to reflect the deletion
+        console.log('📊 Dashboard updated after lead deletion');
     },
     
     async markAsNotClosed(id) {
@@ -2045,8 +2048,21 @@ const HomeView = {
             return eventDate >= now && eventDate <= nextWeek;
         }).length;
         
-        // Closed deals this month
-        const closedDeals = monthlyClients.length;
+        // Closed deals this month - COUNT ONLY LEADS IN 'closed' STATUS
+        const closedDeals = State.leads.filter(l => {
+            if (l.status !== 'closed') return false;
+            // Check if the lead was closed this month
+            const closedDate = l.stageHistory?.find(h => h.stage === 'closed')?.timestamp;
+            if (!closedDate) return false;
+            const date = new Date(closedDate);
+            return date.getFullYear() === thisYear && date.getMonth() === thisMonth;
+        }).length;
+        
+        console.log('📊 Dashboard Stats:', {
+            closedDeals,
+            totalLeads: State.leads.length,
+            closedLeadsTotal: State.leads.filter(l => l.status === 'closed').length
+        });
         
         // New leads this month
         const newLeadsThisMonth = State.leads.filter(l => {
