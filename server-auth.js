@@ -132,11 +132,21 @@ const userSettingsSchema = new mongoose.Schema({
     userId: { type: String, required: true, unique: true, index: true },
     userEmail: { type: String, required: true },
     
-    // Goals
+    // Goals (legacy - for simple 3 goals)
     goals: {
         monthlyIncome: { type: Number, default: 20000 },
         monthlyLeads: { type: Number, default: 30 },
         monthlyDeals: { type: Number, default: 15 }
+    },
+    
+    // Custom Goals - user can define any goals they want
+    customGoals: { 
+        type: Array, 
+        default: [
+            { goalType: 'monthly-income', target: 20000, label: '💰 הכנסה חודשית' },
+            { goalType: 'monthly-leads', target: 30, label: '📊 לידים חדשים' },
+            { goalType: 'monthly-deals', target: 15, label: '✅ עסקאות שנסגרו' }
+        ]
     },
     
     // Message Settings

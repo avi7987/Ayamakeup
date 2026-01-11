@@ -6759,36 +6759,39 @@ const GoalsManager = {
     ],
     
     init() {
-        // Load 3 simple goals from State.userSettings (DB)
-        const goals = State.userSettings?.goals || { monthlyIncome: 20000, monthlyLeads: 30, monthlyDeals: 15 };
+        // Load goals from State.userSettings (DB) - NOT localStorage
+        let savedGoals = [];
         
-        console.log('📊 Loading goals from DB:', goals);
-        
-        // Render the 3 simple goals in settings modal
-        const container = document.getElementById('goals-container');
-        if (container) {
-            container.innerHTML = `
-                <div class="space-y-4">
-                    <div class="bg-white dark:bg-slate-800 p-4 rounded-xl border-2 border-gray-200 dark:border-slate-500">
-                        <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">💰 הכנסה חודשית (₪)</label>
-                        <input type="number" value="${goals.monthlyIncome}" placeholder="20000" 
-                               class="w-full p-3 border border-gray-300 dark:border-slate-500 dark:bg-slate-600 dark:text-white rounded-lg">
-                    </div>
-                    
-                    <div class="bg-white dark:bg-slate-800 p-4 rounded-xl border-2 border-gray-200 dark:border-slate-500">
-                        <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">📊 לידים חדשים</label>
-                        <input type="number" value="${goals.monthlyLeads}" placeholder="30" 
-                               class="w-full p-3 border border-gray-300 dark:border-slate-500 dark:bg-slate-600 dark:text-white rounded-lg">
-                    </div>
-                    
-                    <div class="bg-white dark:bg-slate-800 p-4 rounded-xl border-2 border-gray-200 dark:border-slate-500">
-                        <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">✅ עסקאות שנסגרו</label>
-                        <input type="number" value="${goals.monthlyDeals}" placeholder="15" 
-                               class="w-full p-3 border border-gray-300 dark:border-slate-500 dark:bg-slate-600 dark:text-white rounded-lg">
-                    </div>
-                </div>
-            `;
+        if (isAuthenticated && State.userSettings?.customGoals) {
+            // User is logged in - load their custom goals from DB
+            savedGoals = State.userSettings.customGoals;
+            console.log('📊 Loading user goals from DB:', savedGoals);
+        } else if (!isAuthenticated) {
+            // Not logged in - show 3 default goals (read-only)
+            savedGoals = [
+                { goalType: 'monthly-income', target: 20000, label: '💰 הכנסה חודשית' },
+                { goalType: 'monthly-leads', target: 30, label: '📊 לידים חדשים' },
+                { goalType: 'monthly-deals', target: 15, label: '✅ עסקאות שנסגרו' }
+            ];
+            console.log('📊 Not logged in - using default goals');
+            
+            // Disable add goal button
+            const addBtn = document.getElementById('add-goal-btn');
+            if (addBtn) {
+                addBtn.disabled = true;
+                addBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                addBtn.title = 'יש להתחבר כדי לערוך יעדים';
+            }
+        } else {
+            // Logged in but no goals yet - use defaults
+            savedGoals = [
+                { goalType: 'monthly-income', target: 20000, label: '💰 הכנסה חודשית' },
+                { goalType: 'monthly-leads', target: 30, label: '📊 לידים חדשים' },
+                { goalType: 'monthly-deals', target: 15, label: '✅ עסקאות שנסגרו' }
+            ];
         }
+        
+        this.renderGoals(savedGoals);
         
         // Update dashboard display with real data
         if (typeof updateGoalsSectionDynamic === 'function') {
@@ -6947,45 +6950,41 @@ window.addGoalRow = function() {
 };
 
 window.saveGoals = async function() {
-    // Simple version - just save 3 main goals to DB
-    const incomeInput = document.querySelector('input[placeholder*="הכנסה"]');
-    const leadsInput = document.querySelector('input[placeholder*="לידים"]');
-    const dealsInput = document.querySelector('input[placeholder*="עסקאות"]');
-    
-    // If old system inputs don't exist, try to find new system
-    let monthlyIncome, monthlyLeads, monthlyDeals;
-    
-    if (incomeInput && leadsInput && dealsInput) {
-        monthlyIncome = parseInt(incomeInput.value) || 20000;
-        monthlyLeads = parseInt(leadsInput.value) || 30;
-        monthlyDeals = parseInt(dealsInput.value) || 15;
-    } else {
-        // Parse from dynamic goals system
-        const rows = document.querySelectorAll('.goal-row');
-        monthlyIncome = 20000;
-        monthlyLeads = 30;
-        monthlyDeals = 15;
-        
-        rows.forEach(row => {
-            const goalType = row.querySelector('.goal-type-select')?.value;
-            const target = parseFloat(row.querySelector('.goal-target-input')?.value) || 0;
-            
-            if (goalType === 'monthly_income') monthlyIncome = target;
-            if (goalType === 'monthly_leads') monthlyLeads = target;
-            if (goalType === 'monthly_deals') monthlyDeals = target;
-        });
+    if (!isAuthenticated) {
+        alert('❌ יש להתחבר כדי לשמור יעדים');
+        return;
     }
     
-    try {
-        console.log('💾 Saving goals to DB:', { monthlyIncome, monthlyLeads, monthlyDeals });
+    const goals = [];
+    const rows = document.querySelectorAll('.goal-row');
+    
+    rows.forEach((row, index) => {
+        const goalType = row.querySelector('.goal-type-select').value;
+        const target = parseFloat(row.querySelector('.goal-target-input').value) || 0;
         
+        // Find goal in predefined or custom options
+        let selectedGoal = GoalsManager.predefinedGoals.find(g => g.id === goalType);
+        if (!selectedGoal) {
+            selectedGoal = GoalsManager.customGoalOptions.find(g => g.id === goalType);
+        }
+        
+        if (selectedGoal) {
+            const goal = {
+                goalType,
+                target,
+                label: selectedGoal.label
+            };
+            goals.push(goal);
+        }
+    });
+    
+    try {
+        console.log('💾 Saving', goals.length, 'goals to DB');
+        
+        // Save to DB (NOT localStorage)
         await State.updateSettings({
             ...State.userSettings,
-            goals: {
-                monthlyIncome,
-                monthlyLeads,
-                monthlyDeals
-            }
+            customGoals: goals
         });
         
         alert('✅ היעדים נשמרו בהצלחה!');
@@ -7027,61 +7026,54 @@ function updateGoalsSectionDynamic() {
         return;
     }
     
-    // Load goals from State.userSettings (NOT localStorage)
-    const savedGoals = State.userSettings?.goals || { monthlyIncome: 20000, monthlyLeads: 30, monthlyDeals: 15 };
-    console.log('📊 User goals from DB:', savedGoals);
+    // Load goals from State.userSettings.customGoals (NOT localStorage)
+    let savedGoals = [];
     
-    // Calculate current values
-    const thisMonth = new Date().getMonth();
-    const thisYear = new Date().getFullYear();
+    if (isAuthenticated && State.userSettings?.customGoals) {
+        savedGoals = State.userSettings.customGoals;
+    } else {
+        // Default goals
+        savedGoals = [
+            { goalType: 'monthly-income', target: 20000, label: '💰 הכנסה חודשית' },
+            { goalType: 'monthly-leads', target: 30, label: '📊 לידים חדשים' },
+            { goalType: 'monthly-deals', target: 15, label: '✅ עסקאות שנסגרו' }
+        ];
+    }
     
-    const monthlyClients = State.clients.filter(c => {
-        const date = new Date(c.date);
-        return date.getMonth() === thisMonth && date.getFullYear() === thisYear;
-    });
-    const currentIncome = monthlyClients.reduce((sum, c) => sum + (c.amount || 0), 0);
+    console.log('📊 Display goals from DB:', savedGoals);
     
-    const newLeadsThisMonth = State.leads.filter(l => {
-        const leadDate = new Date(l.createdAt || l.date);
-        return leadDate.getFullYear() === thisYear && leadDate.getMonth() === thisMonth;
-    }).length;
+    if (savedGoals.length === 0) {
+        goalsSection.innerHTML = '<div class="text-center text-gray-500 dark:text-gray-400 py-8">לא הוגדרו יעדים. לחץ על ההגדרות כדי להוסיף.</div>';
+        return;
+    }
     
-    const closedDeals = State.leads.filter(l => {
-        if (l.status !== 'closed' && l.status !== 'completed') return false;
-        const closedEntry = l.stageHistory?.find(h => h.stage === 'closed');
-        if (!closedEntry || !closedEntry.timestamp) return false;
-        const closedDate = new Date(closedEntry.timestamp);
-        return closedDate.getFullYear() === thisYear && closedDate.getMonth() === thisMonth;
-    }).length;
+    // Display all goals
+    const displayGoals = savedGoals;
     
-    // Create 3 default goals
-    const displayGoals = [
-        { 
-            label: 'הכנסות חודשיות', 
-            current: currentIncome, 
-            target: savedGoals.monthlyIncome || 20000, 
-            unit: '₪',
-            color: 'emerald'
-        },
-        { 
-            label: 'לידים חדשים', 
-            current: newLeadsThisMonth, 
-            target: savedGoals.monthlyLeads || 30, 
-            unit: 'לידים',
-            color: 'blue'
-        },
-        { 
-            label: 'עסקאות שנסגרו', 
-            current: closedDeals, 
-            target: savedGoals.monthlyDeals || 15, 
-            unit: 'עסקאות',
-            color: 'purple'
+    const goalsHTML = displayGoals.map((goal, index) => {
+        // Check predefined goals first
+        let selectedGoalDef = GoalsManager.predefinedGoals.find(g => g.id === goal.goalType);
+        
+        // If not found in predefined, check custom goal options
+        if (!selectedGoalDef) {
+            selectedGoalDef = GoalsManager.customGoalOptions.find(g => g.id === goal.goalType);
         }
-    ];
-    
-    const goalsHTML = displayGoals.map(goal => {
-        const percentage = goal.target > 0 ? Math.min(100, Math.round((goal.current / goal.target) * 100)) : 0;
+        
+        // If still not found or no calculate function, skip
+        if (!selectedGoalDef || !selectedGoalDef.calculate) {
+            console.warn('⚠️ Goal not found or no calculate function:', goal.goalType);
+            return '';
+        }
+        
+        const currentValue = selectedGoalDef.calculate();
+        const targetValue = goal.target || 0;
+        const percentage = targetValue > 0 ? Math.min(100, Math.round((currentValue / targetValue) * 100)) : 0;
         const status = percentage >= 90 ? 'עומד ביעד ✔️' : percentage >= 70 ? 'קרוב ליעד ⚠️' : 'רחוק מהיעד';
+        
+        console.log(`📈 Goal: ${goal.label}, Current: ${currentValue}, Target: ${targetValue}, Percentage: ${percentage}%`);
+        
+        const colors = ['emerald', 'blue', 'purple', 'rose', 'amber', 'teal'];
+        const color = colors[index % colors.length];
         
         return `
             <div>
@@ -7089,16 +7081,16 @@ function updateGoalsSectionDynamic() {
                     <div>
                         <div class="text-sm font-semibold text-gray-800 dark:text-gray-100">${goal.label}</div>
                         <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                            <span>${goal.current.toLocaleString()}</span> / <span>${goal.target.toLocaleString()}</span> ${goal.unit}
+                            <span>${currentValue.toLocaleString()}</span> / <span>${targetValue.toLocaleString()}</span> ${selectedGoalDef.unit}
                         </div>
                     </div>
                     <div class="text-left">
-                        <div class="text-xl font-bold text-${goal.color}-600 dark:text-${goal.color}-400">${percentage}%</div>
+                        <div class="text-xl font-bold text-${color}-600 dark:text-${color}-400">${percentage}%</div>
                         <div class="text-xs text-gray-500 dark:text-gray-400">${status}</div>
                     </div>
                 </div>
                 <div class="h-2.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                    <div class="h-full bg-gradient-to-r from-${goal.color}-400 to-${goal.color}-500 rounded-full transition-all duration-1000" style="width: ${percentage}%"></div>
+                    <div class="h-full bg-gradient-to-r from-${color}-400 to-${color}-500 rounded-full transition-all duration-1000" style="width: ${percentage}%"></div>
                 </div>
             </div>
         `;
