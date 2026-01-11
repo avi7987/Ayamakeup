@@ -502,7 +502,9 @@ const State = {
     
     async loadUserSettings() {
         // Load user settings from server (NOT localStorage)
-        if (!isAuthenticated) {
+        console.log('🔄 loadUserSettings called, isAuthenticated:', window.isAuthenticated);
+        
+        if (!window.isAuthenticated) {
             console.log('ℹ️ משתמש לא מחובר - משתמש בהגדרות ברירת מחדל');
             this.userSettings = {
                 goals: {
@@ -510,6 +512,7 @@ const State = {
                     monthlyLeads: 30,
                     monthlyDeals: 15
                 },
+                customGoals: [], // IMPORTANT: Always include customGoals
                 darkMode: false,
                 messageSettings: {},
                 timerSettings: { workMinutes: 25, breakMinutes: 5 },
@@ -526,6 +529,16 @@ const State = {
             console.log('🎯 customGoals טעון:', this.userSettings.customGoals);
             console.log('🎯 customGoals length:', this.userSettings.customGoals?.length || 0);
             
+            // Ensure customGoals exists (backward compatibility)
+            if (!this.userSettings.customGoals) {
+                console.warn('⚠️ customGoals missing - initializing with defaults');
+                this.userSettings.customGoals = [
+                    { goalType: 'monthly-income', target: 20000, label: '💰 הכנסה חודשית' },
+                    { goalType: 'monthly-leads', target: 30, label: '📊 לידים חדשים' },
+                    { goalType: 'monthly-deals', target: 15, label: '✅ עסקאות שנסגרו' }
+                ];
+            }
+            
             // Apply dark mode if set
             if (this.userSettings.darkMode) {
                 document.body.classList.add('dark-mode');
@@ -539,6 +552,7 @@ const State = {
                     monthlyLeads: 30,
                     monthlyDeals: 15
                 },
+                customGoals: [], // IMPORTANT: Always include customGoals
                 darkMode: false
             };
         }
@@ -5502,7 +5516,11 @@ async function initApp() {
     console.log('🚀 Initializing CRM...');
     loadDarkMode(); // Load dark mode preference first
     
-    // Initialize UI elements first
+    // Check authentication status FIRST
+    await checkAuthStatus();
+    console.log('🔐 Auth status checked, isAuthenticated:', window.isAuthenticated);
+    
+    // Initialize UI elements AFTER auth is checked
     await State.init();
     await MessageSettings.init();
     await TimerSettings.init();
@@ -5532,9 +5550,6 @@ async function initApp() {
     // Month filter is already populated in HTML - no need to do anything here
     
     document.getElementById('inc-date').valueAsDate = new Date();
-    
-    // Check authentication status AFTER UI is ready
-    await checkAuthStatus();
     
     // Initial render - Show home page by default
     await switchPage('home');
