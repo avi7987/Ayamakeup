@@ -285,17 +285,8 @@ document.addEventListener('click', (e) => {
 // Logout function
 async function logout() {
     try {
-        const response = await fetch('/auth/logout', { 
-            method: 'POST',
-            credentials: 'include' // Important for cookies
-        });
-        
-        if (response.ok) {
-            console.log('✅ התנתקת בהצלחה');
-            window.location.href = '/'; // Force redirect to home
-        } else {
-            throw new Error('Logout failed');
-        }
+        // Use GET method as server expects GET
+        window.location.href = '/auth/logout';
     } catch (error) {
         console.error('❌ Error logging out:', error);
         // Force reload anyway
