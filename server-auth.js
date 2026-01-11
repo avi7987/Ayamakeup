@@ -130,6 +130,9 @@ leadSchema.index({ userId: 1, id: 1 }, { unique: true });
 const Client = mongoose.model('Client', clientSchema);
 const Lead = mongoose.model('Lead', leadSchema);
 
+// Trust proxy - required for Railway/Heroku
+app.set('trust proxy', 1);
+
 // ==================== SESSION & PASSPORT CONFIGURATION ====================
 
 // Session middleware (using memory store for Railway compatibility)
@@ -138,10 +141,12 @@ app.use(session({
     secret: SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
+    proxy: true, // Trust proxy
     cookie: {
         maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production' // HTTPS only in production
+        secure: true, // Always use secure in production
+        sameSite: 'lax' // Allow OAuth redirects
     }
 }));
 
