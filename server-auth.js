@@ -115,15 +115,12 @@ const Lead = mongoose.model('Lead', leadSchema);
 
 // ==================== SESSION & PASSPORT CONFIGURATION ====================
 
-// Session middleware
+// Session middleware (using memory store for Railway compatibility)
+// Note: Sessions will reset on server restart
 app.use(session({
     secret: SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
-    store: MongoStore.create({
-        mongoUrl: MONGODB_URI,
-        touchAfter: 24 * 3600 // Lazy session update (once per 24 hours)
-    }),
     cookie: {
         maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
         httpOnly: true,
