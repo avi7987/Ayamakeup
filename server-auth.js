@@ -127,8 +127,52 @@ const leadSchema = new mongoose.Schema({
 // Compound index: unique ID per user
 leadSchema.index({ userId: 1, id: 1 }, { unique: true });
 
+// User Settings Schema - stores all user preferences
+const userSettingsSchema = new mongoose.Schema({
+    userId: { type: String, required: true, unique: true, index: true },
+    userEmail: { type: String, required: true },
+    
+    // Goals
+    goals: {
+        monthlyIncome: { type: Number, default: 20000 },
+        monthlyLeads: { type: Number, default: 30 },
+        monthlyDeals: { type: Number, default: 15 }
+    },
+    
+    // Message Settings
+    messageSettings: {
+        templates: { type: Array, default: [] },
+        autoReply: { type: Boolean, default: false },
+        signature: { type: String, default: '' }
+    },
+    
+    // Timer Settings
+    timerSettings: {
+        workMinutes: { type: Number, default: 25 },
+        breakMinutes: { type: Number, default: 5 },
+        autoStart: { type: Boolean, default: false }
+    },
+    
+    // Follow-up Timers
+    followupTimers: { type: Array, default: [] },
+    
+    // UI Preferences
+    darkMode: { type: Boolean, default: false },
+    
+    // Social Strategy
+    socialStrategy: {
+        platforms: { type: Array, default: [] },
+        schedule: { type: Object, default: {} },
+        contentIdeas: { type: Array, default: [] }
+    },
+    
+    createdAt: { type: Date, default: Date.now },
+    updatedAt: { type: Date, default: Date.now }
+});
+
 const Client = mongoose.model('Client', clientSchema);
 const Lead = mongoose.model('Lead', leadSchema);
+const UserSettings = mongoose.model('UserSettings', userSettingsSchema);
 
 // Trust proxy - required for Railway/Heroku
 app.set('trust proxy', 1);
@@ -284,7 +328,75 @@ app.get('/api/logout', (req, res) => {
     });
 });
 
-// ==================== API ROUTES ====================
+// ==================== USER SETTINGS ROUTES ====================
+
+// Get user settings (creates default if not exists)
+app.get('/api/user/settings', isAuthenticated, async (req, res) => {
+    try {
+        let settings = await UserSettings.findOne({ userId: req.user.id });
+        
+        // Create default settings if user doesn't have any
+        if (!settings) {
+            settings = new UserSettings({
+                userId: req.user.id,
+                userEmail: req.user.email,
+                goals: {
+                    monthlyIncome: 20000,
+                    monthlyLeads: 30,
+                    monthlyDeals: 15
+                }
+            });
+            await settings.save();
+            console.log('✨ Created default settings for user:', req.user.email);
+        }
+        
+        res.json(settings);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Update user settings
+app.put('/api/user/settings', isAuthenticated, async (req, res) => {
+    try {
+        const settings = await UserSettings.findOneAndUpdate(
+            { userId: req.user.id },
+            { 
+                ...req.body,
+                userId: req.user.id, // Ensure userId doesn't change
+                userEmail: req.user.email,
+                updatedAt: new Date()
+            },
+            { new: true, upsert: true } // Create if doesn't exist
+        );
+        
+        res.json(settings);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Update specific setting field
+app.patch('/api/user/settings/:field', isAuthenticated, async (req, res) => {
+    try {
+        const { field } = req.params;
+        const updateData = {};
+        updateData[field] = req.body[field];
+        updateData.updatedAt = new Date();
+        
+        const settings = await UserSettings.findOneAndUpdate(
+            { userId: req.user.id },
+            updateData,
+            { new: true, upsert: true }
+        );
+        
+        res.json(settings);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// ==================== CLIENTS ROUTES ====================// ==================== API ROUTES ====================
 
 // Health Check
 app.get('/api/health', (req, res) => {
