@@ -561,7 +561,14 @@ app.get('/api/leads', isAuthenticated, async (req, res) => {
 app.get('/api/leads/:id', isAuthenticated, async (req, res) => {
     try {
         const { id } = req.params;
-        const lead = await Lead.findOne({ userId: req.user.id, id: parseInt(id) });
+        // Support both MongoDB _id and numeric id
+        const lead = await Lead.findOne({ 
+            userId: req.user.id,
+            $or: [
+                { _id: id },
+                { id: parseInt(id) }
+            ]
+        });
         
         if (!lead) {
             return res.status(404).json({ error: 'ליד לא נמצא' });
@@ -620,7 +627,13 @@ app.patch('/api/leads/:id/status', isAuthenticated, async (req, res) => {
         const { status } = req.body;
         
         const lead = await Lead.findOneAndUpdate(
-            { userId: req.user.id, id: parseInt(id) },
+            { 
+                userId: req.user.id,
+                $or: [
+                    { _id: id },
+                    { id: parseInt(id) }
+                ]
+            },
             { status, updatedAt: new Date() },
             { new: true }
         );
@@ -649,7 +662,13 @@ app.put('/api/leads/:id', isAuthenticated, async (req, res) => {
         delete updateData.userEmail;
         
         const lead = await Lead.findOneAndUpdate(
-            { userId: req.user.id, id: parseInt(id) },
+            { 
+                userId: req.user.id,
+                $or: [
+                    { _id: id },
+                    { id: parseInt(id) }
+                ]
+            },
             updateData,
             { new: true }
         );
@@ -668,7 +687,13 @@ app.put('/api/leads/:id', isAuthenticated, async (req, res) => {
 app.delete('/api/leads/:id', isAuthenticated, async (req, res) => {
     try {
         const { id } = req.params;
-        const result = await Lead.deleteOne({ userId: req.user.id, id: parseInt(id) });
+        const result = await Lead.deleteOne({ 
+            userId: req.user.id,
+            $or: [
+                { _id: id },
+                { id: parseInt(id) }
+            ]
+        });
         
         if (result.deletedCount === 0) {
             return res.status(404).json({ error: 'ליד לא נמצא' });
@@ -679,6 +704,247 @@ app.delete('/api/leads/:id', isAuthenticated, async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+
+// ==================== STATISTICS ROUTES ====================
+
+// Contract preview route - Generate HTML preview of contract
+app.get('/api/preview-contract/:id', isAuthenticated, async (req, res) => {
+    try {
+        const { id } = req.params;
+        console.log('📄 Generating contract preview for lead:', id);
+        
+        // Find lead by MongoDB _id OR custom id
+        let lead = await Lead.findOne({ 
+            userId: req.user.id,
+            $or: [
+                { _id: id },
+                { id: parseInt(id) }
+            ]
+        });
+        
+        if (!lead) {
+            return res.status(404).send(`
+                <html dir="rtl">
+                <head><meta charset="UTF-8"><title>שגיאה</title></head>
+                <body style="font-family: Arial; padding: 40px; text-align: center;">
+                    <h1 style="color: red;">❌ ליד לא נמצא</h1>
+                    <p>לא נמצא ליד עם מזהה: ${id}</p>
+                    <button onclick="window.close()">סגור חלון</button>
+                </body>
+                </html>
+            `);
+        }
+        
+        // Generate contract HTML
+        const contractHTML = generateContractHTML(lead);
+        res.send(contractHTML);
+        
+    } catch (error) {
+        console.error('❌ Error generating contract preview:', error);
+        res.status(500).send(`
+            <html dir="rtl">
+            <head><meta charset="UTF-8"><title>שגיאה</title></head>
+            <body style="font-family: Arial; padding: 40px; text-align: center;">
+                <h1 style="color: red;">❌ שגיאה</h1>
+                <p>${error.message}</p>
+                <button onclick="window.close()">סגור חלון</button>
+            </body>
+            </html>
+        `);
+    }
+});
+
+// Helper function to generate contract HTML
+function generateContractHTML(lead) {
+    const today = new Date().toLocaleDateString('he-IL');
+    const eventDate = lead.eventDate ? new Date(lead.eventDate).toLocaleDateString('he-IL') : '___________';
+    
+    // Calculate total price
+    let totalPrice = (lead.totalPrice || 0);
+    const escortPrice = lead.escortPrice || 0;
+    const bridesmaidsPrice = lead.bridesmaids ? lead.bridesmaids.reduce((sum, b) => sum + (b.price || 0), 0) : 0;
+    
+    const depositAmount = lead.depositAmount || 0;
+    const remainingBalance = totalPrice - depositAmount;
+    
+    return `
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>חוזה - ${lead.name} ${lead.lastName || ''}</title>
+    <style>
+        @media print {
+            body { margin: 0; }
+            .no-print { display: none; }
+        }
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.8;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            background: #f5f5f5;
+        }
+        .contract-container {
+            background: white;
+            padding: 60px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 20px;
+            margin-bottom: 40px;
+        }
+        .section {
+            margin-bottom: 30px;
+        }
+        .section-title {
+            font-weight: bold;
+            font-size: 1.1em;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        .field {
+            margin: 10px 0;
+            padding: 8px;
+            background: #f8f9fa;
+            border-right: 4px solid #3498db;
+        }
+        .field strong {
+            color: #2c3e50;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th {
+            background: #3498db;
+            color: white;
+            padding: 12px;
+            text-align: right;
+        }
+        td {
+            padding: 10px;
+            text-align: right;
+        }
+        .total-row {
+            background: #e8f4f8;
+            font-weight: bold;
+        }
+        .signature-section {
+            margin-top: 60px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .signature-box {
+            width: 45%;
+            border-top: 2px solid #333;
+            padding-top: 10px;
+            text-align: center;
+        }
+        .print-button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 20px auto;
+            display: block;
+        }
+        .print-button:hover {
+            background: #2980b9;
+        }
+    </style>
+</head>
+<body>
+    <div class="contract-container">
+        <h1>📋 חוזה לאיפור כלה</h1>
+        
+        <div class="section">
+            <div class="section-title">🗓️ פרטי האירוע</div>
+            <div class="field"><strong>תאריך החוזה:</strong> ${today}</div>
+            <div class="field"><strong>תאריך האירוע:</strong> ${eventDate}</div>
+        </div>
+        
+        <div class="section">
+            <div class="section-title">👰 פרטי הכלה</div>
+            <div class="field"><strong>שם:</strong> ${lead.name} ${lead.lastName || ''}</div>
+            <div class="field"><strong>טלפון:</strong> ${lead.phone || ''}</div>
+            <div class="field"><strong>כתובת:</strong> ${lead.address || 'לא צוין'}</div>
+        </div>
+        
+        <div class="section">
+            <div class="section-title">💰 פירוט מחירים</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>תיאור</th>
+                        <th style="width: 150px;">מחיר</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>איפור כלה</td>
+                        <td>${lead.totalPrice || 0} ₪</td>
+                    </tr>
+                    ${escortPrice > 0 ? `
+                    <tr>
+                        <td>ליווי (${lead.escortType || 'סוג ליווי'})</td>
+                        <td>${escortPrice} ₪</td>
+                    </tr>
+                    ` : ''}
+                    ${lead.bridesmaids && lead.bridesmaids.length > 0 ? lead.bridesmaids.map(b => `
+                    <tr>
+                        <td>${b.service}</td>
+                        <td>${b.price} ₪</td>
+                    </tr>
+                    `).join('') : ''}
+                    <tr class="total-row">
+                        <td><strong>סה"כ:</strong></td>
+                        <td><strong>${totalPrice + escortPrice + bridesmaidsPrice} ₪</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="section">
+            <div class="section-title">💳 תשלומים</div>
+            <div class="field"><strong>מקדמה ששולמה:</strong> ${depositAmount} ₪</div>
+            <div class="field"><strong>יתרת תשלום:</strong> ${remainingBalance} ₪</div>
+        </div>
+        
+        <div class="section">
+            <div class="section-title">📝 הערות נוספות</div>
+            <div class="field">${lead.notes || 'אין הערות'}</div>
+        </div>
+        
+        <div class="signature-section">
+            <div class="signature-box">
+                <div>חתימת הכלה</div>
+                <div style="margin-top: 5px; color: #666;">_______________</div>
+            </div>
+            <div class="signature-box">
+                <div>חתימת המאפרת</div>
+                <div style="margin-top: 5px; color: #666;">_______________</div>
+            </div>
+        </div>
+    </div>
+    
+    <button class="print-button no-print" onclick="window.print()">🖨️ הדפס חוזה</button>
+</body>
+</html>
+    `;
+}
 
 // ==================== STATISTICS ROUTES ====================
 
