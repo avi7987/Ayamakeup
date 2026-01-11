@@ -6808,6 +6808,10 @@ const GoalsManager = {
         
         console.log('📋 Rendering', goals.length, 'goals in settings');
         
+        const isReadOnly = !isAuthenticated;
+        const disabledAttr = isReadOnly ? 'disabled' : '';
+        const disabledClass = isReadOnly ? 'opacity-50 cursor-not-allowed' : '';
+        
         // Get list of already selected goal types (excluding current goal being rendered)
         const getSelectedGoalTypes = (currentIndex) => {
             return goals
@@ -6823,11 +6827,11 @@ const GoalsManager = {
             const selectedTypes = getSelectedGoalTypes(index);
             
             return `
-            <div class="bg-white dark:bg-slate-800 p-4 rounded-xl border-2 border-gray-200 dark:border-slate-500 goal-row" data-index="${index}">
+            <div class="bg-white dark:bg-slate-800 p-4 rounded-xl border-2 border-gray-200 dark:border-slate-500 goal-row ${disabledClass}" data-index="${index}">
                 <div class="flex gap-3 items-start">
                     <div class="flex-1">
                         <label class="block text-xs font-bold text-gray-600 dark:text-gray-300 mb-2">סוג היעד</label>
-                        <select class="goal-type-select w-full p-2 border border-gray-300 dark:border-slate-500 dark:bg-slate-600 dark:text-white rounded-lg text-sm" data-index="${index}" onchange="GoalsManager.handleGoalTypeChange(${index}, this.value)">
+                        <select class="goal-type-select w-full p-2 border border-gray-300 dark:border-slate-500 dark:bg-slate-600 dark:text-white rounded-lg text-sm" data-index="${index}" onchange="GoalsManager.handleGoalTypeChange(${index}, this.value)" ${disabledAttr}>
                             <optgroup label="יעדים סטנדרטיים">
                                 ${this.predefinedGoals.map(pg => {
                                     const isSelected = goal.goalType === pg.id;
@@ -6849,10 +6853,10 @@ const GoalsManager = {
                     </div>
                     <div class="w-32">
                         <label class="block text-xs font-bold text-gray-600 dark:text-gray-300 mb-2">יעד</label>
-                        <input type="number" value="${goal.target}" placeholder="0" class="goal-target-input w-full p-2 border border-gray-300 dark:border-slate-500 dark:bg-slate-600 dark:text-white rounded-lg text-sm" data-index="${index}">
+                        <input type="number" value="${goal.target}" placeholder="0" class="goal-target-input w-full p-2 border border-gray-300 dark:border-slate-500 dark:bg-slate-600 dark:text-white rounded-lg text-sm" data-index="${index}" ${disabledAttr}>
                     </div>
                     <div class="pt-7">
-                        <button onclick="GoalsManager.removeGoal(${index})" class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-all">
+                        <button onclick="GoalsManager.removeGoal(${index})" class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-all" ${disabledAttr}>
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                             </svg>
@@ -6865,7 +6869,9 @@ const GoalsManager = {
     },
     
     handleGoalTypeChange(index, value) {
-        const goals = JSON.parse(localStorage.getItem('userGoals') || '[]');
+        if (!isAuthenticated) return;
+        
+        const goals = State.userSettings?.customGoals || [];
         let selectedGoal = this.predefinedGoals.find(g => g.id === value);
         
         // If not found in predefined, check custom options
@@ -6878,75 +6884,28 @@ const GoalsManager = {
             goals[index].label = selectedGoal.label;
         }
         
-        localStorage.setItem('userGoals', JSON.stringify(goals));
         this.renderGoals(goals);
-        
-        // Sync to server
-        this.syncGoalsToServer(goals);
     },
     
     removeGoal(index) {
-        const goals = JSON.parse(localStorage.getItem('userGoals') || '[]');
+        if (!isAuthenticated) return;
+        
+        const goals = State.userSettings?.customGoals || [];
         goals.splice(index, 1);
-        localStorage.setItem('userGoals', JSON.stringify(goals));
         this.renderGoals(goals);
-        
-        // Sync to server
-        this.syncGoalsToServer(goals);
-    },
-    
-    // Sync goals to server
-    async syncGoalsToServer(goals) {
-        if (!window.isAuthenticated || !window.currentUser) {
-            return;
-        }
-        
-        try {
-            const userId = window.currentUser.id || window.currentUser.email;
-            await fetch(`/api/goals/${userId}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(goals)
-            });
-            console.log('✅ Goals synced to server');
-        } catch (error) {
-            console.warn('⚠️ Error syncing goals:', error);
-        }
-    },
-    
-    // Load goals from server
-    async loadGoalsFromServer() {
-        if (!window.isAuthenticated || !window.currentUser) {
-            return JSON.parse(localStorage.getItem('userGoals') || '[]');
-        }
-        
-        try {
-            const userId = window.currentUser.id || window.currentUser.email;
-            const response = await fetch(`/api/goals/${userId}`);
-            
-            if (response.ok) {
-                const serverGoals = await response.json();
-                if (serverGoals && serverGoals.length > 0) {
-                    localStorage.setItem('userGoals', JSON.stringify(serverGoals));
-                    console.log('✅ Loaded', serverGoals.length, 'goals from server');
-                    return serverGoals;
-                }
-            }
-        } catch (error) {
-            console.warn('⚠️ Error loading goals:', error);
-        }
-        
-        return JSON.parse(localStorage.getItem('userGoals') || '[]');
     }
 };
 
 window.addGoalRow = function() {
-    const goals = JSON.parse(localStorage.getItem('userGoals') || '[]');
+    if (!isAuthenticated) {
+        alert('❌ יש להתחבר כדי להוסיף יעדים');
+        return;
+    }
+    
+    const goals = State.userSettings?.customGoals || [];
     goals.push({ goalType: 'monthly-income', target: 0, label: '💰 הכנסה חודשית' });
-    localStorage.setItem('userGoals', JSON.stringify(goals));
     console.log('➕ Added new goal. Total goals:', goals.length);
     GoalsManager.renderGoals(goals);
-    GoalsManager.syncGoalsToServer(goals);
 };
 
 window.saveGoals = async function() {
