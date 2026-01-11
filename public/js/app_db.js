@@ -7185,10 +7185,6 @@ function updateMobileHeaderAvatar() {
         }
     }
 }
-            mobileAvatar.innerHTML = `<div class="w-full h-full flex items-center justify-center text-white font-bold text-sm">${firstName}</div>`;
-        }
-    }
-}
 
 function closeMobileProfileSheet() {
     const sheet = document.getElementById('mobile-profile-sheet');
