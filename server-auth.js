@@ -168,7 +168,14 @@ app.use(cors({
     credentials: true
 }));
 app.use(bodyParser.json());
+
+// Serve static files from public directory
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Root redirect to index.html
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
 // Authentication middleware
 function isAuthenticated(req, res, next) {
