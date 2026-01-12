@@ -3675,12 +3675,11 @@ const WhatsAppAutomation = {
     
     async confirmContractSend() {
         // Contract already generated, prepare signing link
-        const signingUrl = this.pendingLead.contractFileUrl.replace('view=true', 'view=false');
         const stageSettings = MessageSettings.getSettings(this.pendingStage);
         let message = this.fillTemplate(stageSettings.immediate.template, this.pendingLead);
         
-        // Create signing page URL (not PDF!)
-        const signingUrl = `${window.location.protocol}//${window.location.host}/contract-sign/${this.pendingLead._id || this.pendingLead.id}`;
+        // Create signing page URL (remove view=true to enable signing)
+        const signingUrl = this.pendingLead.contractFileUrl.replace('view=true', '');
         console.log('📤 Signing URL for WhatsApp:', signingUrl);
         
         message += `\n\n👉 לחצי כאן לצפייה וחתימה:\n${signingUrl}`;
