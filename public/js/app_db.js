@@ -3663,23 +3663,15 @@ const WhatsAppAutomation = {
             closeModal('modal-whatsapp-confirm');
             openModal('modal-contract-preview');
             
-            // Display contract HTML directly in iframe (bypass server call timing issues)
-            const iframe = document.getElementById('contract-preview-frame');
-            if (iframe) {
-                // Create full HTML document with styling for the contract
-                const fullHTML = `
-<!DOCTYPE html>
+            // Create full HTML document
+            const fullHTML = `<!DOCTYPE html>
 <html dir="rtl" lang="he">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>תצוגה מקדימה של חוזה</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: white;
@@ -3722,10 +3714,21 @@ ${result.contractHTML}
     </div>
 </body>
 </html>`;
+            
+            // Create blob and object URL
+            const blob = new Blob([fullHTML], { type: 'text/html; charset=utf-8' });
+            const blobUrl = URL.createObjectURL(blob);
+            
+            // Load in iframe using blob URL
+            const iframe = document.getElementById('contract-preview-frame');
+            if (iframe) {
+                iframe.src = blobUrl;
+                console.log('🖼️ Contract HTML loaded in iframe via Blob URL');
                 
-                // Write HTML directly to iframe using srcdoc
-                iframe.srcdoc = fullHTML;
-                console.log('🖼️ Contract HTML loaded directly in iframe (bypassed server call)');
+                // Clean up blob URL after iframe loads
+                iframe.onload = () => {
+                    setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+                };
             }
         } catch (error) {
             console.error('❌ Preview error:', error);
