@@ -180,9 +180,20 @@ const userSettingsSchema = new mongoose.Schema({
     updatedAt: { type: Date, default: Date.now }
 });
 
+// Contract Template Schema - stores user's contract template
+const contractTemplateSchema = new mongoose.Schema({
+    userId: { type: String, required: true, unique: true, index: true },
+    userEmail: { type: String, required: true },
+    templateHTML: { type: String, default: '' },
+    logoUrl: { type: String, default: '' },
+    createdAt: { type: Date, default: Date.now },
+    updatedAt: { type: Date, default: Date.now }
+});
+
 const Client = mongoose.model('Client', clientSchema);
 const Lead = mongoose.model('Lead', leadSchema);
 const UserSettings = mongoose.model('UserSettings', userSettingsSchema);
+const ContractTemplate = mongoose.model('ContractTemplate', contractTemplateSchema);
 
 // Trust proxy - required for Railway/Heroku
 app.set('trust proxy', 1);
@@ -971,6 +982,94 @@ function generateContractHTML(lead) {
 </html>
     `;
 }
+
+// ==================== CONTRACT TEMPLATE ROUTES ====================
+
+// Get user's contract template
+app.get('/api/contract-template-html', isAuthenticated, async (req, res) => {
+    try {
+        let template = await ContractTemplate.findOne({ userId: req.user.id });
+        
+        if (!template) {
+            // Create default template from file
+            const fs = require('fs');
+            const path = require('path');
+            const defaultTemplatePath = path.join(__dirname, 'contract-template-example.txt');
+            
+            let defaultTemplate = '';
+            try {
+                defaultTemplate = fs.readFileSync(defaultTemplatePath, 'utf8');
+            } catch (err) {
+                console.log('Could not load default template file, using hardcoded template');
+                defaultTemplate = `חוזה מתן שירותים
+
+הסכם זה נערך ונחתם ביום {{date}}
+
+בין: {{businessName}} (להלן: "נותן השירות")
+לבין: {{fullName}} (להלן: "הלקוח/ה")
+טלפון: {{phone}}
+
+פרטי האירוע:
+תאריך האירוע: {{eventDate}}
+מקום ההתארגנות: {{location}}
+
+פירוט שירותים ומחירים:
+{{servicesTable}}
+
+סיכום עלויות:
+סך כל השירותים: ₪{{totalPrice}}
+מקדמה ששולמה: ₪{{deposit}}
+יתרה לתשלום: ₪{{balance}}
+
+הערה: חוזה זה נערך בשתי העתקים, כשכל צד קיבל את העתקו.`;
+            }
+            
+            template = new ContractTemplate({
+                userId: req.user.id,
+                userEmail: req.user.email,
+                templateHTML: defaultTemplate,
+                logoUrl: ''
+            });
+            await template.save();
+        }
+        
+        res.json({
+            templateHTML: template.templateHTML,
+            logoUrl: template.logoUrl
+        });
+    } catch (error) {
+        console.error('Error loading contract template:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Save user's contract template
+app.post('/api/contract-template-html', isAuthenticated, async (req, res) => {
+    try {
+        const { templateHTML, logoUrl } = req.body;
+        
+        let template = await ContractTemplate.findOneAndUpdate(
+            { userId: req.user.id },
+            {
+                userId: req.user.id,
+                userEmail: req.user.email,
+                templateHTML: templateHTML || '',
+                logoUrl: logoUrl || '',
+                updatedAt: new Date()
+            },
+            { new: true, upsert: true }
+        );
+        
+        res.json({
+            success: true,
+            templateHTML: template.templateHTML,
+            logoUrl: template.logoUrl
+        });
+    } catch (error) {
+        console.error('Error saving contract template:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
 
 // ==================== STATISTICS ROUTES ====================
 
