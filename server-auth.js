@@ -1112,6 +1112,10 @@ app.post('/api/generate-contract/:id', isAuthenticated, async (req, res) => {
         lead.contractStatus = 'generated';
         await lead.save();
         
+        console.log('✅ Contract saved to lead. Contract HTML length:', contractHTML.length);
+        console.log('✅ Lead contract status:', lead.contractStatus);
+        console.log('✅ Lead has contract.html:', !!lead.contract?.html);
+        
         res.json({
             success: true,
             contractHTML: contractHTML,
@@ -1208,6 +1212,11 @@ app.get('/api/contract-view/:id', async (req, res) => {
                 { id: parseInt(id) }
             ]
         });
+        
+        console.log('🔍 Lead found:', !!lead);
+        console.log('🔍 Lead has contract:', !!lead?.contract);
+        console.log('🔍 Lead has contract.html:', !!lead?.contract?.html);
+        console.log('🔍 Contract HTML length:', lead?.contract?.html?.length || 0);
         
         if (!lead) {
             return res.status(404).json({ error: 'ליד לא נמצא' });

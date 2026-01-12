@@ -3659,13 +3659,18 @@ const WhatsAppAutomation = {
             // Update lead in server with contract URL
             await API.updateLead(serverLeadId, { contractFileUrl: contractUrl });
             
-            // Show preview in iframe
-            const iframe = document.getElementById('contract-preview-frame');
-            iframe.src = contractUrl;
-            
             // Hide confirm modal, show preview modal
             closeModal('modal-whatsapp-confirm');
             openModal('modal-contract-preview');
+            
+            // Load contract in iframe AFTER modal is open (with small delay)
+            setTimeout(() => {
+                const iframe = document.getElementById('contract-preview-frame');
+                if (iframe) {
+                    iframe.src = contractUrl;
+                    console.log('🖼️ Loading contract in iframe:', contractUrl);
+                }
+            }, 300);
         } catch (error) {
             console.error('❌ Preview error:', error);
             const errorMsg = error.message || JSON.stringify(error);
