@@ -1519,25 +1519,34 @@ const LeadProfile = {
                     
                     <!-- Contract Upload -->
                     <div class="bg-indigo-50 p-4 rounded-xl">
-                        <h3 class="font-bold text-indigo-800 mb-3">📄 חוזה חתום</h3>
-                        ${lead.contract?.fileUrl ? `
+                        <h3 class="font-bold text-indigo-800 mb-3">📄 חוזה</h3>
+                        ${lead.contractFileUrl ? `
                             <div class="bg-white p-3 rounded-lg mb-3">
                                 <div class="flex justify-between items-center">
-                                    <span class="text-sm font-bold text-green-600">✅ קובץ חוזה קיים</span>
-                                    <button onclick="ContractsManager.downloadContract('${lead._id || lead.id}')" class="text-xs bg-green-500 text-white px-3 py-2 rounded-lg font-bold">
-                                        📥 הורד
-                                    </button>
+                                    <span class="text-sm font-bold ${lead.contract?.status === 'signed' ? 'text-green-600' : 'text-blue-600'}">
+                                        ${lead.contract?.status === 'signed' ? '✅ חוזה חתום' : '📄 חוזה נוצר'}
+                                    </span>
+                                    <div class="flex gap-2">
+                                        <button onclick="window.open('${lead.contractFileUrl.replace('view=true', 'view=false')}', '_blank')" class="text-xs bg-blue-500 text-white px-3 py-2 rounded-lg font-bold">
+                                            👁️ צפה
+                                        </button>
+                                        ${lead.contract?.status === 'signed' ? `
+                                            <button onclick="window.open('/api/signed-contract/${lead._id || lead.id}', '_blank')" class="text-xs bg-green-500 text-white px-3 py-2 rounded-lg font-bold">
+                                                📥 הדפס
+                                            </button>
+                                        ` : ''}
+                                    </div>
                                 </div>
-                                <div class="text-xs text-gray-500 mt-1">${lead.contract.fileName || 'חוזה.pdf'}</div>
-                                <div class="text-xs text-gray-400">${lead.contract.uploadDate ? new Date(lead.contract.uploadDate).toLocaleDateString('he-IL') : ''}</div>
+                                ${lead.contract?.signedAt ? `<div class="text-xs text-gray-500 mt-1">נחתם ב: ${new Date(lead.contract.signedAt).toLocaleDateString('he-IL')}</div>` : ''}
                             </div>
-                        ` : ''}
-                        <div class="text-sm">
-                            <input type="file" id="contract-file-input" accept=".pdf,.doc,.docx" class="hidden" onchange="LeadProfile.uploadContract(event)">
-                            <button onclick="document.getElementById('contract-file-input').click()" class="w-full bg-indigo-600 text-white py-2 rounded-lg font-bold text-sm">
-                                ${lead.contract?.fileUrl ? '📤 החלף חוזה' : '📤 העלה חוזה חתום'}
-                            </button>
-                        </div>
+                        ` : `
+                            <div class="text-sm text-gray-500">
+                                <p class="mb-3">עדיין לא נוצר חוזה לליד זה</p>
+                                <button onclick="alert('יש להעביר את הליד לשלב \\'נשלח חוזה\\' כדי ליצור חוזה אוטומטית')" class="w-full bg-indigo-600 text-white py-2 rounded-lg font-bold text-sm">
+                                    ℹ️ איך ליצור חוזה?
+                                </button>
+                            </div>
+                        `}
                     </div>
                     
                     <!-- Stage History -->
@@ -3638,13 +3647,21 @@ const WhatsAppAutomation = {
             const result = await ContractManager.generateContract(serverLeadId);
             console.log('✅ Contract generated:', result);
             
-            // CRITICAL: Save the PDF URL to the lead object
-            this.pendingLead.contractFileUrl = result.pdfUrl;
-            console.log('💾 Saved pdfUrl to lead:', this.pendingLead.contractFileUrl);
+            if (!result.success) {
+                throw new Error(result.error || 'שגיאה ביצירת החוזה');
+            }
+            
+            // Create contract URL for viewing
+            const contractUrl = `${window.location.origin}/contract-sign.html?view=true&id=${serverLeadId}`;
+            this.pendingLead.contractFileUrl = contractUrl;
+            console.log('💾 Saved contract URL to lead:', this.pendingLead.contractFileUrl);
+            
+            // Update lead in server with contract URL
+            await API.updateLead(serverLeadId, { contractFileUrl: contractUrl });
             
             // Show preview in iframe
             const iframe = document.getElementById('contract-preview-frame');
-            iframe.src = result.pdfUrl;
+            iframe.src = contractUrl;
             
             // Hide confirm modal, show preview modal
             closeModal('modal-whatsapp-confirm');
@@ -3657,7 +3674,8 @@ const WhatsAppAutomation = {
     },
     
     async confirmContractSend() {
-        // Contract already generated, send signing link
+        // Contract already generated, prepare signing link
+        const signingUrl = this.pendingLead.contractFileUrl.replace('view=true', 'view=false');
         const stageSettings = MessageSettings.getSettings(this.pendingStage);
         let message = this.fillTemplate(stageSettings.immediate.template, this.pendingLead);
         
