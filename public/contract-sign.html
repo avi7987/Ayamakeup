@@ -89,21 +89,29 @@
     </div>
 
     <script>
-        const leadId = window.location.pathname.split('/').pop();
+        const urlParams = new URLSearchParams(window.location.search);
+        const leadId = urlParams.get('id') || window.location.pathname.split('/').pop();
+        const viewMode = urlParams.get('view') === 'true';
         let signaturePad;
         let contractData = null;
 
         // Initialize Signature Pad
         window.addEventListener('DOMContentLoaded', () => {
-            const canvas = document.getElementById('signatureCanvas');
-            signaturePad = new SignaturePad(canvas, {
-                backgroundColor: 'rgb(255, 255, 255)',
-                penColor: 'rgb(0, 0, 0)'
-            });
+            // If view mode, hide signature section
+            if (viewMode) {
+                document.querySelector('.signature-section').style.display = 'none';
+                document.querySelector('body > div > div:first-child p').textContent = 'תצוגה מקדימה של החוזה';
+            } else {
+                const canvas = document.getElementById('signatureCanvas');
+                signaturePad = new SignaturePad(canvas, {
+                    backgroundColor: 'rgb(255, 255, 255)',
+                    penColor: 'rgb(0, 0, 0)'
+                });
 
-            // Enable submit button when checkbox is checked and signature exists
-            document.getElementById('agreeCheckbox').addEventListener('change', updateSubmitButton);
-            signaturePad.addEventListener('endStroke', updateSubmitButton);
+                // Enable submit button when checkbox is checked and signature exists
+                document.getElementById('agreeCheckbox').addEventListener('change', updateSubmitButton);
+                signaturePad.addEventListener('endStroke', updateSubmitButton);
+            }
 
             // Load contract
             loadContract();
@@ -116,8 +124,10 @@
         }
 
         function clearSignature() {
-            signaturePad.clear();
-            updateSubmitButton();
+            if (signaturePad) {
+                signaturePad.clear();
+                updateSubmitButton();
+            }
         }
 
         async function loadContract() {
@@ -143,6 +153,11 @@
         }
 
         async function submitSignature() {
+            if (viewMode) {
+                alert('זוהי תצוגה מקדימה בלבד');
+                return;
+            }
+            
             if (signaturePad.isEmpty()) {
                 alert('אנא חתמי לפני השליחה');
                 return;

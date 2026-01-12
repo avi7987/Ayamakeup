@@ -3413,20 +3413,20 @@ const WhatsAppAutomation = {
             try {
                 const result = await ContractManager.generateContract(this.pendingLead._id || this.pendingLead.id);
                 
-                // Update lead with contract URL
-                this.pendingLead.contractFileUrl = result.pdfUrl;
+                if (!result.success) {
+                    throw new Error(result.error || 'שגיאה ביצירת החוזה');
+                }
+                
+                // Create contract URL for viewing/signing
+                const contractUrl = `${window.location.origin}/contract-sign.html?id=${this.pendingLead._id || this.pendingLead.id}`;
+                this.pendingLead.contractFileUrl = contractUrl;
                 
                 // Add contract link to message
                 const stageSettings = MessageSettings.getSettings(this.pendingStage);
                 let message = this.fillTemplate(stageSettings.immediate.template, this.pendingLead);
                 
-                // Create full URL for WhatsApp sharing
-                const fullPdfUrl = `${window.location.protocol}//${window.location.host}${result.pdfUrl}`;
-                console.log('📤 PDF URL for WhatsApp:', fullPdfUrl);
-                console.log('🌐 Protocol:', window.location.protocol);
-                console.log('🌐 Host:', window.location.host);
-                console.log('📄 Result PDF URL:', result.pdfUrl);
-                message += `\n\nקישור לחוזה: ${fullPdfUrl}`;
+                console.log('📤 Contract URL for WhatsApp:', contractUrl);
+                message += `\n\n✍️ קישור לחתימה על החוזה:\n${contractUrl}`;
                 
                 console.log('💬 Full message:', message);
                 
@@ -3547,9 +3547,20 @@ const WhatsAppAutomation = {
         }
         console.log('✅ Lead data saved');
         
-        // Open HTML preview in new tab
-        const previewUrl = `${CONFIG.API_BASE_URL}/preview-contract/${this.pendingLead._id || this.pendingLead.id}`;
-        window.open(previewUrl, '_blank');
+        // Generate contract first, then open preview
+        try {
+            const result = await ContractManager.generateContract(this.pendingLead._id || this.pendingLead.id);
+            if (result.success) {
+                // Open contract viewing page
+                const previewUrl = `${CONFIG.API_BASE_URL.replace('/api', '')}/contract-sign.html?view=true&id=${this.pendingLead._id || this.pendingLead.id}`;
+                window.open(previewUrl, '_blank');
+            } else {
+                alert('שגיאה ביצירת החוזה: ' + (result.error || 'שגיאה לא ידועה'));
+            }
+        } catch (error) {
+            console.error('❌ Failed to generate contract:', error);
+            alert('שגיאה ביצירת החוזה: ' + error.message);
+        }
     },
     
     async previewContract() {
