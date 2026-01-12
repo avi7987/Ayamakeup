@@ -152,6 +152,15 @@
                 console.log('🔄 Loading contract for lead:', leadId);
                 console.log('🔄 View mode:', viewMode);
                 
+                // Check if contract HTML was passed via URL (from parent window)
+                const urlParams = new URLSearchParams(window.location.search);
+                if (window.opener && window.opener.lastGeneratedContract) {
+                    console.log('✅ Using contract HTML from parent window');
+                    const contractHTML = window.opener.lastGeneratedContract;
+                    document.getElementById('contractContent').innerHTML = contractHTML;
+                    return;
+                }
+                
                 const response = await fetch(`/api/contract-view/${leadId}`);
                 console.log('📡 Response status:', response.status);
                 
@@ -173,6 +182,7 @@
                         <p class="text-xl font-bold mb-2">❌ שגיאה בטעינת החוזה</p>
                         <p>${error.message}</p>
                         <p class="text-sm mt-2">Lead ID: ${leadId}</p>
+                        <p class="text-sm mt-2">אנא נסי שוב או רענני את הדף</p>
                     </div>
                 `;
             }

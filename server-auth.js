@@ -1110,17 +1110,23 @@ app.post('/api/generate-contract/:id', isAuthenticated, async (req, res) => {
             status: 'pending' // pending, signed, cancelled
         };
         lead.contractStatus = 'generated';
-        await lead.save();
         
-        // Wait to ensure MongoDB write is complete
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Save with write concern to ensure it's committed
+        await lead.save({ wtimeout: 5000 });
         
-        // Verify by re-fetching
-        const verifyLead = await Lead.findById(lead._id);
+        // Wait longer to ensure MongoDB write is complete
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Verify by re-fetching with fresh query
+        const verifyLead = await Lead.findById(lead._id).lean();
         console.log('✅ Contract saved to lead. Contract HTML length:', contractHTML.length);
         console.log('✅ Lead contract status:', lead.contractStatus);
         console.log('✅ Lead has contract.html:', !!lead.contract?.html);
         console.log('✅ Verified contract HTML length:', verifyLead.contract?.html?.length || 0);
+        
+        if (!verifyLead.contract?.html) {
+            console.error('⚠️ WARNING: Contract not visible in MongoDB after save!');
+        }
         
         res.json({
             success: true,
