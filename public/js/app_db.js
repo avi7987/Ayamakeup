@@ -3559,13 +3559,78 @@ const WhatsAppAutomation = {
         // Generate contract first, then open preview
         try {
             const result = await ContractManager.generateContract(this.pendingLead._id || this.pendingLead.id);
-            if (result.success) {
-                // Open contract viewing page
-                const previewUrl = `${CONFIG.API_BASE_URL.replace('/api', '')}/contract-sign.html?view=true&id=${this.pendingLead._id || this.pendingLead.id}`;
-                window.open(previewUrl, '_blank');
-            } else {
+            console.log('✅ Contract generated:', result);
+            
+            if (!result.success) {
                 alert('שגיאה ביצירת החוזה: ' + (result.error || 'שגיאה לא ידועה'));
+                return;
             }
+            
+            // Create full HTML document
+            const fullHTML = `<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>תצוגה מקדימה של חוזה</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: white;
+            padding: 40px 20px;
+            direction: rtl;
+        }
+        .contract-content {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            white-space: pre-wrap;
+            line-height: 1.8;
+            direction: rtl;
+            text-align: right;
+        }
+        .contract-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        .contract-content table th,
+        .contract-content table td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: right;
+        }
+        .contract-content table th {
+            background-color: #f5f5f5;
+            font-weight: bold;
+        }
+        .contract-content table tr:nth-child(even) {
+            background-color: #fafafa;
+        }
+    </style>
+</head>
+<body>
+    <div class="contract-content">
+${result.contractHTML}
+    </div>
+</body>
+</html>`;
+            
+            // Open in new window with blob URL
+            const blob = new Blob([fullHTML], { type: 'text/html; charset=utf-8' });
+            const blobUrl = URL.createObjectURL(blob);
+            const newWindow = window.open(blobUrl, '_blank');
+            
+            // Clean up blob URL after window loads
+            if (newWindow) {
+                newWindow.onload = () => {
+                    setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+                };
+            }
+            
+            console.log('🖼️ Contract opened in new window via Blob URL');
         } catch (error) {
             console.error('❌ Failed to generate contract:', error);
             alert('שגיאה ביצירת החוזה: ' + error.message);
