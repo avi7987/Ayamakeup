@@ -20,6 +20,23 @@
             box-shadow: 0 10px 40px rgba(0,0,0,0.1);
             line-height: 1.8;
             font-size: 14px;
+            white-space: pre-wrap;
+            direction: rtl;
+        }
+        .contract-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        .contract-content table th,
+        .contract-content table td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: right;
+        }
+        .contract-content table th {
+            background: #f0f0f0;
+            font-weight: bold;
         }
         .signature-canvas {
             border: 2px solid #e5e7eb;
@@ -132,21 +149,30 @@
 
         async function loadContract() {
             try {
+                console.log('🔄 Loading contract for lead:', leadId);
+                console.log('🔄 View mode:', viewMode);
+                
                 const response = await fetch(`/api/contract-view/${leadId}`);
+                console.log('📡 Response status:', response.status);
+                
                 const data = await response.json();
+                console.log('📦 Response data:', data);
                 
                 if (!response.ok) {
                     throw new Error(data.error || 'שגיאה בטעינת החוזה');
                 }
 
                 contractData = data;
+                console.log('✅ Setting innerHTML with content length:', data.htmlContent?.length);
                 document.getElementById('contractContent').innerHTML = data.htmlContent;
+                console.log('✅ Contract loaded successfully');
             } catch (error) {
-                console.error('Error loading contract:', error);
+                console.error('❌ Error loading contract:', error);
                 document.getElementById('contractContent').innerHTML = `
                     <div class="text-center text-red-600 py-20">
                         <p class="text-xl font-bold mb-2">❌ שגיאה בטעינת החוזה</p>
                         <p>${error.message}</p>
+                        <p class="text-sm mt-2">Lead ID: ${leadId}</p>
                     </div>
                 `;
             }
