@@ -551,6 +551,32 @@ app.post('/api/clients/bulk-delete', isAuthenticated, async (req, res) => {
 app.get('/api/leads', isAuthenticated, async (req, res) => {
     try {
         const leads = await Lead.find({ userId: req.user.id }).sort({ createdAt: -1 });
+        
+        // Check for duplicates
+        const leadIds = leads.map(l => l._id.toString());
+        const uniqueIds = new Set(leadIds);
+        if (leadIds.length !== uniqueIds.size) {
+            console.error('🔴 DUPLICATE LEADS IN DB for user:', req.user.email);
+            console.error('   Total:', leadIds.length, 'Unique:', uniqueIds.size);
+            
+            // Find duplicate IDs
+            const duplicates = leadIds.filter((id, index) => leadIds.indexOf(id) !== index);
+            console.error('   Duplicate _ids:', duplicates);
+            
+            // Return only unique leads (first occurrence)
+            const seenIds = new Set();
+            const uniqueLeads = leads.filter(lead => {
+                const idStr = lead._id.toString();
+                if (seenIds.has(idStr)) return false;
+                seenIds.add(idStr);
+                return true;
+            });
+            
+            console.log('✅ Returning', uniqueLeads.length, 'unique leads');
+            return res.json(uniqueLeads);
+        }
+        
+        console.log('📊 Returning', leads.length, 'leads for user:', req.user.email);
         res.json(leads);
     } catch (error) {
         res.status(500).json({ error: error.message });

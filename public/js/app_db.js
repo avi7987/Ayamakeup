@@ -1172,14 +1172,15 @@ const LeadsManager = {
             const savedLead = await API.addLead(data);
             console.log('✅ Lead saved to server:', savedLead._id);
             console.log('📊 State.leads before push:', State.leads.length);
+            console.trace('🔍 Stack trace for addLead');
             
             // Check if lead already exists
             const existingLead = State.leads.find(l => l._id === savedLead._id || l.id === savedLead._id);
             if (existingLead) {
-                console.warn('⚠️ Lead already exists in state, skipping duplicate');
+                console.warn('⚠️ Lead already exists in state, skipping duplicate. ID:', savedLead._id);
             } else {
                 State.leads.push(savedLead); // Use the lead returned from server with _id
-                console.log('📊 State.leads after push:', State.leads.length);
+                console.log('✅ Lead added to State. State.leads after push:', State.leads.length);
             }
             
             ModalManager.close('modal-new-lead');
@@ -1937,6 +1938,8 @@ const LeadsView = {
     renderLeadsForStage(stageId) {
         let leads = State.leads.filter(l => (l.status || 'new') === stageId);
         
+        console.log('🎨 Rendering', leads.length, 'leads for stage:', stageId);
+        
         // For 'closed' status - sort by event date (closest first) and limit to MAX_CLOSED_LEADS_DISPLAY
         if (stageId === 'closed') {
             leads = leads.sort((a, b) => {
@@ -1953,6 +1956,23 @@ const LeadsView = {
             console.error('🔴 DUPLICATE LEADS DETECTED in stage:', stageId);
             console.error('   Total leads:', leadIds.length, 'Unique IDs:', uniqueLeadIds.size);
             console.error('   IDs:', leadIds);
+            
+            // Find duplicates
+            const duplicates = leadIds.filter((id, index) => leadIds.indexOf(id) !== index);
+            console.error('   Duplicate IDs:', [...new Set(duplicates)]);
+            
+            // CRITICAL: Remove duplicates before rendering
+            const seenIds = new Set();
+            leads = leads.filter(lead => {
+                const id = lead._id || lead.id;
+                if (seenIds.has(id)) {
+                    console.warn('   🗑️ Removing duplicate from render:', id, lead.name);
+                    return false;
+                }
+                seenIds.add(id);
+                return true;
+            });
+            console.log('   ✅ After deduplication:', leads.length, 'leads');
         }
         
         return leads.map(lead => {
