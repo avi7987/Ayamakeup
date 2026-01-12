@@ -1112,9 +1112,15 @@ app.post('/api/generate-contract/:id', isAuthenticated, async (req, res) => {
         lead.contractStatus = 'generated';
         await lead.save();
         
+        // Wait to ensure MongoDB write is complete
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Verify by re-fetching
+        const verifyLead = await Lead.findById(lead._id);
         console.log('✅ Contract saved to lead. Contract HTML length:', contractHTML.length);
         console.log('✅ Lead contract status:', lead.contractStatus);
         console.log('✅ Lead has contract.html:', !!lead.contract?.html);
+        console.log('✅ Verified contract HTML length:', verifyLead.contract?.html?.length || 0);
         
         res.json({
             success: true,
@@ -1205,13 +1211,28 @@ app.get('/api/contract-view/:id', async (req, res) => {
         const { id } = req.params;
         console.log('📄 Loading contract for viewing:', id);
         
-        // Find lead - No auth required for signing (customer can sign)
-        let lead = await Lead.findOne({ 
-            $or: [
-                { _id: id },
-                { id: parseInt(id) }
-            ]
-        });
+        // Retry logic for timing issues
+        let lead = null;
+        let retries = 3;
+        
+        while (retries > 0) {
+            lead = await Lead.findOne({ 
+                $or: [
+                    { _id: id },
+                    { id: parseInt(id) }
+                ]
+            });
+            
+            if (lead && lead.contract && lead.contract.html) {
+                break; // Found it!
+            }
+            
+            if (retries > 1) {
+                console.log(`⏳ Contract not ready yet, retrying... (${retries - 1} retries left)`);
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+            retries--;
+        }
         
         console.log('🔍 Lead found:', !!lead);
         console.log('🔍 Lead has contract:', !!lead?.contract);
