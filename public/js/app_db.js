@@ -925,6 +925,11 @@ const ModalManager = {
             // Load goals when opening settings modal
             if (modalId === 'modal-settings') {
                 GoalsManager.init();
+                // Load business name
+                const businessNameInput = document.getElementById('business-name-input');
+                if (businessNameInput && State.userSettings) {
+                    businessNameInput.value = State.userSettings.businessName || 'Luna Makeup';
+                }
             }
             
             // Render message settings when opening that modal
@@ -7134,9 +7139,12 @@ window.addGoalRow = function() {
 
 window.saveGoals = async function() {
     if (!isAuthenticated) {
-        alert('❌ יש להתחבר כדי לשמור יעדים');
+        alert('❌ יש להתחבר כדי לשמור הגדרות');
         return;
     }
+    
+    // Read business name
+    const businessName = document.getElementById('business-name-input')?.value.trim() || 'Luna Makeup';
     
     // Read values from DOM and update State
     const rows = document.querySelectorAll('.goal-row');
@@ -7162,6 +7170,7 @@ window.saveGoals = async function() {
     });
     
     try {
+        console.log('💾 Saving business name:', businessName);
         console.log('💾 Saving', goals.length, 'goals to DB');
         console.log('📊 Goals data:', JSON.stringify(goals));
         
@@ -7172,17 +7181,19 @@ window.saveGoals = async function() {
             return;
         }
         
+        State.userSettings.businessName = businessName;
         State.userSettings.customGoals = goals;
         
         // Save to DB
         const result = await State.updateSettings({
             ...State.userSettings,
+            businessName: businessName,
             customGoals: goals
         });
         
-        console.log('✅ Goals saved successfully:', result);
+        console.log('✅ Settings saved successfully:', result);
         
-        alert('✅ היעדים נשמרו בהצלחה!');
+        alert('✅ ההגדרות נשמרו בהצלחה!');
         closeModal('modal-settings');
         
         // Refresh dashboard to show new goals
@@ -7193,8 +7204,8 @@ window.saveGoals = async function() {
             HomeView.update(false);
         }
     } catch (error) {
-        console.error('❌ Error saving goals:', error);
-        alert('❌ שגיאה בשמירת היעדים: ' + error.message);
+        console.error('❌ Error saving settings:', error);
+        alert('❌ שגיאה בשמירת ההגדרות: ' + error.message);
     }
 };
 

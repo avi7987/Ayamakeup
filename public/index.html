@@ -2764,11 +2764,30 @@
     <div id="modal-settings" class="modal">
         <div class="bg-white dark:bg-[#111827] p-8 rounded-3xl w-full max-w-2xl shadow-2xl text-right max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-6">
-                <h3 class="text-2xl font-bold text-purple-800 dark:text-purple-300">🎯 הגדרות יעדים</h3>
+                <h3 class="text-2xl font-bold text-purple-800 dark:text-purple-300">⚙️ הגדרות כלליות</h3>
                 <button onclick="closeModal('modal-settings')" class="text-3xl text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">&times;</button>
             </div>
             
             <div class="space-y-6">
+                <!-- Business Name Section -->
+                <div class="bg-gradient-to-br from-pink-50 to-purple-50 dark:from-pink-900/20 dark:to-purple-900/20 p-6 rounded-xl border-2 border-pink-200 dark:border-pink-700">
+                    <h4 class="text-lg font-bold text-gray-900 dark:text-white mb-4">🏢 שם העסק</h4>
+                    <div class="space-y-2">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            שם העסק שיופיע בחוזים ובהודעות
+                        </label>
+                        <input 
+                            type="text" 
+                            id="business-name-input" 
+                            class="w-full p-3 border-2 border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-pink-500 dark:focus:border-pink-400 focus:ring-2 focus:ring-pink-200 dark:focus:ring-pink-800 transition-all" 
+                            placeholder="לדוגמה: Luna Makeup"
+                        />
+                    </div>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                        💡 שם זה יופיע בחוזים, בהודעות ובכל מקום שנדרש זיהוי העסק
+                    </p>
+                </div>
+                
                 <!-- Goals Section -->
                 <div class="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 p-6 rounded-xl border-2 border-purple-200 dark:border-purple-700">
                     <div class="flex justify-between items-center mb-4">
@@ -2906,6 +2925,6 @@
     </div>
 
     <!-- Application Script -->
-    <script src="js/app_db.js?v=12012026v3"></script>
+    <script src="js/app_db.js?v=12012026v4"></script>
 </body>
 </html>

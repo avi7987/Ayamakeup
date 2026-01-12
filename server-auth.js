@@ -131,6 +131,7 @@ leadSchema.index({ userId: 1, id: 1 }, { unique: true });
 const userSettingsSchema = new mongoose.Schema({
     userId: { type: String, required: true, unique: true, index: true },
     userEmail: { type: String, required: true },
+    businessName: { type: String, default: 'Luna Makeup' },
     
     // Goals (legacy - for simple 3 goals)
     goals: {
@@ -1097,8 +1098,11 @@ app.post('/api/generate-contract/:id', isAuthenticated, async (req, res) => {
             return res.status(400).json({ error: 'לא נמצאה תבנית חוזה. אנא צרי תבנית בעורך החוזים' });
         }
         
+        // Get user settings for business name
+        const userSettings = await UserSettings.findOne({ userId: req.user.id });
+        
         // Prepare contract data
-        const contractData = prepareContractData(lead);
+        const contractData = await prepareContractData(lead, req.user.email);
         
         // Fill template with data
         let contractHTML = fillTemplate(template.templateHTML, contractData);
@@ -1141,9 +1145,13 @@ app.post('/api/generate-contract/:id', isAuthenticated, async (req, res) => {
 });
 
 // Helper function to prepare contract data from lead
-function prepareContractData(lead) {
+async function prepareContractData(lead, userEmail) {
     const today = new Date().toLocaleDateString('he-IL');
     const eventDate = lead.eventDate ? new Date(lead.eventDate).toLocaleDateString('he-IL') : 'לא נקבע';
+    
+    // Get business name from user settings
+    const userSettings = await UserSettings.findOne({ userEmail });
+    const businessName = userSettings?.businessName || 'Luna Makeup';
     
     const fullName = `${lead.name} ${lead.lastName || ''}`.trim();
     const phone = lead.phone || '';
@@ -1151,7 +1159,7 @@ function prepareContractData(lead) {
     const location = lead.location || address;
     
     // Calculate prices
-    const basePrice = lead.totalPrice || lead.price || 0;
+    const basePrice = lead.proposedPrice || lead.totalPrice || lead.price || 0;
     const escortPrice = lead.escortPrice || 0;
     const bridesmaidsPrice = lead.bridesmaids ? lead.bridesmaids.reduce((sum, b) => sum + (b.price || 0), 0) : 0;
     const totalPrice = basePrice + escortPrice + bridesmaidsPrice;
@@ -1184,7 +1192,7 @@ function prepareContractData(lead) {
     
     return {
         date: today,
-        businessName: 'Luna Makeup', // You can make this configurable
+        businessName: businessName,
         fullName: fullName,
         phone: phone,
         address: address,
