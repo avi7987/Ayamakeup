@@ -1217,9 +1217,9 @@ app.get('/api/contract-view/:id', async (req, res) => {
         const { id } = req.params;
         console.log('📄 Loading contract for viewing:', id);
         
-        // Retry logic for timing issues
+        // Retry logic for timing issues - read from primary with longer delays
         let lead = null;
-        let retries = 3;
+        let retries = 5;
         
         while (retries > 0) {
             lead = await Lead.findOne({ 
@@ -1227,7 +1227,7 @@ app.get('/api/contract-view/:id', async (req, res) => {
                     { _id: id },
                     { id: parseInt(id) }
                 ]
-            });
+            }).read('primary'); // Force read from primary to avoid replication lag
             
             if (lead && lead.contract && lead.contract.html) {
                 break; // Found it!
@@ -1235,7 +1235,7 @@ app.get('/api/contract-view/:id', async (req, res) => {
             
             if (retries > 1) {
                 console.log(`⏳ Contract not ready yet, retrying... (${retries - 1} retries left)`);
-                await new Promise(resolve => setTimeout(resolve, 500));
+                await new Promise(resolve => setTimeout(resolve, 1000)); // Increased to 1 second
             }
             retries--;
         }

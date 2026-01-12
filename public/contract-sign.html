@@ -8,10 +8,49 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
         body {
             font-family: Arial, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            width: 100%;
+        }
+        .container {
+            max-width: 900px;
+            width: 100%;
+            margin: 0 auto;
+        }
+        .contract-content {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            line-height: 1.8;
+            font-size: 14px;
+            white-space: pre-wrap;
+            direction: rtl;
+        }
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            .contract-content {
+                padding: 20px;
+                font-size: 13px;
+            }
+            .contract-content table th,
+            .contract-content table td {
+                padding: 8px !important;
+                font-size: 12px;
+            }
         }
         .contract-content {
             background: white;
