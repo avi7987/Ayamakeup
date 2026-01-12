@@ -1071,6 +1071,292 @@ app.post('/api/contract-template-html', isAuthenticated, async (req, res) => {
     }
 });
 
+// Generate contract from template - fill in lead data
+app.post('/api/generate-contract/:id', isAuthenticated, async (req, res) => {
+    try {
+        const { id } = req.params;
+        console.log('📄 Generating contract for lead:', id);
+        
+        // Find lead
+        let lead = await Lead.findOne({ 
+            userId: req.user.id,
+            $or: [
+                { _id: id },
+                { id: parseInt(id) }
+            ]
+        });
+        
+        if (!lead) {
+            return res.status(404).json({ error: 'ליד לא נמצא' });
+        }
+        
+        // Get user's contract template
+        let template = await ContractTemplate.findOne({ userId: req.user.id });
+        
+        if (!template || !template.templateHTML) {
+            return res.status(400).json({ error: 'לא נמצאה תבנית חוזה. אנא צרי תבנית בעורך החוזים' });
+        }
+        
+        // Prepare contract data
+        const contractData = prepareContractData(lead);
+        
+        // Fill template with data
+        let contractHTML = fillTemplate(template.templateHTML, contractData);
+        
+        // Save contract to lead
+        lead.contract = {
+            html: contractHTML,
+            createdAt: new Date(),
+            status: 'pending' // pending, signed, cancelled
+        };
+        lead.contractStatus = 'generated';
+        await lead.save();
+        
+        res.json({
+            success: true,
+            contractHTML: contractHTML,
+            leadId: lead._id
+        });
+        
+    } catch (error) {
+        console.error('❌ Error generating contract:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Helper function to prepare contract data from lead
+function prepareContractData(lead) {
+    const today = new Date().toLocaleDateString('he-IL');
+    const eventDate = lead.eventDate ? new Date(lead.eventDate).toLocaleDateString('he-IL') : 'לא נקבע';
+    
+    const fullName = `${lead.name} ${lead.lastName || ''}`.trim();
+    const phone = lead.phone || '';
+    const address = lead.address || 'לא צוין';
+    const location = lead.location || address;
+    
+    // Calculate prices
+    const basePrice = lead.totalPrice || lead.price || 0;
+    const escortPrice = lead.escortPrice || 0;
+    const bridesmaidsPrice = lead.bridesmaids ? lead.bridesmaids.reduce((sum, b) => sum + (b.price || 0), 0) : 0;
+    const totalPrice = basePrice + escortPrice + bridesmaidsPrice;
+    const depositAmount = lead.depositAmount || lead.deposit || 0;
+    const balance = totalPrice - depositAmount;
+    
+    // Build services table HTML
+    let servicesTableHTML = '<table border="1" style="width: 100%; border-collapse: collapse; margin: 20px 0;">';
+    servicesTableHTML += '<thead><tr><th style="padding: 10px; text-align: right;">תיאור השירות</th><th style="padding: 10px; text-align: right; width: 150px;">מחיר</th></tr></thead>';
+    servicesTableHTML += '<tbody>';
+    
+    // Base service
+    servicesTableHTML += `<tr><td style="padding: 10px;">איפור כלה</td><td style="padding: 10px;">${basePrice} ₪</td></tr>`;
+    
+    // Escort
+    if (escortPrice > 0) {
+        const escortType = lead.escortType || 'ליווי';
+        servicesTableHTML += `<tr><td style="padding: 10px;">${escortType}</td><td style="padding: 10px;">${escortPrice} ₪</td></tr>`;
+    }
+    
+    // Bridesmaids
+    if (lead.bridesmaids && lead.bridesmaids.length > 0) {
+        lead.bridesmaids.forEach(b => {
+            servicesTableHTML += `<tr><td style="padding: 10px;">${b.service}</td><td style="padding: 10px;">${b.price} ₪</td></tr>`;
+        });
+    }
+    
+    servicesTableHTML += `<tr style="background: #f0f0f0; font-weight: bold;"><td style="padding: 10px;">סה"כ</td><td style="padding: 10px;">${totalPrice} ₪</td></tr>`;
+    servicesTableHTML += '</tbody></table>';
+    
+    return {
+        date: today,
+        businessName: 'Luna Makeup', // You can make this configurable
+        fullName: fullName,
+        phone: phone,
+        address: address,
+        location: location,
+        eventDate: eventDate,
+        servicesTable: servicesTableHTML,
+        totalPrice: totalPrice,
+        deposit: depositAmount,
+        balance: balance,
+        notes: lead.notes || ''
+    };
+}
+
+// Helper function to fill template with data
+function fillTemplate(template, data) {
+    let filled = template;
+    
+    // Replace all {{variable}} with actual data
+    Object.keys(data).forEach(key => {
+        const regex = new RegExp(`\\{\\{${key}\\}\\}`, 'g');
+        filled = filled.replace(regex, data[key]);
+    });
+    
+    return filled;
+}
+
+// Get contract for viewing/signing
+app.get('/api/contract-view/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        console.log('📄 Loading contract for viewing:', id);
+        
+        // Find lead - No auth required for signing (customer can sign)
+        let lead = await Lead.findOne({ 
+            $or: [
+                { _id: id },
+                { id: parseInt(id) }
+            ]
+        });
+        
+        if (!lead) {
+            return res.status(404).json({ error: 'ליד לא נמצא' });
+        }
+        
+        if (!lead.contract || !lead.contract.html) {
+            return res.status(404).json({ error: 'חוזה לא נמצא. אנא צרי חוזה תחילה' });
+        }
+        
+        res.json({
+            htmlContent: lead.contract.html,
+            status: lead.contract.status || 'pending'
+        });
+        
+    } catch (error) {
+        console.error('❌ Error loading contract:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Save digital signature
+app.post('/api/sign-contract/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { signature } = req.body;
+        
+        console.log('✍️ Saving signature for lead:', id);
+        
+        if (!signature) {
+            return res.status(400).json({ error: 'חתימה לא נמצאה' });
+        }
+        
+        // Find lead
+        let lead = await Lead.findOne({ 
+            $or: [
+                { _id: id },
+                { id: parseInt(id) }
+            ]
+        });
+        
+        if (!lead) {
+            return res.status(404).json({ error: 'ליד לא נמצא' });
+        }
+        
+        if (!lead.contract || !lead.contract.html) {
+            return res.status(404).json({ error: 'חוזה לא נמצא' });
+        }
+        
+        // Add signature to contract HTML
+        const signedHTML = addSignatureToContract(lead.contract.html, signature);
+        
+        // Update lead with signed contract
+        lead.contract.html = signedHTML;
+        lead.contract.status = 'signed';
+        lead.contract.signedAt = new Date();
+        lead.contract.signatureData = signature;
+        lead.contractStatus = 'signed';
+        
+        await lead.save();
+        
+        console.log('✅ Contract signed successfully');
+        
+        res.json({
+            success: true,
+            message: 'החוזה נחתם בהצלחה',
+            signedContractUrl: `/api/signed-contract/${lead._id}`
+        });
+        
+    } catch (error) {
+        console.error('❌ Error signing contract:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Helper function to add signature to contract HTML
+function addSignatureToContract(html, signatureData) {
+    // Remove any existing signature section first
+    let cleanHTML = html.replace(/<div class="signature-section">[\s\S]*?<\/div>/g, '');
+    
+    // Add digital signature section at the end
+    const signatureSection = `
+<div class="signature-section" style="margin-top: 40px; padding: 30px; background: #f9fafb; border-radius: 12px;">
+    <h3 style="font-weight: bold; margin-bottom: 20px; text-align: center;">✍️ חתימה דיגיטלית</h3>
+    <div style="text-align: center;">
+        <img src="${signatureData}" alt="חתימה דיגיטלית" style="max-width: 400px; border: 2px solid #ddd; border-radius: 8px; padding: 10px; background: white; display: inline-block;">
+        <p style="margin-top: 15px; color: #666; font-size: 14px;">חתימה דיגיטלית - ${new Date().toLocaleDateString('he-IL')} ${new Date().toLocaleTimeString('he-IL')}</p>
+    </div>
+</div>
+`;
+    
+    return cleanHTML + signatureSection;
+}
+
+// Get signed contract HTML
+app.get('/api/signed-contract/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        let lead = await Lead.findOne({ 
+            $or: [
+                { _id: id },
+                { id: parseInt(id) }
+            ]
+        });
+        
+        if (!lead || !lead.contract || !lead.contract.html) {
+            return res.status(404).send('<h1>חוזה לא נמצא</h1>');
+        }
+        
+        // Wrap in HTML document for viewing/printing
+        const fullHTML = `
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>חוזה חתום</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.8;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            background: #f5f5f5;
+        }
+        @media print {
+            body { background: white; }
+            .no-print { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <button onclick="window.print()" class="no-print" style="background: #667eea; color: white; padding: 15px 30px; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; margin-bottom: 20px; display: block; margin-left: auto; margin-right: auto;">🖨️ הדפס חוזה</button>
+    <div style="background: white; padding: 60px; box-shadow: 0 0 20px rgba(0,0,0,0.1); border-radius: 12px;">
+        ${lead.contract.html}
+    </div>
+</body>
+</html>
+        `;
+        
+        res.send(fullHTML);
+        
+    } catch (error) {
+        console.error('Error loading signed contract:', error);
+        res.status(500).send('<h1>שגיאה בטעינת החוזה</h1>');
+    }
+});
+
 // ==================== STATISTICS ROUTES ====================
 
 // Get statistics summary for current user
