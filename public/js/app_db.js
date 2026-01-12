@@ -3663,14 +3663,70 @@ const WhatsAppAutomation = {
             closeModal('modal-whatsapp-confirm');
             openModal('modal-contract-preview');
             
-            // Load contract in iframe AFTER modal is open (with small delay)
-            setTimeout(() => {
-                const iframe = document.getElementById('contract-preview-frame');
-                if (iframe) {
-                    iframe.src = contractUrl;
-                    console.log('🖼️ Loading contract in iframe:', contractUrl);
-                }
-            }, 300);
+            // Display contract HTML directly in iframe (bypass server call timing issues)
+            const iframe = document.getElementById('contract-preview-frame');
+            if (iframe) {
+                // Create full HTML document with styling for the contract
+                const fullHTML = `
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>תצוגה מקדימה של חוזה</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: white;
+            padding: 40px 20px;
+            direction: rtl;
+        }
+        .contract-content {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            white-space: pre-wrap;
+            line-height: 1.8;
+            direction: rtl;
+            text-align: right;
+        }
+        .contract-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        .contract-content table th,
+        .contract-content table td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: right;
+        }
+        .contract-content table th {
+            background-color: #f5f5f5;
+            font-weight: bold;
+        }
+        .contract-content table tr:nth-child(even) {
+            background-color: #fafafa;
+        }
+    </style>
+</head>
+<body>
+    <div class="contract-content">
+${result.contractHTML}
+    </div>
+</body>
+</html>`;
+                
+                // Write HTML directly to iframe using srcdoc
+                iframe.srcdoc = fullHTML;
+                console.log('🖼️ Contract HTML loaded directly in iframe (bypassed server call)');
+            }
         } catch (error) {
             console.error('❌ Preview error:', error);
             const errorMsg = error.message || JSON.stringify(error);
