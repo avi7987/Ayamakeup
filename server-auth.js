@@ -1245,7 +1245,13 @@ function fillTemplate(template, data) {
 app.get('/api/contract-view/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        console.log('📄 Loading contract for viewing:', id);
+        console.log('📄 ========================================');
+        console.log('📄 Contract View Request');
+        console.log('📄 ID from URL:', id);
+        console.log('📄 ID type:', typeof id);
+        console.log('📄 ID length:', id.length);
+        console.log('📄 Is valid ObjectId:', mongoose.Types.ObjectId.isValid(id));
+        console.log('📄 ========================================');
         
         // Retry logic for timing issues - read from primary with longer delays
         let lead = null;
@@ -1254,16 +1260,45 @@ app.get('/api/contract-view/:id', async (req, res) => {
         console.log(`🔍 Attempting to load contract for lead: ${id}`);
         
         while (retries > 0) {
-            lead = await Lead.findOne({ 
-                $or: [
-                    { _id: id },
-                    { id: parseInt(id) }
-                ]
-            }).read('primary'); // Force read from primary to avoid replication lag
+            // Try multiple query strategies
+            let query;
+            
+            // If it's a valid MongoDB ObjectId, search by _id
+            if (mongoose.Types.ObjectId.isValid(id) && id.length === 24) {
+                console.log(`🔍 Trying as MongoDB ObjectId: ${id}`);
+                query = { _id: id };
+            } 
+            // If it's a number, search by numeric id
+            else if (!isNaN(id)) {
+                console.log(`🔍 Trying as numeric ID: ${parseInt(id)}`);
+                query = { id: parseInt(id) };
+            }
+            // Try both
+            else {
+                console.log(`🔍 Trying both _id and numeric id`);
+                query = {
+                    $or: [
+                        { _id: id },
+                        { id: parseInt(id) || 0 }
+                    ]
+                };
+            }
+            
+            lead = await Lead.findOne(query).read('primary');
             
             if (lead && lead.contract && lead.contract.html) {
                 console.log(`✅ Contract found on attempt ${11 - retries}`);
+                console.log(`✅ Lead _id: ${lead._id}`);
+                console.log(`✅ Lead numeric id: ${lead.id}`);
                 break; // Found it!
+            }
+            
+            if (!lead) {
+                console.log(`❌ Lead not found with query:`, query);
+            } else if (!lead.contract) {
+                console.log(`❌ Lead found but no contract object`);
+            } else if (!lead.contract.html) {
+                console.log(`❌ Lead found, has contract, but no HTML`);
             }
             
             if (retries > 1) {
