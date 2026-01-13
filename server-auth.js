@@ -1115,21 +1115,43 @@ app.post('/api/generate-contract/:id', isAuthenticated, async (req, res) => {
         };
         lead.contractStatus = 'generated';
         
-        // Save with write concern to ensure it's committed
-        await lead.save({ wtimeout: 5000 });
+        // Save with strong write concern to ensure it's committed to majority of nodes
+        await lead.save({ 
+            wtimeout: 10000,
+            w: 'majority'
+        });
         
-        // Wait longer to ensure MongoDB write is complete
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // Wait significantly longer to ensure MongoDB replication is complete
+        console.log('⏳ Waiting for MongoDB to complete write and replication...');
+        await new Promise(resolve => setTimeout(resolve, 3000));
         
-        // Verify by re-fetching with fresh query
-        const verifyLead = await Lead.findById(lead._id).lean();
+        // Verify by re-fetching multiple times
+        let verifyLead = null;
+        let verifyAttempts = 3;
+        
+        for (let i = 0; i < verifyAttempts; i++) {
+            verifyLead = await Lead.findById(lead._id).read('primary').lean();
+            if (verifyLead?.contract?.html) {
+                console.log(`✅ Verification successful on attempt ${i + 1}`);
+                break;
+            }
+            if (i < verifyAttempts - 1) {
+                console.log(`⚠️ Verification attempt ${i + 1} failed, retrying...`);
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+        }
+        
         console.log('✅ Contract saved to lead. Contract HTML length:', contractHTML.length);
         console.log('✅ Lead contract status:', lead.contractStatus);
         console.log('✅ Lead has contract.html:', !!lead.contract?.html);
-        console.log('✅ Verified contract HTML length:', verifyLead.contract?.html?.length || 0);
+        console.log('✅ Verified contract HTML length:', verifyLead?.contract?.html?.length || 0);
         
-        if (!verifyLead.contract?.html) {
-            console.error('⚠️ WARNING: Contract not visible in MongoDB after save!');
+        if (!verifyLead?.contract?.html) {
+            console.error('❌ CRITICAL: Contract not visible in MongoDB after multiple verification attempts!');
+            return res.status(500).json({ 
+                error: 'שגיאה בשמירת החוזה. אנא נסי שוב.',
+                details: 'Contract saved but not immediately readable'
+            });
         }
         
         res.json({
@@ -1227,7 +1249,9 @@ app.get('/api/contract-view/:id', async (req, res) => {
         
         // Retry logic for timing issues - read from primary with longer delays
         let lead = null;
-        let retries = 5;
+        let retries = 10; // Increased from 5 to 10
+        
+        console.log(`🔍 Attempting to load contract for lead: ${id}`);
         
         while (retries > 0) {
             lead = await Lead.findOne({ 
@@ -1238,12 +1262,14 @@ app.get('/api/contract-view/:id', async (req, res) => {
             }).read('primary'); // Force read from primary to avoid replication lag
             
             if (lead && lead.contract && lead.contract.html) {
+                console.log(`✅ Contract found on attempt ${11 - retries}`);
                 break; // Found it!
             }
             
             if (retries > 1) {
-                console.log(`⏳ Contract not ready yet, retrying... (${retries - 1} retries left)`);
-                await new Promise(resolve => setTimeout(resolve, 1000)); // Increased to 1 second
+                const waitTime = retries > 7 ? 2000 : 1500; // Longer wait for first attempts
+                console.log(`⏳ Contract not ready yet, waiting ${waitTime}ms... (${retries - 1} retries left)`);
+                await new Promise(resolve => setTimeout(resolve, waitTime));
             }
             retries--;
         }

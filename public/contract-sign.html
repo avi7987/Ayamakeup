@@ -188,6 +188,15 @@
 
         async function loadContract() {
             try {
+                // Show loading message
+                document.getElementById('contractContent').innerHTML = `
+                    <div class="text-center text-gray-600 py-20">
+                        <div class="animate-spin rounded-full h-16 w-16 border-b-4 border-purple-600 mx-auto mb-4"></div>
+                        <p class="text-xl font-bold mb-2">⏳ טוען חוזה...</p>
+                        <p class="text-sm">אנא המתן, זה עשוי לקחת מספר שניות</p>
+                    </div>
+                `;
+                
                 console.log('🔄 Loading contract for lead:', leadId);
                 console.log('🔄 View mode:', viewMode);
                 
@@ -221,7 +230,11 @@
                         <p class="text-xl font-bold mb-2">❌ שגיאה בטעינת החוזה</p>
                         <p>${error.message}</p>
                         <p class="text-sm mt-2">Lead ID: ${leadId}</p>
-                        <p class="text-sm mt-2">אנא נסי שוב או רענני את הדף</p>
+                        <p class="text-sm mt-4">
+                            <button onclick="location.reload()" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-bold">
+                                🔄 נסה שוב
+                            </button>
+                        </p>
                     </div>
                 `;
             }
