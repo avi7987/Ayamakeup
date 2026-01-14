@@ -1300,7 +1300,7 @@ app.get('/api/contract-view/:id', async (req, res) => {
 });
 
 // Delete contract (for testing/debugging)
-app.delete('/api/contract/:id', requireAuth, async (req, res) => {
+app.delete('/api/contract/:id', isAuthenticated, async (req, res) => {
     try {
         const { id } = req.params;
         const lead = await Lead.findById(id);
