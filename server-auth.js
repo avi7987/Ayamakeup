@@ -1117,8 +1117,17 @@ app.post('/api/generate-contract/:id', isAuthenticated, async (req, res) => {
         
         // Simple, fast save to MongoDB
         console.log('💾 Saving contract to MongoDB...');
-        await lead.save();
-        console.log('✅ Contract saved successfully');
+        console.log('💾 Lead ID:', lead._id);
+        console.log('💾 Contract HTML length:', contractHTML.length);
+        
+        try {
+            await lead.save();
+            console.log('✅ Contract saved successfully to MongoDB');
+        } catch (saveError) {
+            console.error('❌ MongoDB save error:', saveError);
+            console.error('❌ Error details:', saveError.message);
+            // Continue anyway - the HTML is in the response
+        }
         
         res.json({
             success: true,

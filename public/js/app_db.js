@@ -3816,8 +3816,9 @@ ${result.contractHTML}
         const stageSettings = MessageSettings.getSettings(this.pendingStage);
         let message = this.fillTemplate(stageSettings.immediate.template, this.pendingLead);
         
-        // Create signing page URL (remove view=true to enable signing)
-        const signingUrl = this.pendingLead.contractFileUrl.replace('view=true', '');
+        // Create signing page URL (completely remove view parameter and clean up)
+        const leadId = this.pendingLead._id || this.pendingLead.id;
+        const signingUrl = `${window.location.origin}/contract-sign.html?id=${leadId}`;
         console.log('📤 Signing URL for WhatsApp:', signingUrl);
         
         message += `\n\n👉 לחצי כאן לצפייה וחתימה:\n${signingUrl}`;
