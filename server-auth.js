@@ -1115,49 +1115,29 @@ app.post('/api/generate-contract/:id', isAuthenticated, async (req, res) => {
         };
         lead.contractStatus = 'generated';
         
-        // Save with strong write concern to ensure it's committed to majority of nodes
-        await lead.save({ 
-            wtimeout: 10000,
-            w: 'majority'
-        });
-        
-        // Wait significantly longer to ensure MongoDB replication is complete
-        console.log('⏳ Waiting for MongoDB to complete write and replication...');
-        await new Promise(resolve => setTimeout(resolve, 3000));
-        
-        // Verify by re-fetching multiple times
-        let verifyLead = null;
-        let verifyAttempts = 3;
-        
-        for (let i = 0; i < verifyAttempts; i++) {
-            verifyLead = await Lead.findById(lead._id).read('primary').lean();
-            if (verifyLead?.contract?.html) {
-                console.log(`✅ Verification successful on attempt ${i + 1}`);
-                break;
-            }
-            if (i < verifyAttempts - 1) {
-                console.log(`⚠️ Verification attempt ${i + 1} failed, retrying...`);
-                await new Promise(resolve => setTimeout(resolve, 1000));
-            }
-        }
-        
-        console.log('✅ Contract saved to lead. Contract HTML length:', contractHTML.length);
-        console.log('✅ Lead contract status:', lead.contractStatus);
-        console.log('✅ Lead has contract.html:', !!lead.contract?.html);
-        console.log('✅ Verified contract HTML length:', verifyLead?.contract?.html?.length || 0);
-        
-        if (!verifyLead?.contract?.html) {
-            console.warn('⚠️ WARNING: Contract not immediately readable from MongoDB, but it was saved.');
-            console.warn('⚠️ The retry logic in contract-view will handle this.');
-        }
-        
-        // Return success regardless of immediate verification
-        // The contract-view endpoint with retries will read it when ready
-        res.json({
+        // Return success immediately with the contract HTML
+        // Save to MongoDB asynchronously (don't wait)
+        const contractResponse = {
             success: true,
             contractHTML: contractHTML,
             leadId: lead._id
-        });
+        };
+        
+        // Send response immediately
+        res.json(contractResponse);
+        
+        // Save to MongoDB in background (async, non-blocking)
+        (async () => {
+            try {
+                await lead.save({ 
+                    wtimeout: 10000,
+                    w: 'majority'
+                });
+                console.log('✅ Contract saved to MongoDB in background');
+            } catch (error) {
+                console.error('❌ Error saving contract to MongoDB:', error);
+            }
+        })();
         
     } catch (error) {
         console.error('❌ Error generating contract:', error);
@@ -1252,9 +1232,9 @@ app.get('/api/contract-view/:id', async (req, res) => {
         console.log('📄 Is valid ObjectId:', mongoose.Types.ObjectId.isValid(id));
         console.log('📄 ========================================');
         
-        // Retry logic for timing issues - read from primary with longer delays
+        // Simple retry logic with reasonable delays
         let lead = null;
-        let retries = 10; // Increased from 5 to 10
+        let retries = 5; // Reduced to 5 retries
         
         console.log(`🔍 Attempting to load contract for lead: ${id}`);
         
@@ -1286,7 +1266,7 @@ app.get('/api/contract-view/:id', async (req, res) => {
             lead = await Lead.findOne(query).read('primary');
             
             if (lead && lead.contract && lead.contract.html) {
-                console.log(`✅ Contract found on attempt ${11 - retries}`);
+                console.log(`✅ Contract found on attempt ${6 - retries}`);
                 console.log(`✅ Lead _id: ${lead._id}`);
                 console.log(`✅ Lead numeric id: ${lead.id}`);
                 break; // Found it!
@@ -1301,8 +1281,8 @@ app.get('/api/contract-view/:id', async (req, res) => {
             }
             
             if (retries > 1) {
-                const waitTime = retries > 7 ? 2000 : 1500; // Longer wait for first attempts
-                console.log(`⏳ Contract not ready yet, waiting ${waitTime}ms... (${retries - 1} retries left)`);
+                const waitTime = 2000; // 2 seconds between retries
+                console.log(`⏳ Waiting ${waitTime}ms before retry... (${retries - 1} retries left)`);
                 await new Promise(resolve => setTimeout(resolve, waitTime));
             }
             retries--;
