@@ -1115,29 +1115,16 @@ app.post('/api/generate-contract/:id', isAuthenticated, async (req, res) => {
         };
         lead.contractStatus = 'generated';
         
-        // Return success immediately with the contract HTML
-        // Save to MongoDB asynchronously (don't wait)
-        const contractResponse = {
+        // Simple, fast save to MongoDB
+        console.log('💾 Saving contract to MongoDB...');
+        await lead.save();
+        console.log('✅ Contract saved successfully');
+        
+        res.json({
             success: true,
             contractHTML: contractHTML,
             leadId: lead._id
-        };
-        
-        // Send response immediately
-        res.json(contractResponse);
-        
-        // Save to MongoDB in background (async, non-blocking)
-        (async () => {
-            try {
-                await lead.save({ 
-                    wtimeout: 10000,
-                    w: 'majority'
-                });
-                console.log('✅ Contract saved to MongoDB in background');
-            } catch (error) {
-                console.error('❌ Error saving contract to MongoDB:', error);
-            }
-        })();
+        });
         
     } catch (error) {
         console.error('❌ Error generating contract:', error);
@@ -1308,6 +1295,30 @@ app.get('/api/contract-view/:id', async (req, res) => {
         
     } catch (error) {
         console.error('❌ Error loading contract:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Delete contract (for testing/debugging)
+app.delete('/api/contract/:id', requireAuth, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const lead = await Lead.findById(id);
+        
+        if (!lead) {
+            return res.status(404).json({ error: 'Lead not found' });
+        }
+        
+        // Clear contract
+        lead.contract = undefined;
+        lead.contractStatus = undefined;
+        lead.contractFileUrl = undefined;
+        await lead.save();
+        
+        console.log(`🗑️ Contract deleted for lead: ${id}`);
+        res.json({ success: true, message: 'Contract deleted' });
+    } catch (error) {
+        console.error('Error deleting contract:', error);
         res.status(500).json({ error: error.message });
     }
 });
