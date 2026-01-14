@@ -3425,12 +3425,16 @@ const WhatsAppAutomation = {
             
             // Generate contract
             try {
+                console.log('📄 Generating contract for lead:', this.pendingLead._id || this.pendingLead.id);
                 const result = await ContractManager.generateContract(this.pendingLead._id || this.pendingLead.id);
+                console.log('📄 Contract generation result:', result);
                 
                 if (!result.success) {
+                    console.error('❌ Contract generation failed:', result.error);
                     throw new Error(result.error || 'שגיאה ביצירת החוזה');
                 }
                 
+                console.log('✅ Contract generated successfully, creating URL...');
                 // Create contract URL for viewing/signing
                 const contractUrl = `${window.location.origin}/contract-sign.html?id=${this.pendingLead._id || this.pendingLead.id}`;
                 this.pendingLead.contractFileUrl = contractUrl;
