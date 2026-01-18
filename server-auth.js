@@ -3,11 +3,40 @@ const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const path = require('path');
+const fs = require('fs');
 const mongoose = require('mongoose');
 const session = require('express-session');
 const MongoStore = require('connect-mongo');
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
+const multer = require('multer');
+
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        const uploadDir = path.join(__dirname, 'public', 'uploads');
+        if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+        }
+        cb(null, uploadDir);
+    },
+    filename: (req, file, cb) => {
+        const uniqueName = `logo-${Date.now()}${path.extname(file.originalname)}`;
+        cb(null, uniqueName);
+    }
+});
+const upload = multer({ 
+    storage: storage,
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+    fileFilter: (req, file, cb) => {
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        if (allowedTypes.includes(file.mimetype)) {
+            cb(null, true);
+        } else {
+            cb(new Error('רק קבצי תמונה מותרים'));
+        }
+    }
+});
 
 // Initialize Express App
 const app = express();
@@ -1078,6 +1107,40 @@ app.post('/api/contract-template-html', isAuthenticated, async (req, res) => {
     } catch (error) {
         console.error('Error saving contract template:', error);
         res.status(500).json({ error: error.message });
+    }
+});
+
+// Upload logo endpoint
+app.post('/api/upload-logo', isAuthenticated, upload.single('logo'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ success: false, error: 'לא נבחר קובץ' });
+        }
+        
+        const logoUrl = `/uploads/${req.file.filename}`;
+        
+        // Update user's contract template with logo URL
+        await ContractTemplate.findOneAndUpdate(
+            { userId: req.user.id },
+            {
+                userId: req.user.id,
+                userEmail: req.user.email,
+                logoUrl: logoUrl,
+                updatedAt: new Date()
+            },
+            { new: true, upsert: true }
+        );
+        
+        console.log('✅ Logo uploaded successfully:', logoUrl);
+        
+        res.json({
+            success: true,
+            logoUrl: logoUrl,
+            message: 'הלוגו הועלה בהצלחה'
+        });
+    } catch (error) {
+        console.error('❌ Error uploading logo:', error);
+        res.status(500).json({ success: false, error: error.message });
     }
 });
 

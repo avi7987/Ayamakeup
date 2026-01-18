@@ -232,6 +232,10 @@
                         <div class="variable-name">{{servicesTable}}</div>
                         <div class="variable-desc">טבלת שירותים</div>
                     </div>
+                    <div class="variable-item" onclick="insertVariable('{{ownerSignature}}')">
+                        <div class="variable-name">{{ownerSignature}}</div>
+                        <div class="variable-desc">חתימת בעל העסק</div>
+                    </div>
                     <div class="variable-item" onclick="insertVariable('{{logoUrl}}')">
                         <div class="variable-name">{{logoUrl}}</div>
                         <div class="variable-desc">כתובת לוגו</div>
@@ -241,8 +245,66 @@
 
             <!-- Editor Panel -->
             <div class="editor-panel">
-                <h3 class="font-bold text-lg mb-4">✏️ עורך תבנית (HTML)</h3>
-                <textarea id="templateEditor" placeholder="הקלד כאן את תבנית החוזה...&#10;&#10;אתה יכול להשתמש ב-HTML לעיצוב ובמשתנים מהרשימה משמאל.&#10;&#10;דוגמה:&#10;<h1>חוזה</h1>&#10;<p>שם הלקוח: {{fullName}}</p>"></textarea>
+                <h3 class="font-bold text-lg mb-4">✏️ עורך תבנית</h3>
+                
+                <!-- Formatting Toolbar -->
+                <div class="bg-gray-100 p-2 rounded-lg mb-2 flex flex-wrap gap-2 border border-gray-300">
+                    <button onclick="formatText('bold')" class="px-3 py-1 bg-white border border-gray-300 rounded hover:bg-gray-200" title="מודגש">
+                        <strong>B</strong>
+                    </button>
+                    <button onclick="formatText('italic')" class="px-3 py-1 bg-white border border-gray-300 rounded hover:bg-gray-200" title="נטוי">
+                        <em>I</em>
+                    </button>
+                    <button onclick="formatText('underline')" class="px-3 py-1 bg-white border border-gray-300 rounded hover:bg-gray-200" title="קו תחתון">
+                        <u>U</u>
+                    </button>
+                    <span class="border-l border-gray-400 mx-1"></span>
+                    <select onchange="formatText('fontSize', this.value); this.value='';" class="px-2 py-1 bg-white border border-gray-300 rounded text-sm">
+                        <option value="">גודל</option>
+                        <option value="12px">12px</option>
+                        <option value="14px">14px</option>
+                        <option value="16px">16px</option>
+                        <option value="18px">18px</option>
+                        <option value="20px">20px</option>
+                        <option value="24px">24px</option>
+                        <option value="28px">28px</option>
+                        <option value="32px">32px</option>
+                    </select>
+                    <select onchange="formatText('color', this.value); this.value='';" class="px-2 py-1 bg-white border border-gray-300 rounded text-sm">
+                        <option value="">צבע</option>
+                        <option value="#000000">שחור</option>
+                        <option value="#FF0000">אדום</option>
+                        <option value="#0000FF">כחול</option>
+                        <option value="#008000">ירוק</option>
+                        <option value="#800080">סגול</option>
+                        <option value="#FFA500">כתום</option>
+                    </select>
+                    <span class="border-l border-gray-400 mx-1"></span>
+                    <button onclick="formatText('alignRight')" class="px-3 py-1 bg-white border border-gray-300 rounded hover:bg-gray-200" title="יישור לימין">
+                        ⬅
+                    </button>
+                    <button onclick="formatText('alignCenter')" class="px-3 py-1 bg-white border border-gray-300 rounded hover:bg-gray-200" title="מרכוז">
+                        ↔
+                    </button>
+                    <button onclick="formatText('alignLeft')" class="px-3 py-1 bg-white border border-gray-300 rounded hover:bg-gray-200" title="יישור לשמאל">
+                        ➡
+                    </button>
+                    <span class="border-l border-gray-400 mx-1"></span>
+                    <button onclick="formatText('h1')" class="px-3 py-1 bg-white border border-gray-300 rounded hover:bg-gray-200 text-sm" title="כותרת 1">
+                        H1
+                    </button>
+                    <button onclick="formatText('h2')" class="px-3 py-1 bg-white border border-gray-300 rounded hover:bg-gray-200 text-sm" title="כותרת 2">
+                        H2
+                    </button>
+                    <button onclick="formatText('h3')" class="px-3 py-1 bg-white border border-gray-300 rounded hover:bg-gray-200 text-sm" title="כותרת 3">
+                        H3
+                    </button>
+                    <button onclick="formatText('p')" class="px-3 py-1 bg-white border border-gray-300 rounded hover:bg-gray-200 text-sm" title="פסקה">
+                        P
+                    </button>
+                </div>
+                
+                <textarea id="templateEditor" placeholder="הקלד כאן את תבנית החוזה...&#10;&#10;אתה יכול להשתמש בכפתורי העיצוב למעלה ובמשתנים מהרשימה משמאל.&#10;&#10;דוגמה:&#10;<h1>חוזה</h1>&#10;<p>שם הלקוח: {{fullName}}</p>&#10;<p>{{ownerSignature}}</p>"></textarea>
             </div>
         </div>
     </div>
@@ -287,6 +349,68 @@
             notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
             document.body.appendChild(notification);
             setTimeout(() => notification.remove(), 2000);
+        }
+
+        // Format text in editor
+        function formatText(command, value = null) {
+            const editor = document.getElementById('templateEditor');
+            const start = editor.selectionStart;
+            const end = editor.selectionEnd;
+            const selectedText = editor.value.substring(start, end);
+            
+            if (!selectedText && !['h1', 'h2', 'h3', 'p', 'alignRight', 'alignCenter', 'alignLeft'].includes(command)) {
+                alert('נא לבחור טקסט לעיצוב');
+                return;
+            }
+            
+            let formattedText = '';
+            const text = editor.value;
+            
+            switch(command) {
+                case 'bold':
+                    formattedText = `<strong>${selectedText}</strong>`;
+                    break;
+                case 'italic':
+                    formattedText = `<em>${selectedText}</em>`;
+                    break;
+                case 'underline':
+                    formattedText = `<u>${selectedText}</u>`;
+                    break;
+                case 'fontSize':
+                    formattedText = `<span style="font-size: ${value};">${selectedText}</span>`;
+                    break;
+                case 'color':
+                    formattedText = `<span style="color: ${value};">${selectedText}</span>`;
+                    break;
+                case 'alignRight':
+                    formattedText = `<div style="text-align: right;">${selectedText || 'הטקסט שלך כאן'}</div>`;
+                    break;
+                case 'alignCenter':
+                    formattedText = `<div style="text-align: center;">${selectedText || 'הטקסט שלך כאן'}</div>`;
+                    break;
+                case 'alignLeft':
+                    formattedText = `<div style="text-align: left;">${selectedText || 'הטקסט שלך כאן'}</div>`;
+                    break;
+                case 'h1':
+                    formattedText = `<h1>${selectedText || 'כותרת 1'}</h1>`;
+                    break;
+                case 'h2':
+                    formattedText = `<h2>${selectedText || 'כותרת 2'}</h2>`;
+                    break;
+                case 'h3':
+                    formattedText = `<h3>${selectedText || 'כותרת 3'}</h3>`;
+                    break;
+                case 'p':
+                    formattedText = `<p>${selectedText || 'פסקה'}</p>`;
+                    break;
+                default:
+                    return;
+            }
+            
+            editor.value = text.substring(0, start) + formattedText + text.substring(end);
+            editor.selectionStart = start;
+            editor.selectionEnd = start + formattedText.length;
+            editor.focus();
         }
 
         // Save template
