@@ -1304,6 +1304,39 @@ app.get('/api/contract-view/:id', async (req, res) => {
     }
 });
 
+// Debug: Check lead contract status
+app.get('/api/debug-contract/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        console.log('🔍 DEBUG: Checking contract for lead:', id);
+        
+        const lead = await Lead.findById(id);
+        
+        if (!lead) {
+            console.log('❌ DEBUG: Lead not found');
+            return res.json({ found: false, error: 'Lead not found' });
+        }
+        
+        console.log('✅ DEBUG: Lead found');
+        console.log('📋 DEBUG: Contract exists:', !!lead.contract);
+        console.log('📋 DEBUG: Contract HTML length:', lead.contract?.html?.length || 0);
+        console.log('📋 DEBUG: Contract status:', lead.contractStatus);
+        console.log('📋 DEBUG: Contract createdAt:', lead.contract?.createdAt);
+        
+        res.json({
+            found: true,
+            hasContract: !!lead.contract,
+            contractHtmlLength: lead.contract?.html?.length || 0,
+            contractStatus: lead.contractStatus,
+            contractCreatedAt: lead.contract?.createdAt,
+            leadId: lead._id.toString()
+        });
+    } catch (error) {
+        console.error('❌ DEBUG Error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Delete contract (for testing/debugging)
 app.delete('/api/contract/:id', isAuthenticated, async (req, res) => {
     try {
