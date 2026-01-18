@@ -1116,18 +1116,14 @@ app.post('/api/generate-contract/:id', isAuthenticated, async (req, res) => {
         lead.contractStatus = 'generated';
         
         // Simple, fast save to MongoDB
-        console.log('💾 Saving contract to MongoDB...');
+        console.log('💾 ============ SAVING CONTRACT TO MONGODB ============');
         console.log('💾 Lead ID:', lead._id);
+        console.log('💾 Lead _id type:', typeof lead._id);
         console.log('💾 Contract HTML length:', contractHTML.length);
+        console.log('💾 Contract status:', lead.contractStatus);
         
-        try {
-            await lead.save();
-            console.log('✅ Contract saved successfully to MongoDB');
-        } catch (saveError) {
-            console.error('❌ MongoDB save error:', saveError);
-            console.error('❌ Error details:', saveError.message);
-            // Continue anyway - the HTML is in the response
-        }
+        await lead.save();
+        console.log('✅ ============ CONTRACT SAVED SUCCESSFULLY ============');
         
         res.json({
             success: true,
