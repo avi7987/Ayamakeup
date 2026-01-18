@@ -1384,6 +1384,38 @@ app.get('/api/debug-contract/:id', async (req, res) => {
     }
 });
 
+// Get all signed contracts for current user
+app.get('/api/signed-contracts', isAuthenticated, async (req, res) => {
+    try {
+        console.log('📜 Fetching signed contracts for user:', req.user.email);
+        
+        // Find all leads with signed contracts for this user
+        const leads = await Lead.find({
+            userEmail: req.user.email,
+            contractStatus: 'signed',
+            'contract.html': { $exists: true }
+        }).sort({ 'contract.signedAt': -1 }); // Most recent first
+        
+        console.log(`✅ Found ${leads.length} signed contracts`);
+        
+        // Map to simplified contract data
+        const contracts = leads.map(lead => ({
+            leadId: lead._id.toString(),
+            leadName: `${lead.name} ${lead.lastName || ''}`.trim(),
+            leadPhone: lead.phone,
+            eventDate: lead.eventDate,
+            signedAt: lead.contract.signedAt,
+            createdAt: lead.contract.createdAt
+        }));
+        
+        res.json({ contracts });
+        
+    } catch (error) {
+        console.error('❌ Error fetching signed contracts:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Delete contract (for testing/debugging)
 app.delete('/api/contract/:id', isAuthenticated, async (req, res) => {
     try {

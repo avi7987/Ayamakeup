@@ -5319,6 +5319,96 @@ window.showTooltip = function(tooltipId) {
     }
 };
 
+// ==================== CONTRACTS VIEW ====================
+const ContractsView = {
+    async render() {
+        if (!isAuthenticated) {
+            this.showEmptyState();
+            return;
+        }
+        
+        try {
+            // Fetch signed contracts from server
+            const response = await fetch(`${CONFIG.API_BASE_URL}/signed-contracts`);
+            const data = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(data.error || 'שגיאה בטעינת חוזים');
+            }
+            
+            const container = document.getElementById('contracts-list-container');
+            
+            if (!data.contracts || data.contracts.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-20">
+                        <div class="text-6xl mb-4">📜</div>
+                        <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">אין חוזים חתומים עדיין</h3>
+                        <p class="text-gray-600 dark:text-gray-400">כשלקוחות יחתמו על חוזים, הם יופיעו כאן</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Render contracts list
+            container.innerHTML = data.contracts.map(contract => `
+                <div class="bg-white dark:bg-[#111827] rounded-xl shadow-md p-6 hover:shadow-lg transition-all">
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1">
+                            <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-1">
+                                ${contract.leadName}
+                            </h3>
+                            <div class="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
+                                <span>📅 נחתם: ${new Date(contract.signedAt).toLocaleDateString('he-IL')}</span>
+                                <span>📞 ${contract.leadPhone}</span>
+                                ${contract.eventDate ? `<span>🎉 אירוע: ${new Date(contract.eventDate).toLocaleDateString('he-IL')}</span>` : ''}
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="ContractsView.viewContract('${contract.leadId}')" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-bold transition-all flex items-center gap-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                </svg>
+                                צפה בחוזה
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+        } catch (error) {
+            console.error('❌ Error loading contracts:', error);
+            const container = document.getElementById('contracts-list-container');
+            container.innerHTML = `
+                <div class="text-center py-20">
+                    <div class="text-6xl mb-4">❌</div>
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">שגיאה בטעינת חוזים</h3>
+                    <p class="text-gray-600 dark:text-gray-400">${error.message}</p>
+                    <button onclick="ContractsView.render()" class="mt-4 bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg font-bold">
+                        נסה שוב
+                    </button>
+                </div>
+            `;
+        }
+    },
+    
+    showEmptyState() {
+        const container = document.getElementById('contracts-list-container');
+        container.innerHTML = `
+            <div class="text-center py-20">
+                <div class="text-6xl mb-4">🔒</div>
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">יש להתחבר כדי לצפות בחוזים</h3>
+                <p class="text-gray-600 dark:text-gray-400">התחברי עם חשבון Google כדי לראות את החוזים החתומים</p>
+            </div>
+        `;
+    },
+    
+    viewContract(leadId) {
+        // Open contract in new window
+        window.open(`/contract-sign.html?id=${leadId}&view=true`, '_blank');
+    }
+};
+
 // ==================== BUSINESS INSIGHTS VIEW ====================
 const InsightsView = {
     charts: {},
@@ -5802,8 +5892,8 @@ async function switchPageNav(pageName) {
         console.log('💡 Loading insights data...');
         await InsightsView.render();
     } else if (pageName === 'contracts') {
-        console.log('📄 Loading contracts...');
-        ContractsManager.init();
+        console.log('� Loading contracts...');
+        await ContractsView.render();
     } else if (pageName === 'social-strategy') {
         console.log('🧠 Loading social strategy...');
         SocialStrategy.init();
