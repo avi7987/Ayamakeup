@@ -2788,6 +2788,33 @@
                     </p>
                 </div>
                 
+                <!-- Owner Signature Section -->
+                <div class="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-6 rounded-xl border-2 border-blue-200 dark:border-blue-700">
+                    <h4 class="text-lg font-bold text-gray-900 dark:text-white mb-4">✍️ חתימה דיגיטלית</h4>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                        צרי את החתימה שלך פעם אחת - היא תופיע אוטומטית בכל החוזים
+                    </p>
+                    
+                    <div class="space-y-3">
+                        <!-- Signature Preview -->
+                        <div id="signature-preview-container" class="hidden">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                החתימה הנוכחית:
+                            </label>
+                            <div class="bg-white dark:bg-gray-800 p-4 rounded-lg border-2 border-gray-300 dark:border-gray-600">
+                                <img id="signature-preview" src="" alt="החתימה שלך" class="max-h-24 mx-auto"/>
+                            </div>
+                        </div>
+                        
+                        <button onclick="openSignatureModal()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-bold transition-all flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+                            </svg>
+                            <span id="signature-button-text">צרי חתימה</span>
+                        </button>
+                    </div>
+                </div>
+                
                 <!-- Goals Section -->
                 <div class="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 p-6 rounded-xl border-2 border-purple-200 dark:border-purple-700">
                     <div class="flex justify-between items-center mb-4">
@@ -2904,6 +2931,36 @@
         </div>
     </div>
 
+    <!-- Modal: Signature Drawing -->
+    <div id="modal-signature" class="modal">
+        <div class="bg-white dark:bg-[#111827] p-8 rounded-3xl w-full max-w-3xl shadow-2xl text-right">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold text-blue-800 dark:text-blue-300">✍️ צרי את החתימה שלך</h3>
+                <button onclick="closeSignatureModal()" class="text-3xl text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">&times;</button>
+            </div>
+            
+            <div class="space-y-4">
+                <p class="text-gray-600 dark:text-gray-400">
+                    ציירי את החתימה שלך בתיבה למטה. החתימה תופיע אוטומטית בכל החוזים שתיצרי.
+                </p>
+                
+                <!-- Canvas for signature -->
+                <div class="border-4 border-gray-300 dark:border-gray-600 rounded-xl bg-white overflow-hidden">
+                    <canvas id="signature-canvas" width="700" height="300" class="cursor-crosshair touch-none w-full" style="touch-action: none;"></canvas>
+                </div>
+                
+                <div class="flex gap-3">
+                    <button onclick="clearSignature()" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-3 rounded-xl font-bold transition-all">
+                        נקה
+                    </button>
+                    <button onclick="saveSignature()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-bold transition-all">
+                        שמור חתימה
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Timer Settings Modal -->
     <div id="modal-timer-settings" class="modal">
         <div class="bg-white dark:bg-[#111827] p-8 rounded-3xl w-full max-w-4xl shadow-2xl text-right max-h-[90vh] overflow-y-auto">
@@ -2924,7 +2981,152 @@
         </div>
     </div>
 
+    <!-- Signature Drawing Script -->
+    <script>
+        let signatureCanvas, signatureCtx;
+        let isDrawing = false;
+        let lastX = 0;
+        let lastY = 0;
+
+        function openSignatureModal() {
+            openModal('modal-signature');
+            
+            // Initialize canvas after modal is open
+            setTimeout(() => {
+                signatureCanvas = document.getElementById('signature-canvas');
+                signatureCtx = signatureCanvas.getContext('2d');
+                
+                // Set canvas to white background
+                signatureCtx.fillStyle = 'white';
+                signatureCtx.fillRect(0, 0, signatureCanvas.width, signatureCanvas.height);
+                
+                // Set drawing style
+                signatureCtx.strokeStyle = '#000';
+                signatureCtx.lineWidth = 2;
+                signatureCtx.lineCap = 'round';
+                signatureCtx.lineJoin = 'round';
+                
+                // Load existing signature if available
+                if (State.userSettings?.ownerSignature) {
+                    const img = new Image();
+                    img.onload = () => {
+                        signatureCtx.drawImage(img, 0, 0, signatureCanvas.width, signatureCanvas.height);
+                    };
+                    img.src = State.userSettings.ownerSignature;
+                }
+                
+                // Mouse events
+                signatureCanvas.addEventListener('mousedown', startDrawing);
+                signatureCanvas.addEventListener('mousemove', draw);
+                signatureCanvas.addEventListener('mouseup', stopDrawing);
+                signatureCanvas.addEventListener('mouseout', stopDrawing);
+                
+                // Touch events for mobile
+                signatureCanvas.addEventListener('touchstart', handleTouchStart);
+                signatureCanvas.addEventListener('touchmove', handleTouchMove);
+                signatureCanvas.addEventListener('touchend', stopDrawing);
+            }, 100);
+        }
+
+        function closeSignatureModal() {
+            closeModal('modal-signature');
+        }
+
+        function startDrawing(e) {
+            isDrawing = true;
+            const rect = signatureCanvas.getBoundingClientRect();
+            lastX = e.clientX - rect.left;
+            lastY = e.clientY - rect.top;
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            
+            const rect = signatureCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            signatureCtx.beginPath();
+            signatureCtx.moveTo(lastX, lastY);
+            signatureCtx.lineTo(x, y);
+            signatureCtx.stroke();
+            
+            lastX = x;
+            lastY = y;
+        }
+
+        function stopDrawing() {
+            isDrawing = false;
+        }
+
+        function handleTouchStart(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const rect = signatureCanvas.getBoundingClientRect();
+            lastX = touch.clientX - rect.left;
+            lastY = touch.clientY - rect.top;
+            isDrawing = true;
+        }
+
+        function handleTouchMove(e) {
+            if (!isDrawing) return;
+            e.preventDefault();
+            
+            const touch = e.touches[0];
+            const rect = signatureCanvas.getBoundingClientRect();
+            const x = touch.clientX - rect.left;
+            const y = touch.clientY - rect.top;
+            
+            signatureCtx.beginPath();
+            signatureCtx.moveTo(lastX, lastY);
+            signatureCtx.lineTo(x, y);
+            signatureCtx.stroke();
+            
+            lastX = x;
+            lastY = y;
+        }
+
+        function clearSignature() {
+            signatureCtx.fillStyle = 'white';
+            signatureCtx.fillRect(0, 0, signatureCanvas.width, signatureCanvas.height);
+        }
+
+        async function saveSignature() {
+            if (!isAuthenticated) {
+                alert('❌ יש להתחבר כדי לשמור חתימה');
+                return;
+            }
+            
+            try {
+                // Convert canvas to base64 data URL
+                const signatureDataUrl = signatureCanvas.toDataURL('image/png');
+                
+                // Save to state
+                State.userSettings.ownerSignature = signatureDataUrl;
+                
+                // Save to DB
+                await State.updateSettings({
+                    ...State.userSettings,
+                    ownerSignature: signatureDataUrl
+                });
+                
+                console.log('✅ Signature saved successfully');
+                
+                // Update preview
+                document.getElementById('signature-preview').src = signatureDataUrl;
+                document.getElementById('signature-preview-container').classList.remove('hidden');
+                document.getElementById('signature-button-text').textContent = 'ערכי חתימה';
+                
+                alert('✅ החתימה נשמרה בהצלחה!');
+                closeSignatureModal();
+            } catch (error) {
+                console.error('❌ Error saving signature:', error);
+                alert('❌ שגיאה בשמירת החתימה: ' + error.message);
+            }
+        }
+    </script>
+
     <!-- Application Script -->
-    <script src="js/app_db.js?v=14012026v2"></script>
+    <script src="js/app_db.js?v=14012026v3"></script>
 </body>
 </html>

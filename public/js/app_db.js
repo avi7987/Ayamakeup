@@ -930,6 +930,18 @@ const ModalManager = {
                 if (businessNameInput && State.userSettings) {
                     businessNameInput.value = State.userSettings.businessName || 'Luna Makeup';
                 }
+                // Load signature preview
+                if (State.userSettings?.ownerSignature) {
+                    const signaturePreview = document.getElementById('signature-preview');
+                    const signaturePreviewContainer = document.getElementById('signature-preview-container');
+                    const signatureButtonText = document.getElementById('signature-button-text');
+                    
+                    if (signaturePreview && signaturePreviewContainer && signatureButtonText) {
+                        signaturePreview.src = State.userSettings.ownerSignature;
+                        signaturePreviewContainer.classList.remove('hidden');
+                        signatureButtonText.textContent = 'ערכי חתימה';
+                    }
+                }
             }
             
             // Render message settings when opening that modal

@@ -140,6 +140,7 @@ const userSettingsSchema = new mongoose.Schema({
     userId: { type: String, required: true, unique: true, index: true },
     userEmail: { type: String, required: true },
     businessName: { type: String, default: 'Luna Makeup' },
+    ownerSignature: { type: String, default: '' }, // Base64 data URL of signature canvas
     
     // Goals (legacy - for simple 3 goals)
     goals: {
@@ -1180,6 +1181,7 @@ async function prepareContractData(lead, userEmail) {
     // Get business name from user settings
     const userSettings = await UserSettings.findOne({ userEmail });
     const businessName = userSettings?.businessName || 'Luna Makeup';
+    const ownerSignature = userSettings?.ownerSignature || '';
     
     const fullName = `${lead.name} ${lead.lastName || ''}`.trim();
     const phone = lead.phone || '';
@@ -1218,9 +1220,19 @@ async function prepareContractData(lead, userEmail) {
     servicesTableHTML += `<tr style="background: #f0f0f0; font-weight: bold;"><td style="padding: 10px;">סה"כ</td><td style="padding: 10px;">${totalPrice} ₪</td></tr>`;
     servicesTableHTML += '</tbody></table>';
     
+    // Create signature HTML if signature exists
+    let ownerSignatureHTML = '';
+    if (ownerSignature) {
+        ownerSignatureHTML = `<div style="margin-top: 40px; text-align: center;">
+            <p style="margin-bottom: 10px; font-weight: bold;">חתימת ${businessName}:</p>
+            <img src="${ownerSignature}" alt="חתימת ${businessName}" style="max-width: 200px; height: auto; border-bottom: 2px solid #000; padding-bottom: 5px;" />
+        </div>`;
+    }
+    
     return {
         date: today,
         businessName: businessName,
+        ownerSignature: ownerSignatureHTML,
         fullName: fullName,
         phone: phone,
         address: address,
