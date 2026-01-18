@@ -1108,22 +1108,49 @@ app.post('/api/generate-contract/:id', isAuthenticated, async (req, res) => {
         let contractHTML = fillTemplate(template.templateHTML, contractData);
         
         // Save contract to lead
+        console.log('🔧 ============ PREPARING CONTRACT DATA ============');
+        console.log('🔧 HTML length:', contractHTML.length);
+        console.log('🔧 Lead before save:', {
+            _id: lead._id,
+            hasContract: !!lead.contract,
+            contractStatus: lead.contractStatus
+        });
+        
         lead.contract = {
             html: contractHTML,
             createdAt: new Date(),
-            status: 'pending' // pending, signed, cancelled
+            status: 'pending'
         };
         lead.contractStatus = 'generated';
         
-        // Simple, fast save to MongoDB
-        console.log('💾 ============ SAVING CONTRACT TO MONGODB ============');
-        console.log('💾 Lead ID:', lead._id);
-        console.log('💾 Lead _id type:', typeof lead._id);
-        console.log('💾 Contract HTML length:', contractHTML.length);
-        console.log('💾 Contract status:', lead.contractStatus);
+        console.log('🔧 Lead after setting contract:', {
+            _id: lead._id,
+            hasContract: !!lead.contract,
+            contractHtmlLength: lead.contract?.html?.length,
+            contractStatus: lead.contractStatus
+        });
         
-        await lead.save();
-        console.log('✅ ============ CONTRACT SAVED SUCCESSFULLY ============');
+        // Save to MongoDB with error handling
+        console.log('💾 ============ SAVING CONTRACT TO MONGODB ============');
+        try {
+            const savedLead = await lead.save();
+            console.log('✅ ============ CONTRACT SAVED SUCCESSFULLY ============');
+            console.log('✅ Saved lead ID:', savedLead._id);
+            console.log('✅ Saved contract exists:', !!savedLead.contract);
+            console.log('✅ Saved contract HTML length:', savedLead.contract?.html?.length || 0);
+            
+            // Verify save by reading from DB
+            const verifyLead = await Lead.findById(lead._id);
+            console.log('🔍 VERIFICATION: Contract exists in DB:', !!verifyLead?.contract);
+            console.log('🔍 VERIFICATION: Contract HTML length:', verifyLead?.contract?.html?.length || 0);
+            
+        } catch (saveError) {
+            console.error('❌ ============ MONGODB SAVE ERROR ============');
+            console.error('❌ Error:', saveError);
+            console.error('❌ Error message:', saveError.message);
+            console.error('❌ Error stack:', saveError.stack);
+            throw saveError;
+        }
         
         res.json({
             success: true,
