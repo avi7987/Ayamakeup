@@ -120,6 +120,14 @@ const leadSchema = new mongoose.Schema({
     depositIncomeRecorded: { type: Boolean, default: false },
     eventPaymentIncomeRecorded: { type: Boolean, default: false },
     contractFileUrl: String,
+    contract: {
+        html: String,
+        createdAt: Date,
+        status: String,
+        signedAt: Date,
+        signature: String
+    },
+    contractStatus: String,
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now }
 });
