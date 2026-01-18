@@ -1544,7 +1544,7 @@ const LeadProfile = {
                                         ${lead.contract?.status === 'signed' ? '✅ חוזה חתום' : '📄 חוזה נוצר'}
                                     </span>
                                     <div class="flex gap-2">
-                                        <button onclick="window.open('${lead.contractFileUrl.replace('view=true', 'view=false')}', '_blank')" class="text-xs bg-blue-500 text-white px-3 py-2 rounded-lg font-bold">
+                                        <button onclick="window.open('${lead.contractFileUrl.includes('view=') ? lead.contractFileUrl : lead.contractFileUrl + '&view=true'}', '_blank')" class="text-xs bg-blue-500 text-white px-3 py-2 rounded-lg font-bold">
                                             👁️ צפה
                                         </button>
                                         ${lead.contract?.status === 'signed' ? `

@@ -1107,11 +1107,11 @@ app.post('/api/generate-contract/:id', isAuthenticated, async (req, res) => {
             return res.status(400).json({ error: 'לא נמצאה תבנית חוזה. אנא צרי תבנית בעורך החוזים' });
         }
         
-        // Get user settings for business name
+        // Get user settings for business name and signature
         const userSettings = await UserSettings.findOne({ userId: req.user.id });
         
         // Prepare contract data
-        const contractData = await prepareContractData(lead, req.user.email);
+        const contractData = await prepareContractData(lead, req.user.email, userSettings);
         
         // Fill template with data
         let contractHTML = fillTemplate(template.templateHTML, contractData);
@@ -1174,12 +1174,11 @@ app.post('/api/generate-contract/:id', isAuthenticated, async (req, res) => {
 });
 
 // Helper function to prepare contract data from lead
-async function prepareContractData(lead, userEmail) {
+async function prepareContractData(lead, userEmail, userSettings) {
     const today = new Date().toLocaleDateString('he-IL');
     const eventDate = lead.eventDate ? new Date(lead.eventDate).toLocaleDateString('he-IL') : 'לא נקבע';
     
-    // Get business name from user settings
-    const userSettings = await UserSettings.findOne({ userEmail });
+    // Get business name and signature from user settings
     const businessName = userSettings?.businessName || 'Luna Makeup';
     const ownerSignature = userSettings?.ownerSignature || '';
     
