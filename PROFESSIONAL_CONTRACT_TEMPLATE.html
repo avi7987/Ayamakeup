@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Arial', sans-serif;
+            line-height: 1.4;
+            color: #1a1a1a;
+            background: #ffffff;
+            padding: 16px;
+            font-size: 14px;
+        }
+        .contract-header {
+            text-align: center;
+            padding: 16px 0 12px;
+            border-bottom: 3px solid #6366f1;
+            margin-bottom: 16px;
+        }
+        .contract-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #6366f1;
+            margin-bottom: 4px;
+        }
+        .contract-subtitle {
+            font-size: 13px;
+            color: #64748b;
+        }
+        .section {
+            background: #f8fafc;
+            padding: 12px;
+            margin-bottom: 12px;
+            border-radius: 8px;
+            border-right: 4px solid #6366f1;
+        }
+        .section-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #6366f1;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .info-row:last-child {
+            border-bottom: none;
+        }
+        .info-label {
+            font-weight: 600;
+            color: #475569;
+            font-size: 13px;
+        }
+        .info-value {
+            color: #1e293b;
+            font-weight: 500;
+            font-size: 13px;
+        }
+        .price-section {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            padding: 14px;
+            margin: 12px 0;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+        .price-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            font-size: 14px;
+        }
+        .total-row {
+            border-top: 2px solid rgba(255,255,255,0.3);
+            margin-top: 8px;
+            padding-top: 8px;
+            font-size: 16px;
+            font-weight: 700;
+        }
+        .balance-highlight {
+            background: rgba(255,255,255,0.2);
+            padding: 8px;
+            border-radius: 6px;
+            margin-top: 8px;
+            text-align: center;
+            font-size: 15px;
+            font-weight: 700;
+        }
+        .terms {
+            background: #fff7ed;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #fed7aa;
+            margin: 12px 0;
+        }
+        .terms-title {
+            font-weight: 700;
+            color: #c2410c;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        .terms-list {
+            padding-right: 18px;
+            font-size: 12px;
+            line-height: 1.5;
+            color: #78350f;
+        }
+        .terms-list li {
+            margin-bottom: 4px;
+        }
+        .signature-section {
+            background: #f0fdf4;
+            padding: 14px;
+            border-radius: 8px;
+            border: 2px solid #86efac;
+            margin-top: 16px;
+            text-align: center;
+        }
+        .signature-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #166534;
+            margin-bottom: 10px;
+        }
+        .signature-box {
+            background: white;
+            border: 2px dashed #86efac;
+            border-radius: 6px;
+            padding: 12px;
+            margin: 10px 0;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .signature-image {
+            max-width: 200px;
+            max-height: 70px;
+            width: auto;
+            height: auto;
+        }
+        .date-stamp {
+            font-size: 11px;
+            color: #64748b;
+            margin-top: 6px;
+        }
+        @media print {
+            body { padding: 0; font-size: 12px; }
+            .section { page-break-inside: avoid; }
+        }
+        @media (max-width: 640px) {
+            body { font-size: 13px; padding: 12px; }
+            .contract-title { font-size: 20px; }
+            .info-row { flex-direction: column; gap: 2px; }
+            .info-value { font-weight: 700; }
+        }
+    </style>
+</head>
+<body>
+    <div class="contract-header">
+        <div class="contract-title">📜 חוזה מתן שירותים</div>
+        <div class="contract-subtitle">{{businessName}} | {{date}}</div>
+    </div>
+
+    <!-- Parties Section -->
+    <div class="section">
+        <div class="section-title">👥 צדדים להסכם</div>
+        <div class="info-row">
+            <span class="info-label">נותן השירות:</span>
+            <span class="info-value">{{businessName}}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">מקבל השירות:</span>
+            <span class="info-value">{{fullName}}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">טלפון:</span>
+            <span class="info-value">{{phone}}</span>
+        </div>
+    </div>
+
+    <!-- Event Details -->
+    <div class="section">
+        <div class="section-title">🎉 פרטי האירוע</div>
+        <div class="info-row">
+            <span class="info-label">תאריך האירוע:</span>
+            <span class="info-value">{{eventDate}}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">מיקום:</span>
+            <span class="info-value">{{location}}</span>
+        </div>
+    </div>
+
+    <!-- Services Table -->
+    <div class="section">
+        <div class="section-title">💄 שירותים</div>
+        {{servicesTable}}
+    </div>
+
+    <!-- Pricing -->
+    <div class="price-section">
+        <div class="price-row">
+            <span>💰 סה"כ לתשלום:</span>
+            <span>₪{{totalPrice}}</span>
+        </div>
+        <div class="price-row">
+            <span>✅ מקדמה ששולמה:</span>
+            <span>₪{{deposit}}</span>
+        </div>
+        <div class="price-row total-row">
+            <span>💵 סה"כ לתשלום:</span>
+            <span>₪{{totalPrice}}</span>
+        </div>
+        <div class="balance-highlight">
+            💳 יתרה לתשלום ביום האירוע: ₪{{balance}}
+        </div>
+    </div>
+
+    <!-- Terms -->
+    <div class="terms">
+        <div class="terms-title">⚖️ תנאים והתחייבויות</div>
+        <ul class="terms-list">
+            <li>המקדמה אינה מוחזרת במקרה של ביטול מצד הלקוח</li>
+            <li>היתרה תשולם במזומן או העברה בנקאית ביום האירוע</li>
+            <li>במקרה של עיכוב של מעל 30 דקות, ייתכן שינוי במחיר</li>
+            <li>נותן השירות שומר לעצמו את הזכות לבטל בהתראה של 48 שעות מראש</li>
+            <li>חוזה זה מהווה את מלוא ההסכמה בין הצדדים</li>
+        </ul>
+    </div>
+
+    <!-- Owner Signature -->
+    <div class="signature-section">
+        <div class="signature-title">✍️ חתימת {{businessName}}</div>
+        <div class="signature-box">
+            {{ownerSignature}}
+        </div>
+        <div class="date-stamp">נחתם דיגיטלית ב-{{date}}</div>
+    </div>
+
+    <!-- Client Signature Area -->
+    <div class="signature-section" style="background: #eff6ff; border-color: #93c5fd;">
+        <div class="signature-title" style="color: #1e40af;">📝 חתימת הלקוח</div>
+        <div style="font-size: 12px; color: #1e3a8a; margin-bottom: 8px;">
+            החתימה הדיגיטלית תתווסף אוטומטית בסיום תהליך החתימה
+        </div>
+    </div>
+</body>
+</html>
